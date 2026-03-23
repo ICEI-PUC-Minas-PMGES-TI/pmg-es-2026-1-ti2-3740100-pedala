@@ -1,4 +1,4 @@
-# Nome do projeto
+# PedaLa
 
 Escreva um ou dois parágrafos resumindo o objetivo do seu projeto.
 
