@@ -1,9 +1,9 @@
 ### 3.3.1 Processo 1 – NOME DO PROCESSO
 
-_Apresente aqui o nome e as oportunidades de melhoria para o processo 1. 
-Em seguida, apresente o modelo do processo 1, descrito no padrão BPMN._
+Uma melhoria importante seria a implementação de validação automática em tempo real dos dados inseridos, reduzindo erros no preenchimento. Além disso, a inclusão de autenticação em duas etapas aumentaria a segurança do acesso do usuário.
 
-![Exemplo de um Modelo BPMN do PROCESSO 1](images/process.png "Modelo BPMN do Processo 1.")
+
+![Exemplo de um Modelo BPMN do PROCESSO 1](images/Processo1.png "Modelo BPMN do Processo 1.")
 
 #### Detalhamento das atividades
 
@@ -37,31 +37,69 @@ _* **Link** - campo que armazena uma URL_
 _* **Tabela** - campo formado por uma matriz de valores_
 
 
-**Nome da atividade 1**
+**Acessar Sistema **
 
 | **Campo**       | **Tipo**         | **Restrições** | **Valor default** |
 | ---             | ---              | ---            | ---               |
-| [Nome do campo] | [tipo de dados]  |                |                   |
-| ***Exemplo:***  |                  |                |                   |
-| login           | Caixa de Texto   | formato de e-mail |                |
-| senha           | Caixa de Texto   | mínimo de 8 caracteres |           |
+| email           | Caixa de texto   |formato de email|                   |
+| senha           | Caixa de texto   | minimo de 8 caracteres |           |
+|                 |                  |                |                   |
+
 
 | **Comandos**         |  **Destino**                   | **Tipo** |
 | ---                  | ---                            | ---               |
-| [Nome do botão/link] | Atividade/processo de destino  | (default/cancel  ) |
-| ***Exemplo:***       |                                |                   |
-| entrar               | Fim do Processo 1              | default           |
-| cadastrar            | Início do proceso de cadastro  |                   |
+| entrar               | Fim do processo                | default           |
+| cadastrar             | Preencher dados do processo   |                   |
+|                       |                                |                   |
 
 
-**Nome da atividade 2**
+
+**Preencher dados pessoais**
 
 | **Campo**       | **Tipo**         | **Restrições** | **Valor default** |
 | ---             | ---              | ---            | ---               |
-| [Nome do campo] | [tipo de dados]  |                |                   |
+| nome            | Caixa de texto  |                |                   |
+| CPF             | Caixa de texto   |Formato CPF válido|                   |
+| email           | Caixa de texto   |formato de email|                   |
+| telefone        | Caixa de texto   |números válidos|                   |
 |                 |                  |                |                   |
 
 | **Comandos**         |  **Destino**                   | **Tipo**          |
 | ---                  | ---                            | ---               |
-| [Nome do botão/link] | Atividade/processo de destino  | (default/cancel/  ) |
+| Enviar               | Validar informações            | default |
+| cancelar             | Fim do processo                | cancel |
 |                      |                                |                   |
+
+
+
+**Validar informações**
+
+| **Campo**       | **Tipo**         | **Restrições** | **Valor default** |
+| ---             | ---              | ---            | ---               |
+| dados do usuário| área de texto    |  obrigatório   |                   |
+|                  |                 |                |                   |
+
+
+| **Comandos**         |  **Destino**                   | **Tipo** |
+| ---                  | ---                            | ---               |
+|dados válidos         |Criar conta                     | default           |
+|dados inválidos       | Preencher dados pessoais       | cancel            |
+|                      |                                |                   |
+
+
+
+**Criar conta**
+
+| **Campo**       | **Tipo**         | **Restrições** | **Valor default** |
+| ---             | ---              | ---            | ---               |
+| id do usuário   | Número           |Gerado automaticamente|automático   |
+|data de cadastro | Data e hora      |atual                               |
+|                 |                  |                |                   |
+
+| **Comandos**         |  **Destino**                   | **Tipo**          |
+| ---                  | ---                            | ---               |
+| concluir             |Fim do processo                 |default            |
+|                      |                                |                   |
+
+
+
