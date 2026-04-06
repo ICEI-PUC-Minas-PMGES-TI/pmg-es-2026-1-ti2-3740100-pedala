@@ -1,9 +1,8 @@
-### 3.3.2 Processo 2 – NOME DO PROCESSO
+### 3.3.2 Processo 2 – RESERVA DE BICICLETA
 
-_Apresente aqui o nome e as oportunidades de melhoria para o processo 2. 
-Em seguida, apresente o modelo do processo 2, descrito no padrão BPMN._
+O processo pode ser aprimorado com a implementação de filtros mais avançados na busca de bicicletas, como localização, tipo e preço.
 
-![Exemplo de um Modelo BPMN do PROCESSO 2](images/process.png "Modelo BPMN do Processo 2.")
+![Exemplo de um Modelo BPMN do PROCESSO 2](images/Processo2.png "Modelo BPMN do Processo 2.")
 
 
 #### Detalhamento das atividades
@@ -37,31 +36,99 @@ _* **Link** - campo que armazena uma URL_
 
 _* **Tabela** - campo formado por uma matriz de valores_
 
-**Nome da atividade 1**
+**Acessar catálogo de bicicletas**
 
 | **Campo**       | **Tipo**         | **Restrições** | **Valor default** |
 | ---             | ---              | ---            | ---               |
-| [Nome do campo] | [tipo de dados]  |                |                   |
-| ***Exemplo:***  |                  |                |                   |
-| login           | Caixa de Texto   | formato de e-mail |                |
-| senha           | Caixa de Texto   | mínimo de 8 caracteres |           |
+| Localização     | Caixa de texto   |  opcional      |                   |
+|tipo de bicicleta| Seleção única    |opções disponíveis|                   |
+| preço máximo    | Número           |valor positivo |                   |
+|                 |                  |                |                   |
+
 
 | **Comandos**         |  **Destino**                   | **Tipo** |
 | ---                  | ---                            | ---               |
-| [Nome do botão/link] | Atividade/processo de destino  | (default/cancel  ) |
-| ***Exemplo:***       |                                |                   |
-| entrar               | Fim do Processo 1              | default           |
-| cadastrar            | Início do proceso de cadastro  |                   |
+| buscar               | Exibir bicicletas disponiveis  | default           |
+|                      |                                |                   |
 
 
-**Nome da atividade 2**
+
+**Exibir bicicletas disponíveis**
 
 | **Campo**       | **Tipo**         | **Restrições** | **Valor default** |
 | ---             | ---              | ---            | ---               |
-| [Nome do campo] | [tipo de dados]  |                |                   |
+| Lista de bicicletas| tabela        | dados do sistema|                   |
+|imagem da bicicleta | imagem        | opcional       |                   |
 |                 |                  |                |                   |
 
 | **Comandos**         |  **Destino**                   | **Tipo**          |
 | ---                  | ---                            | ---               |
-| [Nome do botão/link] | Atividade/processo de destino  | (default/cancel/  ) |
+| selecionar bicicleta | Selecionar bicicleta           | default           |
+|                      |                                |                   |
+
+
+**Selecionar bicicleta**
+
+| **Campo**       | **Tipo**         | **Restrições** | **Valor default** |
+| ---             | ---              | ---            | ---               |
+| bicicleta escolhida | Caixa de texto  | obrigatório |                   |
+|                 |                  |                |                   |
+
+| **Comandos**         |  **Destino**                   | **Tipo**          |
+| ---                  | ---                            | ---               |
+| continuar            | definir período                | default           |
+|                      |                                |                   |
+
+
+**Definir período de locação**
+
+| **Campo**       | **Tipo**         | **Restrições** | **Valor default** |
+| ---             | ---              | ---            | ---               |
+| data início     |data              |   obrigatório  |                   |
+| data fim        | data             |  maior que data fim|                   |
+|                 |                  |                |                   |
+
+| **Comandos**         |  **Destino**                   | **Tipo**          |
+| ---                  | ---                            | ---               |
+| confirmar período    | escolher seguro                | default           |
+|                      |                                |                   |
+
+
+**Escolher tipo de seguro**
+
+| **Campo**       | **Tipo**         | **Restrições** | **Valor default** |
+| ---             | ---              | ---            | ---               |
+| tipo de seguro  | seleção única  |Básico, intermediário, premium|Básico  |
+|                 |                  |                |                   |
+
+| **Comandos**         |  **Destino**                   | **Tipo**          |
+| ---                  | ---                            | ---               |
+| confirmar seguro     | calcular valor total           | default           |
+|                      |                                |                   |
+
+
+**Calcular valor total**
+
+| **Campo**       | **Tipo**         | **Restrições** | **Valor default** |
+| ---             | ---              | ---            | ---               |
+| valor da locação | número          | calculado automaticamente | automático|
+|                 |                  |                |                   |
+
+| **Comandos**         |  **Destino**                   | **Tipo**          |
+| ---                  | ---                            | ---               |
+| continuar            |     registrar reserva          | default           |
+|                      |                                |                   |
+
+
+**Registrar reserva**
+
+| **Campo**       | **Tipo**         | **Restrições** | **Valor default** |
+| ---             | ---              | ---            | ---               |
+| status da reserva| caixa de texto  | pendente de pagamento|Pendente     |
+| código da reserva| número          | gerado automaticamente|automático  |
+|                 |                  |                |                   |
+
+| **Comandos**         |  **Destino**                   | **Tipo**          |
+| ---                  | ---                            | ---               |
+| finalizar            | fim do processo                |default            |
 |                      |                                |                   |
