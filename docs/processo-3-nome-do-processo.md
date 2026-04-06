@@ -1,9 +1,8 @@
-### 3.3.3 Processo 3 – NOME DO PROCESSO
+### 3.3.3 Processo 3 – Pagamento e GPS
 
-_Apresente aqui o nome e as oportunidades de melhoria para o processo 3. 
-Em seguida, apresente o modelo do processo 3, descrito no padrão BPMN._
+O processo pode ser aprimorado com a inclusão de múltiplas formas de pagamento, como PIX, cartão de crédito e carteiras digitais. Outra melhoria seria a implementação de notificações em tempo real para informar o status do pagamento ao cliente.
 
-![Exemplo de um Modelo BPMN do PROCESSO 3](images/process.png "Modelo BPMN do Processo 3.")
+![Exemplo de um Modelo BPMN do PROCESSO 3](images/Processo3.png "Modelo BPMN do Processo 3.")
 
 
 #### Detalhamento das atividades
@@ -37,31 +36,101 @@ _* **Link** - campo que armazena uma URL_
 
 _* **Tabela** - campo formado por uma matriz de valores_
 
-**Nome da atividade 1**
+**Confirmar reserva**
 
 | **Campo**       | **Tipo**         | **Restrições** | **Valor default** |
 | ---             | ---              | ---            | ---               |
-| [Nome do campo] | [tipo de dados]  |                |                   |
-| ***Exemplo:***  |                  |                |                   |
-| login           | Caixa de Texto   | formato de e-mail |                |
-| senha           | Caixa de Texto   | mínimo de 8 caracteres |           |
+| código da reserva| número         | obrigatório    |                   |
+| valor total     | número          | somente leitura |                   |
+|  |                  |                |                   |
+
 
 | **Comandos**         |  **Destino**                   | **Tipo** |
 | ---                  | ---                            | ---               |
-| [Nome do botão/link] | Atividade/processo de destino  | (default/cancel  ) |
-| ***Exemplo:***       |                                |                   |
-| entrar               | Fim do Processo 1              | default           |
-| cadastrar            | Início do proceso de cadastro  |                   |
+| confirmar            | Enviar dados para pagamento    | default           |
+| cancelar             | fim do processo                | cancel            |
+|       |                                |                   |
 
 
-**Nome da atividade 2**
+
+**Enviar dados para pagamento**
 
 | **Campo**       | **Tipo**         | **Restrições** | **Valor default** |
 | ---             | ---              | ---            | ---               |
-| [Nome do campo] | [tipo de dados]  |                |                   |
+| dados do pagamento | área de texto  | obrigatório   |                   |
 |                 |                  |                |                   |
 
 | **Comandos**         |  **Destino**                   | **Tipo**          |
 | ---                  | ---                            | ---               |
-| [Nome do botão/link] | Atividade/processo de destino  | (default/cancel/  ) |
+| enviar               | processar pagamento            | default           |
 |                      |                                |                   |
+
+
+
+**Processar pagamento**
+
+| **Campo**       | **Tipo**         | **Restrições** | **Valor default** |
+| ---             | ---              | ---            | ---               |
+|status do pagamento |caixa de texto  | aprovado ou recusado               |                   |
+|                 |                  |                |                   |
+
+| **Comandos**         |  **Destino**                   | **Tipo**          |
+| ---                  | ---                            | ---               |
+| aprovado | confirmar locação  |default |
+| recusado | fim do processo | cancel |
+|                      |                                |                   |
+
+
+
+**Confirmar locação**
+
+| **Campo**       | **Tipo**         | **Restrições** | **Valor default** |
+| ---             | ---              | ---            | ---               |
+| Status da locação | caixa de texto  |confirmado                | confirmado                  |
+|                 |                  |                |                   |
+
+| **Comandos**         |  **Destino**                   | **Tipo**          |
+| ---                  | ---                            | ---               |
+| continuar | Atualizar status da bicicleta  | default |
+|                      |                                |                   |
+
+
+
+**Atualizar status da bicicleta**
+
+| **Campo**       | **Tipo**         | **Restrições** | **Valor default** |
+| ---             | ---              | ---            | ---               |
+| status da bicicleta |caixa de texto  |Em uso                |   Em uso                |
+|                 |                  |                |                   |
+
+| **Comandos**         |  **Destino**                   | **Tipo**          |
+| ---                  | ---                            | ---               |
+| atualizar | ativar GPS | default |
+|                      |                                |                   |
+
+
+**Ativar GPS**
+
+| **Campo**       | **Tipo**         | **Restrições** | **Valor default** |
+| ---             | ---              | ---            | ---               |
+| Status do GPS | Caixa de texto  | ativo               | ativo                  |
+|                 |                  |                |                   |
+
+| **Comandos**         |  **Destino**                   | **Tipo**          |
+| ---                  | ---                            | ---               |
+| ativar | exibir localização no painel  | default |
+|                      |                                |                   |
+
+
+**Exibir localização no painel**
+
+| **Campo**       | **Tipo**         | **Restrições** | **Valor default** |
+| ---             | ---              | ---            | ---               |
+| localização em tempo real | área de texto  | localização contínua                |                   |
+|                 |                  |                |                   |
+
+| **Comandos**         |  **Destino**                   | **Tipo**          |
+| ---                  | ---                            | ---               |
+| finalizar | fim do processo | default |
+|                      |                                |                   |
+
