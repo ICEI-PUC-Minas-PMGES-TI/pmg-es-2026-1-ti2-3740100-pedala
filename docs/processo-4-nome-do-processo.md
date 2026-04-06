@@ -1,9 +1,8 @@
-### 3.3.4 Processo 4 – NOME DO PROCESSO
+### 3.3.4 Processo 4 – MONITORAMENTO E ENCERRAMENTO DA LOCAÇÃO
 
-_Apresente aqui o nome e as oportunidades de melhoria para o processo 4. 
-Em seguida, apresente o modelo do processo 4, descrito no padrão BPMN._
+A criação de um histórico detalhado de uso pode ajudar na tomada de decisões administrativas. Também é possível melhorar a comunicação com o cliente por meio de notificações durante todo o período de locação.
 
-![Exemplo de um Modelo BPMN do PROCESSO 4](images/process.png "Modelo BPMN do Processo 4.")
+![Exemplo de um Modelo BPMN do PROCESSO 4](images/Processo4.png "Modelo BPMN do Processo 4.")
 
 
 #### Detalhamento das atividades
@@ -37,31 +36,130 @@ _* **Link** - campo que armazena uma URL_
 
 _* **Tabela** - campo formado por uma matriz de valores_
 
-**Nome da atividade 1**
+
+**Monitorar localização das bicicletas**
 
 | **Campo**       | **Tipo**         | **Restrições** | **Valor default** |
 | ---             | ---              | ---            | ---               |
-| [Nome do campo] | [tipo de dados]  |                |                   |
-| ***Exemplo:***  |                  |                |                   |
-| login           | Caixa de Texto   | formato de e-mail |                |
-| senha           | Caixa de Texto   | mínimo de 8 caracteres |           |
+| localização em tempo real | área de texto  |  atualização contínua|                   |
+| status da bicicleta| caixa de texto  |obrigatório                |Em uso                   |
+| |                  |                |                   |
+
 
 | **Comandos**         |  **Destino**                   | **Tipo** |
 | ---                  | ---                            | ---               |
-| [Nome do botão/link] | Atividade/processo de destino  | (default/cancel  ) |
-| ***Exemplo:***       |                                |                   |
-| entrar               | Fim do Processo 1              | default           |
-| cadastrar            | Início do proceso de cadastro  |                   |
+| verificar situação | verificar desvio suspeito  | default |
+|       |                                |                   |
 
 
-**Nome da atividade 2**
+
+**Verificar desvio suspeito**
 
 | **Campo**       | **Tipo**         | **Restrições** | **Valor default** |
 | ---             | ---              | ---            | ---               |
-| [Nome do campo] | [tipo de dados]  |                |                   |
+| status de rota | caixa de texto  | dentro ou fora da rota               |                   |
 |                 |                  |                |                   |
 
 | **Comandos**         |  **Destino**                   | **Tipo**          |
 | ---                  | ---                            | ---               |
-| [Nome do botão/link] | Atividade/processo de destino  | (default/cancel/  ) |
+| desvio detectado | bloquear bicicleta  | default |
+| sem desvio | devolver bicicleta  |  |
 |                      |                                |                   |
+
+
+**Bloquear bicicleta**
+
+| **Campo**       | **Tipo**         | **Restrições** | **Valor default** |
+| ---             | ---              | ---            | ---               |
+| status do bloqueio | caixa de texto  | ativado               | ativado                  |
+|                 |                  |                |                   |
+
+| **Comandos**         |  **Destino**                   | **Tipo**          |
+| ---                  | ---                            | ---               |
+| continuar | devolver bicicleta  | default |
+|                      |                                |                   |
+
+
+
+**Devolver bicicleta**
+
+| **Campo**       | **Tipo**         | **Restrições** | **Valor default** |
+| ---             | ---              | ---            | ---               |
+| data de devolução | data e hora  | obrigatório               |                   |
+| condição da bicicleta | área de texto  | preenchido pelo funcionário               |                   |
+|                 |                  |                |                   |
+
+| **Comandos**         |  **Destino**                   | **Tipo**          |
+| ---                  | ---                            | ---               |
+| confirmar devolução | verificar estado físico da bicicleta  | default |
+|                      |                                |                   |
+
+
+**Verificar estado físico da bicicleta**
+
+| **Campo**       | **Tipo**         | **Restrições** | **Valor default** |
+| ---             | ---              | ---            | ---               |
+| estado físico | área de texto  |obrigatório               |                   |
+| danos identificados | área de texto  | opcional              |                   |
+|                 |                  |                |                   |
+
+| **Comandos**         |  **Destino**                   | **Tipo**          |
+| ---                  | ---                            | ---               |
+| sem danos | Desativar GPS  | default |
+| com danos | Acionar seguro  |  |
+|                      |                                |                   |
+
+
+**Verificar seguro**
+
+| **Campo**       | **Tipo**         | **Restrições** | **Valor default** |
+| ---             | ---              | ---            | ---               |
+| tipo de seguro | seleção úncia | Básico, Intermediário, Premium               |                   |
+|                 |                  |                |                   |
+
+| **Comandos**         |  **Destino**                   | **Tipo**          |
+| ---                  | ---                            | ---               |
+| Aplicar regras | Aplicar regras do seguro | default|
+|                      |                                |                   |
+
+
+**Aplicar regras do seguro**
+
+| **Campo**       | **Tipo**         | **Restrições** | **Valor default** |
+| ---             | ---              | ---            | ---               |
+| valor do dano| número  | valor positivo              |                   |
+| cobertura aplicada | caixa de texto  | conforme plano              |                   |
+|                 |                  |                |                   |
+
+| **Comandos**         |  **Destino**                   | **Tipo**          |
+| ---                  | ---                            | ---               |
+| continuar | Desativar GPS  | default |
+|                      |                                |                   |
+
+
+
+**Desativar GPS**
+
+| **Campo**       | **Tipo**         | **Restrições** | **Valor default** |
+| ---             | ---              | ---            | ---               |
+| status do GPS | caixa de texto  | inativo              |  inativo                 |
+|                 |                  |                |                   |
+
+| **Comandos**         |  **Destino**                   | **Tipo**          |
+| ---                  | ---                            | ---               |
+| continuar | Atualizar status da bicicleta  | default |
+|                      |                                |                   |
+
+
+**Atualizar status da bicicleta**
+
+| **Campo**       | **Tipo**         | **Restrições** | **Valor default** |
+| ---             | ---              | ---            | ---               |
+| status da bicicleta | caixa de texto  | disponível ou manutenção             |  Disponível                 |
+
+| **Comandos**         |  **Destino**                   | **Tipo**          |
+| ---                  | ---                            | ---               |
+| finalizar | fim do processo  | default |
+|                      |                                |                   |
+
+
