@@ -1,27 +1,26 @@
-# TITULO DO PROJETO
+# PedaLá
 
 
-**Nome completo do Aluno 1, email do aluno 1**
+**Bernardo Parreiras Prado**
 
-**Nome completo do Aluno 2, email do aluno 2**
+**Davi Santana Knaip Delogo**
 
-**Nome completo do Aluno 3, email do aluno 3**
+**Eli Junior Domingos Dias**
 
-**Nome completo do Aluno 4, email do aluno 4**
+**João Paulo Aguiar Prado**
 
-**Nome completo do Aluno 5, email do aluno 5**
+**Luiz Eduardo Campos Silva**
 
-**Nome completo do Aluno 6, email do aluno 6**
 
 ---
 
 Professores:
 
-** Prof. Nome do Prof 1 **
+**Michelle Hanne Soares de Andrade**
 
-** Prof. Nome do Prof 2 **
+**Lucca Soares de Paiva Lacerda**
 
-** Prof. Nome do Prof 3 **
+**Luiz Carlos da Silva**
 
 ---
 
@@ -31,57 +30,148 @@ _Instituto de Informática e Ciências Exatas – Pontifícia Universidade Cató
 
 ---
 
-_**Resumo**. Escrever aqui o resumo. O resumo deve contextualizar rapidamente o trabalho, descrever seu objetivo e, ao final, 
-mostrar algum resultado relevante do trabalho (até 10 linhas)._
+_**Resumo**. O PedaLá é uma plataforma web de locação de bicicletas que incentiva a mobilidade sustentável de forma prática e acessível. Criada para pessoas físicas, a solução atende tanto quem busca lazer quanto profissionais, como entregadores. O projeto elimina os altos custos de aquisição e manutenção de uma bicicleta própria, oferecendo um processo de aluguel 100% digital. Por meio do sistema, o cliente consegue realizar o cadastro, a reserva, o pagamento e a contratação de um seguro (Básico, Intermediário ou Premium) de forma totalmente online. O principal diferencial tecnológico e de segurança é o rastreamento via GPS integrado a todas as unidades. Isso garante à administração um monitoramento em tempo real, inibindo furtos e protegendo o patrimônio antes, durante e após a locação.._
 
 ---
 
 
 ## 1. Introdução
 
-_Apresente uma frase introdutória definindo o que será apresentado._
+_A mobilidade urbana e as atividades ao ar livre vêm ganhando cada vez mais 
+espaço na rotina das pessoas, seja para lazer, prática de exercícios ou até mesmo 
+como forma de trabalho. Nesse cenário, a bicicleta se destaca como uma alternativa 
+sustentável, acessível e benéfica para a saúde, sendo utilizada tanto para 
+deslocamentos no dia a dia quanto para momentos de lazer, como trilhas e passeios 
+com amigos._
 
 ### 1.1 Contextualização
 
-_Na **contextualização**, o aluno deve dizer do que se trata o trabalho, em que área ou contexto se insere.
-A **contextualização** deve ser desenvolvida de algo mais genérico para algo mais específico. 
-A citação de pesquisas quantitativas é bem aceita aqui (corretamente referenciadas)._
+_Diante dessa realidade, surge a proposta de desenvolver um sistema web voltado 
+para a locação de bicicletas para pessoas físicas. A plataforma terá como objetivo 
+facilitar o aluguel de bicicletas de maneira prática e segura, atendendo diferentes 
+necessidades, como passeios de fim de semana, atividades esportivas, 
+deslocamento urbano ou uso profissional, como no caso de entregadores._
 
 ### 1.2 Problema
 
-_Em seguida o aluno deve caminhar a contextualização para descrever o **problema** que o trabalho trata. 
-O **problema** pode ser algo vivido em uma empresa específica. Neste caso, o aluno deve rapidamente apresentar 
-o cenário de problema da empresa. A empresa só deve ser citada explicitamente se o aluno tiver autorização 
-para tal._
+_Mesmo com o aumento do uso de bicicletas, muitas pessoas não têm uma bicicleta 
+própria ou não querem investir na compra para usar apenas de vez em quando. 
+Além disso, existem outras dificuldades, como custos de manutenção, preocupação 
+com segurança e falta de espaço para guardar o equipamento. 
+Atualmente, nem todas as opções de locação oferecem um processo simples e 
+totalmente digital. Em alguns casos, é necessário atendimento presencial ou não há 
+clareza sobre disponibilidade e condições de uso._
 
 ### 1.3 Objetivo geral
 
-_O aluno deve escrever um pequeno parágrafo ou frase com o **objetivo geral** do trabalho. 
-O objetivo deve ser bem direto, específico e definido com verbos de ação (elaborar, propor, avaliar, comparar, desenvolver, etc.). No caso específico deste projeto, o objetivo deste trabalho é desenvolver um sistema para automação de processos para um problema específico._
+_Desenvolver um sistema web para locação de bicicletas destinado a pessoas 
+físicas, permitindo reserva online, pagamento digital, contratação de diferentes 
+planos de seguro e monitoramento das bicicletas por meio de tecnologia GPS, 
+garantindo segurança, controle operacional e eficiência na gestão._
 
 #### 1.3.1 Objetivos específicos
 
-_Apresente também alguns (pelo menos 4) **objetivos específicos** dependendo de onde você vai querer 
-concentrar sua prática investigativa, ou como você irá aprofundar seu trabalho._
+_● Desenvolver um catálogo digital de bicicletas com informações detalhadas 
+sobre modelo, categoria, valor da locação e disponibilidade;_
+
+_● Implementar sistema de cadastro e autenticação de usuários, garantindo 
+segurança e rastreabilidade das locações;_
+
+_● Permitir a reserva de bicicletas por período determinado, com atualização 
+automática da disponibilidade no sistema;_
+
+_● Implementar diferentes planos de seguro (Básico, Intermediário e Premium),
+permitindo ao cliente escolher o nível de proteção desejado;_
+
+_● Integrar sistema de pagamento online para processamento e confirmação 
+automática das transações;_ 
+
+_● Implementar tecnologia de monitoramento por GPS em todas as bicicletas,
+permitindo acompanhamento em tempo real pelo painel administrativo;_
+
+_● Desenvolver painel administrativo para gestão de bicicletas, reservas, 
+seguros e monitoramento de localização;_
+
+_● Gerenciar o processo de entrega e devolução das bicicletas, incluindo 
+inspeção e aplicação das regras de seguro em caso de danos;_
+
+_● Controlar o status operacional das bicicletas (disponível, reservada, em uso 
+ou em manutenção)._
 
 ### 1.4 Justificativas
 
-_Mostre também as **justificativas** para o 
-desenvolvimento do seu trabalho e, caso deseje, destaque alguma contribuição do trabalho._
+_Por isso, propõe-se o desenvolvimento de uma plataforma web que torne o aluguel 
+de bicicletas mais fácil e acessível. A ideia é oferecer um sistema prático, que 
+permita reserva online, pagamento digital e opção de seguro para trazer mais 
+segurança ao usuário, além de incentivar o uso de um meio de transporte 
+sustentável. Além disso, o sistema contará com tecnologia de rastreamento via 
+GPS, proporcionando maior segurança patrimonial, controle administrativo em 
+tempo real e redução de riscos de furto._
 
 ## 2. Participantes do processo
 
-_Apresente aqui os perfis dos usuários-chave do sistema. Diversas são as informações que podem ser relevantes para a definição dos perfis dos usuários, tais como idade, gênero, aspectos culturais, nível de educação, entre outros. A pesquisa de mercado pode ser uma ferramenta poderosa para se identificar e caracterizar os perfis de usuários. Apresente claramente o papel a ser desempenhado por cada usuário._
+_3.1 Cliente_
+
+Pessoa física que utiliza a plataforma para:
+
+● _Realizar cadastro;_
+
+● _Consultar bicicletas disponíveis;_
+
+● _Efetuar reserva;_
+
+● _Selecionar tipo de seguro;- 
+
+● _Realizar pagamento;_ 
+
+
+_3.2 Administrador do Sistema_ 
+
+_Responsável pela gestão do sistema, incluindo:_
+
+● _Cadastro e atualização de bicicletas;_
+
+● _Definição de preços;_
+
+● _Configuração dos tipos de seguro;_
+
+● _Controle de disponibilidade;_
+
+● _Acompanhamento de reservas;_
+
+● _Emissão de relatórios._
+
+_3.3 Funcionário_
+
+_Responsável pelo suporte operacional e atendimento ao cliente. Atua em:_ 
+
+● _Entrega da bicicleta;_
+
+● _Conferência do estado do equipamento antes da retirada;_ 
+
+● _Orientação sobre regras de uso;_ 
+
+● _Explicação dos tipos de seguro disponíveis;_
+
+● _Registro de contratação ou alteração de seguro (quando necessário);_ 
+
+● _Inspeção na devolução;_
+
+● _Registro de eventuais danos._
+
+● _Check-Out_
 
 ## 3. Modelagem do processo de negócio
 
 ### 3.1. Análise da situação atual
 
-_Apresente uma descrição textual de como os sistemas atuais resolvem o problema que seu projeto se propõe a resolver. Caso sua proposta seja inovadora e não existam processos claramente definidos, **apresente como as tarefas que o seu sistema pretende implementar são executadas atualmente**, mesmo que não se utilize tecnologia computacional._
+_Hoje, 23 de março, estamos no processo de estruturação da solução. Estamos lapidando a ideia, levantando os requisitos (funcionais e não funcionais) necessários para a construção da plataforma , verificando projetos semelhantes, entendendo os casos de uso. Além disso, levatamento de processos (BPMN). Esse processo é fundamental para validarmos a nossa proposta de valor e garantirmos que a plataforma entregue uma experiência 100% digital, segura e inovadora._
 
 ### 3.2. Descrição geral da proposta de solução
 
-_Apresente aqui uma descrição da sua proposta abordando seus limites e suas ligações com as estratégias do negócio e os objetivos geral e específicos do projeto. Apresente aqui as oportunidades de melhorias._
+_A proposta do PedaLá é desenvolver uma plataforma web que centraliza todo o processo de locação de bicicletas, permitindo cadastro, reserva, pagamento e acompanhamento em um único sistema. A solução inclui catálogo digital, escolha de seguro, pagamento online e monitoramento em tempo real via GPS, trazendo mais praticidade e segurança._
+
+_Como melhoria, o sistema reduz processos manuais, aumenta o controle operacional e melhora a experiência do usuário, além de estar alinhado com a mobilidade sustentável e a digitalização dos serviços. A solução também facilita a gestão administrativa e reduz riscos relacionados ao uso e à segurança das bicicletas._
 
 ### 3.3. Modelagem dos processos
 
@@ -109,7 +199,7 @@ _O documento a seguir apresenta os indicadores de desempenho dos processos._
 
 ## 6. Interface do sistema
 
-_A sessão a seguir apresenta a descrição do produto de software desenvolvido._ 
+_A sessão a seguir apresenta a descrição do produto de software desenvolvido._
 
 [Documentação da interface do sistema](interface.md)
 
@@ -156,10 +246,4 @@ _Atualizar os links e adicionar novos links para que a estrutura do código este
 [Slides da apresentação final](presentations/)
 
 
-[Vídeo da apresentação final](video/)
-
-
-
-
-
-
+[Vídeo da apresentação final](video/)xx
