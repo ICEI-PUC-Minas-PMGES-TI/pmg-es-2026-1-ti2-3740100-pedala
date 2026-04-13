@@ -143,7 +143,7 @@ _Como melhoria, o sistema reduz processos manuais, aumenta o controle operaciona
 
 ### 3.3. Modelagem dos processos
 
-[PROCESSO 1 - Gestão de Clientes](processo-1-gesta_cliente.md "Detalhamento do Processo 1.")
+[PROCESSO 1 - Gestão de Clientes](processo-1-gestao_cliente.md "Detalhamento do Processo 1.")
 
 [PROCESSO 2 - ReservaBike](processo-2-ReservaNike.md "Detalhamento do Processo 2.")
 
