@@ -3,7 +3,7 @@
 Uma melhoria importante seria a implementação de validação automática em tempo real dos dados inseridos, reduzindo erros no preenchimento. Além disso, a inclusão de autenticação em duas etapas aumentaria a segurança do acesso do usuário.
 
 
-![Imagem do processo 1](images/Processo-2-gestao-cliente)
+![Imagem do processo 1](images/Processo-1-gestao-cliente)
 
 #### Detalhamento das atividades
 
