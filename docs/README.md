@@ -37,76 +37,44 @@ _**Resumo**. O PedaLá é uma plataforma web de locação de bicicletas que ince
 
 ## 1. Introdução
 
-_A mobilidade urbana e as atividades ao ar livre vêm ganhando cada vez mais 
-espaço na rotina das pessoas, seja para lazer, prática de exercícios ou até mesmo 
-como forma de trabalho. Nesse cenário, a bicicleta se destaca como uma alternativa 
-sustentável, acessível e benéfica para a saúde, sendo utilizada tanto para 
-deslocamentos no dia a dia quanto para momentos de lazer, como trilhas e passeios 
+_A mobilidade urbana e as atividades ao ar livre vêm ganhando cada vez mais espaço na rotina das pessoas, seja para lazer, prática de exercícios ou até mesmo como forma de trabalho. Nesse cenário, a bicicleta se destaca como uma alternativa sustentável, acessível e benéfica para a saúde, sendo utilizada tanto para deslocamentos no dia a dia quanto para momentos de lazer, como trilhas e passeios 
 com amigos._
 
 ### 1.1 Contextualização
 
-_Diante dessa realidade, surge a proposta de desenvolver um sistema web voltado 
-para a locação de bicicletas para pessoas físicas. A plataforma terá como objetivo 
-facilitar o aluguel de bicicletas de maneira prática e segura, atendendo diferentes 
-necessidades, como passeios de fim de semana, atividades esportivas, 
-deslocamento urbano ou uso profissional, como no caso de entregadores._
+_Diante dessa realidade, surge a proposta de desenvolver um sistema web voltado para a locação de bicicletas para pessoas físicas. A plataforma terá como objetivo facilitar o aluguel de bicicletas de maneira prática e segura, atendendo diferentes necessidades, como passeios de fim de semana, atividades esportivas, deslocamento urbano ou uso profissional, como no caso de entregadores._
 
 ### 1.2 Problema
 
-_Mesmo com o aumento do uso de bicicletas, muitas pessoas não têm uma bicicleta 
-própria ou não querem investir na compra para usar apenas de vez em quando. 
-Além disso, existem outras dificuldades, como custos de manutenção, preocupação 
-com segurança e falta de espaço para guardar o equipamento. 
-Atualmente, nem todas as opções de locação oferecem um processo simples e 
-totalmente digital. Em alguns casos, é necessário atendimento presencial ou não há 
-clareza sobre disponibilidade e condições de uso._
+_Mesmo com o aumento do uso de bicicletas, muitas pessoas não têm uma bicicleta própria ou não querem investir na compra para usar apenas de vez em quando. Além disso, existem outras dificuldades, como custos de manutenção, preocupação com segurança e falta de espaço para guardar o equipamento. Atualmente, nem todas as opções de locação oferecem um processo simples e totalmente digital. Em alguns casos, é necessário atendimento presencial ou não há clareza sobre disponibilidade e condições de uso._
 
 ### 1.3 Objetivo geral
 
-_Desenvolver um sistema web para locação de bicicletas destinado a pessoas 
-físicas, permitindo reserva online, pagamento digital, contratação de diferentes 
-planos de seguro e monitoramento das bicicletas por meio de tecnologia GPS, 
-garantindo segurança, controle operacional e eficiência na gestão._
+_Desenvolver um sistema web para locação de bicicletas destinado a pessoas físicas, permitindo reserva online, pagamento digital, contratação de diferentes planos de seguro e monitoramento das bicicletas por meio de tecnologia GPS, garantindo segurança, controle operacional e eficiência na gestão._
 
 #### 1.3.1 Objetivos específicos
 
-_● Desenvolver um catálogo digital de bicicletas com informações detalhadas 
-sobre modelo, categoria, valor da locação e disponibilidade;_
+_● Desenvolver um catálogo digital de bicicletas com informações detalhadas sobre modelo, categoria, valor da locação e disponibilidade;_
 
-_● Implementar sistema de cadastro e autenticação de usuários, garantindo 
-segurança e rastreabilidade das locações;_
+_● Implementar sistema de cadastro e autenticação de usuários, garantindo segurança e rastreabilidade das locações;_
 
-_● Permitir a reserva de bicicletas por período determinado, com atualização 
-automática da disponibilidade no sistema;_
+_● Permitir a reserva de bicicletas por período determinado, com atualização automática da disponibilidade no sistema;_
 
-_● Implementar diferentes planos de seguro (Básico, Intermediário e Premium),
-permitindo ao cliente escolher o nível de proteção desejado;_
+_● Implementar diferentes planos de seguro (Básico, Intermediário e Premium),permitindo ao cliente escolher o nível de proteção desejado;_
 
-_● Integrar sistema de pagamento online para processamento e confirmação 
-automática das transações;_ 
+_● Integrar sistema de pagamento online para processamento e confirmação automática das transações;_ 
 
-_● Implementar tecnologia de monitoramento por GPS em todas as bicicletas,
-permitindo acompanhamento em tempo real pelo painel administrativo;_
+_● Implementar tecnologia de monitoramento por GPS em todas as bicicletas,permitindo acompanhamento em tempo real pelo painel administrativo;_
 
-_● Desenvolver painel administrativo para gestão de bicicletas, reservas, 
-seguros e monitoramento de localização;_
+_● Desenvolver painel administrativo para gestão de bicicletas, reservas, seguros e monitoramento de localização;_
 
-_● Gerenciar o processo de entrega e devolução das bicicletas, incluindo 
-inspeção e aplicação das regras de seguro em caso de danos;_
+_● Gerenciar o processo de entrega e devolução das bicicletas, incluindo inspeção e aplicação das regras de seguro em caso de danos;_
 
-_● Controlar o status operacional das bicicletas (disponível, reservada, em uso 
-ou em manutenção)._
+_● Controlar o status operacional das bicicletas (disponível, reservada, em uso ou em manutenção)._
 
 ### 1.4 Justificativas
 
-_Por isso, propõe-se o desenvolvimento de uma plataforma web que torne o aluguel 
-de bicicletas mais fácil e acessível. A ideia é oferecer um sistema prático, que 
-permita reserva online, pagamento digital e opção de seguro para trazer mais 
-segurança ao usuário, além de incentivar o uso de um meio de transporte 
-sustentável. Além disso, o sistema contará com tecnologia de rastreamento via 
-GPS, proporcionando maior segurança patrimonial, controle administrativo em 
-tempo real e redução de riscos de furto._
+_Por isso, propõe-se o desenvolvimento de uma plataforma web que torne o aluguel de bicicletas mais fácil e acessível. A ideia é oferecer um sistema prático, que permita reserva online, pagamento digital e opção de seguro para trazer mais segurança ao usuário, além de incentivar o uso de um meio de transporte sustentável. Além disso, o sistema contará com tecnologia de rastreamento via GPS, proporcionando maior segurança patrimonial, controle administrativo em tempo real e redução de riscos de furto._
 
 ## 2. Participantes do processo
 
@@ -120,7 +88,7 @@ Pessoa física que utiliza a plataforma para:
 
 ● _Efetuar reserva;_
 
-● _Selecionar tipo de seguro;- 
+● _Selecionar tipo de seguro;_
 
 ● _Realizar pagamento;_ 
 
@@ -141,13 +109,10 @@ _Responsável pela gestão do sistema, incluindo:_
 
 ● _Emissão de relatórios._
 
+
 _3.3 Funcionário_
 
 _Responsável pelo suporte operacional e atendimento ao cliente. Atua em:_ 
-
-● _Entrega da bicicleta;_
-
-● _Conferência do estado do equipamento antes da retirada;_ 
 
 ● _Orientação sobre regras de uso;_ 
 
@@ -155,17 +120,20 @@ _Responsável pelo suporte operacional e atendimento ao cliente. Atua em:_
 
 ● _Registro de contratação ou alteração de seguro (quando necessário);_ 
 
-● _Inspeção na devolução;_
+● _Realizar inspeção da bicicleta com registro digital no sistema;_
 
 ● _Registro de eventuais danos._
 
 ● _Check-Out_
 
+● _Check-In_
+
 ## 3. Modelagem do processo de negócio
 
 ### 3.1. Análise da situação atual
+_Atualmente, a locação de bicicletas é, em grande parte, realizada de forma presencial ou com baixo nível de digitalização, exigindo deslocamento do cliente e dificultando o acesso a informações claras sobre disponibilidade, valores e condições. Além disso, a falta de sistemas integrados torna o processo menos prático e pode gerar falhas na gestão e no controle das locações. Nesse contexto, evidencia-se a necessidade de uma solução digital mais eficiente e acessível._
 
-_Hoje, 23 de março, estamos no processo de estruturação da solução. Estamos lapidando a ideia, levantando os requisitos (funcionais e não funcionais) necessários para a construção da plataforma , verificando projetos semelhantes, entendendo os casos de uso. Além disso, levatamento de processos (BPMN). Esse processo é fundamental para validarmos a nossa proposta de valor e garantirmos que a plataforma entregue uma experiência 100% digital, segura e inovadora._
+_Estamos no processo de estruturação da solução. Estamos lapidando a ideia, levantando os requisitos (funcionais e não funcionais) necessários para a construção da plataforma , verificando projetos semelhantes, entendendo os casos de uso. Além disso, levatamento de processos (BPMN). Esse processo é fundamental para validarmos a nossa proposta de valor e garantirmos que a plataforma entregue uma experiência 100% digital, segura e inovadora._
 
 ### 3.2. Descrição geral da proposta de solução
 
@@ -175,9 +143,9 @@ _Como melhoria, o sistema reduz processos manuais, aumenta o controle operaciona
 
 ### 3.3. Modelagem dos processos
 
-[PROCESSO 1 - Nome do Processo](processo-1-nome-do-processo.md "Detalhamento do Processo 1.")
+[PROCESSO 1 - Gestão de Clientes](processo-1-gesta_cliente.md "Detalhamento do Processo 1.")
 
-[PROCESSO 2 - Nome do Processo](processo-2-nome-do-processo.md "Detalhamento do Processo 2.")
+[PROCESSO 2 - ReservaBike](processo-2-ReservaNike.md "Detalhamento do Processo 2.")
 
 [PROCESSO 3 - Nome do Processo](processo-3-nome-do-processo.md "Detalhamento do Processo 3.")
 
