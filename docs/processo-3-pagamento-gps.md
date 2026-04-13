@@ -1,136 +1,119 @@
-### 3.3.3 Processo 3 – Pagamento e GPS
+### 3.3.3 Processo – Pagamento e Monitoramento da Locação (GPS)
 
-O processo pode ser aprimorado com a inclusão de múltiplas formas de pagamento, como PIX, cartão de crédito e carteiras digitais. Outra melhoria seria a implementação de notificações em tempo real para informar o status do pagamento ao cliente.
+O processo de pagamento pode ser aprimorado com a inclusão de múltiplas formas de pagamento, como PIX, cartão de crédito e carteiras digitais. Além disso, a implementação de notificações em tempo real permite informar o cliente sobre o status da transação, tornando a experiência mais transparente e eficiente. Após a confirmação do pagamento, inicia-se o monitoramento da bicicleta durante o período da locação.
 
-![Exemplo de um Modelo BPMN do PROCESSO 3](images/Processo3.png "Modelo BPMN do Processo 3.")
+![BPMN do PROCESSO 3](images/Processo-3-pagamento-gps.png "Modelo BPMN do Processo 3.")
 
 
 #### Detalhamento das atividades
 
-_Descreva aqui cada uma das propriedades das atividades do processo 3. 
-Devem estar relacionadas com o modelo de processo apresentado anteriormente._
+---
 
-_Os tipos de dados a serem utilizados são:_
+### **Selecionar forma de pagamento**
 
-_* **Área de texto** - campo texto de múltiplas linhas_
+| **Campo**             | **Tipo**         | **Restrições**                  | **Valor default** |
+|----------------------|------------------|---------------------------------|-------------------|
+| forma de pagamento   | Seleção única    | PIX / Cartão / Carteira digital |                   |
 
-_* **Caixa de texto** - campo texto de uma linha_
+| **Comandos** | **Destino**           | **Tipo** |
+|--------------|----------------------|----------|
+| confirmar    | Processar pagamento  | default  |
 
-_* **Número** - campo numérico_
+---
 
-_* **Data** - campo do tipo data (dd-mm-aaaa)_
+### **Processar pagamento**
 
-_* **Hora** - campo do tipo hora (hh:mm:ss)_
+| **Campo** | **Tipo** | **Restrições** | **Valor default** |
+|----------|----------|----------------|-------------------|
+| valor    | Número   | maior que 0    |                   |
 
-_* **Data e Hora** - campo do tipo data e hora (dd-mm-aaaa, hh:mm:ss)_
+| **Comandos** | **Destino**             | **Tipo** |
+|--------------|------------------------|----------|
+| processar    | Verificar pagamento    | default  |
 
-_* **Imagem** - campo contendo uma imagem_
+---
 
-_* **Seleção única** - campo com várias opções de valores que são mutuamente exclusivas (tradicional radio button ou combobox)_
+### **Verificar pagamento**
 
-_* **Seleção múltipla** - campo com várias opções que podem ser selecionadas mutuamente (tradicional checkbox ou listbox)_
+| **Campo** | **Tipo**        | **Restrições**           | **Valor default** |
+|----------|------------------|--------------------------|-------------------|
+| status   | Seleção única    | aprovado / recusado      |                   |
 
-_* **Arquivo** - campo de upload de documento_
+| **Comandos** | **Destino**                    | **Tipo** |
+|--------------|--------------------------------|----------|
+| aprovado     | Confirmar pagamento            | default  |
+| recusado     | Notificar falha no pagamento   | cancel   |
 
-_* **Link** - campo que armazena uma URL_
+---
 
-_* **Tabela** - campo formado por uma matriz de valores_
+### **Notificar falha no pagamento**
 
-**Confirmar reserva**
+| **Campo** | **Tipo**        | **Restrições** | **Valor default** |
+|----------|------------------|----------------|-------------------|
+| mensagem | Área de texto    | obrigatório    |                   |
 
-| **Campo**       | **Tipo**         | **Restrições** | **Valor default** |
-| ---             | ---              | ---            | ---               |
-| código da reserva| número         | obrigatório    |                   |
-| valor total     | número          | somente leitura |                   |
-|  |                  |                |                   |
+| **Comandos**        | **Destino**                 | **Tipo** |
+|---------------------|----------------------------|----------|
+| tentar novamente    | Selecionar forma de pagamento | default  |
 
+---
 
-| **Comandos**         |  **Destino**                   | **Tipo** |
-| ---                  | ---                            | ---               |
-| confirmar            | Enviar dados para pagamento    | default           |
-| cancelar             | fim do processo                | cancel            |
-|       |                                |                   |
+### **Confirmar pagamento**
 
+| **Campo** | **Tipo**        | **Restrições** | **Valor default** |
+|----------|------------------|----------------|-------------------|
+| status   | Seleção única    | pago           |                   |
 
+| **Comandos** | **Destino**          | **Tipo** |
+|--------------|---------------------|----------|
+| continuar    | Notificar cliente   | default  |
 
-**Enviar dados para pagamento**
+---
 
-| **Campo**       | **Tipo**         | **Restrições** | **Valor default** |
-| ---             | ---              | ---            | ---               |
-| dados do pagamento | área de texto  | obrigatório   |                   |
-|                 |                  |                |                   |
+### **Notificar cliente**
 
-| **Comandos**         |  **Destino**                   | **Tipo**          |
-| ---                  | ---                            | ---               |
-| enviar               | processar pagamento            | default           |
-|                      |                                |                   |
+| **Campo** | **Tipo**        | **Restrições** | **Valor default** |
+|----------|------------------|----------------|-------------------|
+| mensagem | Área de texto    | obrigatório    |                   |
 
+| **Comandos** | **Destino**                      | **Tipo** |
+|--------------|----------------------------------|----------|
+| enviar       | Consultar localização da bicicleta | default  |
 
+---
 
-**Processar pagamento**
+### **Consultar localização da bicicleta**
 
-| **Campo**       | **Tipo**         | **Restrições** | **Valor default** |
-| ---             | ---              | ---            | ---               |
-|status do pagamento |caixa de texto  | aprovado ou recusado               |                   |
-|                 |                  |                |                   |
+| **Campo**        | **Tipo**        | **Restrições** | **Valor default** |
+|-----------------|------------------|----------------|-------------------|
+| localização     | Caixa de texto   | automático     |                   |
+| status locação  | Seleção única    | em uso         |                   |
 
-| **Comandos**         |  **Destino**                   | **Tipo**          |
-| ---                  | ---                            | ---               |
-| aprovado | confirmar locação  |default |
-| recusado | fim do processo | cancel |
-|                      |                                |                   |
+| **Comandos** | **Destino**                  | **Tipo** |
+|--------------|-----------------------------|----------|
+| atualizar    | Verificar finalização       | default  |
 
+---
 
+### **Verificar finalização da locação**
 
-**Confirmar locação**
+| **Campo** | **Tipo**        | **Restrições**           | **Valor default** |
+|----------|------------------|--------------------------|-------------------|
+| status   | Seleção única    | em andamento / finalizada|                   |
 
-| **Campo**       | **Tipo**         | **Restrições** | **Valor default** |
-| ---             | ---              | ---            | ---               |
-| Status da locação | caixa de texto  |confirmado                | confirmado                  |
-|                 |                  |                |                   |
+| **Comandos** | **Destino**                         | **Tipo** |
+|--------------|-------------------------------------|----------|
+| finalizada   | Encerrar monitoramento              | default  |
+| em andamento | Consultar localização da bicicleta  | default  |
 
-| **Comandos**         |  **Destino**                   | **Tipo**          |
-| ---                  | ---                            | ---               |
-| continuar | Atualizar status da bicicleta  | default |
-|                      |                                |                   |
+---
 
+### **Encerrar monitoramento**
 
+| **Campo**       | **Tipo**        | **Restrições** | **Valor default** |
+|----------------|------------------|----------------|-------------------|
+| data/hora fim  | Data e hora      | automático     | atual             |
 
-**Atualizar status da bicicleta**
-
-| **Campo**       | **Tipo**         | **Restrições** | **Valor default** |
-| ---             | ---              | ---            | ---               |
-| status da bicicleta |caixa de texto  |Em uso                |   Em uso                |
-|                 |                  |                |                   |
-
-| **Comandos**         |  **Destino**                   | **Tipo**          |
-| ---                  | ---                            | ---               |
-| atualizar | ativar GPS | default |
-|                      |                                |                   |
-
-
-**Ativar GPS**
-
-| **Campo**       | **Tipo**         | **Restrições** | **Valor default** |
-| ---             | ---              | ---            | ---               |
-| Status do GPS | Caixa de texto  | ativo               | ativo                  |
-|                 |                  |                |                   |
-
-| **Comandos**         |  **Destino**                   | **Tipo**          |
-| ---                  | ---                            | ---               |
-| ativar | exibir localização no painel  | default |
-|                      |                                |                   |
-
-
-**Exibir localização no painel**
-
-| **Campo**       | **Tipo**         | **Restrições** | **Valor default** |
-| ---             | ---              | ---            | ---               |
-| localização em tempo real | área de texto  | localização contínua                |                   |
-|                 |                  |                |                   |
-
-| **Comandos**         |  **Destino**                   | **Tipo**          |
-| ---                  | ---                            | ---               |
-| finalizar | fim do processo | default |
-|                      |                                |                   |
-
+| **Comandos** | **Destino** | **Tipo** |
+|--------------|------------|----------|
+| finalizar    | Fim        | default  |
