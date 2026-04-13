@@ -1,99 +1,94 @@
-### 3.3.2 Processo 2 – RESERVA DE BICICLETA
+### 3.3.2 Processo 2 – Reserva de Bicicleta
 
 O processo pode ser aprimorado com a implementação de filtros mais avançados na busca de bicicletas, como localização, tipo e preço.
 
-![Exemplo de um Modelo BPMN do PROCESSO 2](images\Processo-2-Reserva-Bike.jpg "Modelo BPMN do Processo 2.")
+![Exemplo de um Modelo BPMN do PROCESSO 2](images/Processo-2-Reserva-Bike.png "Modelo BPMN do Processo 2.")
 
 #### Detalhamento das atividades
 
 _Descreva aqui cada uma das propriedades das atividades do processo 2. Devem estar relacionadas com o modelo de processo apresentado anteriormente._
 
-_Os tipos de dados a serem utilizados são:_
-
-_* **Área de texto** - campo texto de múltiplas linhas_
-_* **Caixa de texto** - campo texto de uma linha_
-_* **Número** - campo numérico_
-_* **Data** - campo do tipo data (dd-mm-aaaa)_
-_* **Hora** - campo do tipo hora (hh:mm:ss)_
-_* **Data e Hora** - campo do tipo data e hora (dd-mm-aaaa, hh:mm:ss)_
-_* **Imagem** - campo contendo uma imagem_
-_* **Seleção única** - campo com várias opções de valores que são mutuamente exclusivas (tradicional radio button ou combobox)_
-_* **Seleção múltipla** - campo com várias opções que podem ser selecionadas mutuamente (tradicional checkbox ou listbox)_
-_* **Arquivo** - campo de upload de documento_
-_* **Link** - campo que armazena uma URL_
-_* **Tabela** - campo formado por uma matriz de valores_
-
-**Acessar catálogo de bicicletas**
+**Acessar catálogo**
 
 | **Campo** | **Tipo** | **Restrições** | **Valor default** |
 | --- | --- | --- | --- |
-| Localização | Caixa de texto | opcional | |
-| Tipo de bicicleta | Seleção única | opções disponíveis | |
-| Preço máximo | Número | valor positivo | |
+| Localização | Caixa de texto | Opcional | |
+| Tipo de bicicleta | Seleção única | Opções disponíveis | |
+| Preço máximo | Número | Valor positivo, Opcional | |
 
 | **Comandos** | **Destino** | **Tipo** |
 | --- | --- | --- |
-| Buscar | Exibir modelos disponíveis | default |
+| Buscar | Consultar modelos disponíveis | default |
 
-**Exibir modelos disponíveis**
+**Consultar modelos disponíveis**
+*(Atividade de serviço/sistema: não possui interface, apenas regras de busca no banco de dados)*
 
-| **Campo** | **Tipo** | **Restrições** | **Valor default** |
-| --- | --- | --- | --- |
-| Lista de bicicletas | Tabela | dados do sistema | |
-| Imagem da bicicleta | Imagem | opcional | |
+| **Regras (Sistema)** |
+| --- |
+| Buscar no banco de dados as bicicletas que correspondem aos filtros aplicados. |
+| Retornar apenas as bicicletas que possuam o status de "Disponível". |
 
-| **Comandos** | **Destino** | **Tipo** |
+| **Comandos (Retorno do Sistema)** | **Destino** | **Tipo** |
 | --- | --- | --- |
-| Selecionar bicicleta | Selecionar bicicleta | default |
+| Exibir resultados | Selecionar bicicleta | default |
 
 **Selecionar bicicleta**
 
 | **Campo** | **Tipo** | **Restrições** | **Valor default** |
 | --- | --- | --- | --- |
-| Bicicleta escolhida | Caixa de texto | obrigatório | |
+| Lista de bicicletas | Tabela | Dados retornados pelo sistema | |
+| Bicicleta escolhida | Seleção única | Obrigatório | |
 
 | **Comandos** | **Destino** | **Tipo** |
 | --- | --- | --- |
-| Continuar | Definir período de locação | default |
+| Continuar / Escolher | Definir período | default |
 
-**Definir período de locação**
+**Definir período**
 
 | **Campo** | **Tipo** | **Restrições** | **Valor default** |
 | --- | --- | --- | --- |
-| Data início | Data | obrigatório | |
-| Data fim | Data | maior que data início | |
+| Data início | Data e Hora | Obrigatório, deve ser maior ou igual à data atual | |
+| Data fim | Data e Hora | Obrigatório, deve ser maior que a Data início | |
 
 | **Comandos** | **Destino** | **Tipo** |
 | --- | --- | --- |
 | Confirmar período | Escolher tipo de seguro | default |
+| Voltar | Selecionar bicicleta | cancel |
 
 **Escolher tipo de seguro**
 
 | **Campo** | **Tipo** | **Restrições** | **Valor default** |
 | --- | --- | --- | --- |
-| Tipo de seguro | Seleção única | Básico, Intermediário, Premium | Básico |
+| Tipo de seguro | Seleção única | Obrigatório (Básico, Intermediário, Premium) | Básico |
 
 | **Comandos** | **Destino** | **Tipo** |
 | --- | --- | --- |
 | Confirmar seguro | Calcular valor da locação | default |
+| Voltar | Definir período | cancel |
 
 **Calcular valor da locação**
+*(Atividade de serviço/sistema: cálculo realizado em back-end)*
 
-| **Campo** | **Tipo** | **Restrições** | **Valor default** |
-| --- | --- | --- | --- |
-| Valor da locação | Número | calculado automaticamente | automático |
+| **Regras (Sistema)** |
+| --- |
+| Calcular a duração total da locação com base nas datas de início e fim. |
+| Multiplicar a duração pelo valor da tarifa da bicicleta escolhida. |
+| Adicionar ao montante o valor referente ao tipo de seguro selecionado. |
 
-| **Comandos** | **Destino** | **Tipo** |
+| **Comandos (Retorno do Sistema)** | **Destino** | **Tipo** |
 | --- | --- | --- |
-| Continuar | Registrar reserva | default |
+| Cálculo concluído | Registrar reserva (Pendente Pgto) | default |
 
-**Registrar reserva**
+**Registrar reserva (Pendente Pgto)**
+*(Atividade de serviço/sistema: gravação dos dados no banco e alteração de status)*
 
-| **Campo** | **Tipo** | **Restrições** | **Valor default** |
-| --- | --- | --- | --- |
-| Status da reserva | Caixa de texto | pendente de pagamento | Pendente |
-| Código da reserva | Número | gerado automaticamente | automático |
+| **Regras (Sistema)** |
+| --- |
+| Gerar um código único para a reserva. |
+| Gravar os dados da reserva no banco de dados vinculados ao cliente logado. |
+| Definir o status da reserva como "Pendente de Pagamento". |
+| Bloquear temporariamente a bicicleta selecionada para o período definido. |
 
-| **Comandos** | **Destino** | **Tipo** |
+| **Comandos (Retorno do Sistema)** | **Destino** | **Tipo** |
 | --- | --- | --- |
-| Finalizar | Fim do processo | default |
+| Finalizar | FIM | default |
