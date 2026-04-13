@@ -1,9 +1,9 @@
-### 3.3.1 Processo 1 – NOME DO PROCESSO
+### 3.3.1 Processo 1 – Gestão do Cliente
 
 Uma melhoria importante seria a implementação de validação automática em tempo real dos dados inseridos, reduzindo erros no preenchimento. Além disso, a inclusão de autenticação em duas etapas aumentaria a segurança do acesso do usuário.
 
 
-![Exemplo de um Modelo BPMN do PROCESSO 1](images/Processo1.png "Modelo BPMN do Processo 1.")
+![Exemplo de um Modelo BPMN do PROCESSO 1](images/Processo-2-gestao-cliente")
 
 #### Detalhamento das atividades
 
