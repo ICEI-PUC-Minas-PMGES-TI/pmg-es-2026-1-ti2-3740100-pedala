@@ -145,7 +145,7 @@ _Como melhoria, o sistema reduz processos manuais, aumenta o controle operaciona
 
 [PROCESSO 1 - Gestão de Clientes](processo-1-gestao_cliente.md "Detalhamento do Processo 1.")
 
-[PROCESSO 2 - ReservaBike](processo-2-ReservaNike.md "Detalhamento do Processo 2.")
+[PROCESSO 2 - ReservaBike](processo-2-ReservaBike.md "Detalhamento do Processo 2.")
 
 [PROCESSO 3 - Nome do Processo](processo-3-nome-do-processo.md "Detalhamento do Processo 3.")
 
