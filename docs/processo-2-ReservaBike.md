@@ -12,7 +12,6 @@ _Descreva aqui cada uma das propriedades das atividades do processo 2. Devem est
 
 | **Campo** | **Tipo** | **Restrições** | **Valor default** |
 | --- | --- | --- | --- |
-| Localização | Caixa de texto | Opcional | |
 | Tipo de bicicleta | Seleção única | Opções disponíveis | |
 | Preço máximo | Número | Valor positivo, Opcional | |
 
