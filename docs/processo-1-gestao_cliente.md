@@ -2,8 +2,7 @@
 
 Uma melhoria importante seria a implementação de validação automática em tempo real dos dados inseridos, reduzindo erros no preenchimento. Além disso, a inclusão de autenticação em duas etapas aumentaria a segurança do acesso do usuário.
 
-![Imagem do processo 1](images/Processo-1-gestao-cliente.jpeg "Moedlo")
-![Exemplo de um Modelo BPMN do PROCESSO 3](images/Processo3.png "Modelo BPMN do Processo 3.")
+![Imagem do processo 1](images/Processo-1-gestao-cliente.png)
 
 #### Detalhamento das atividades
 
