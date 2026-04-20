@@ -2,7 +2,7 @@
 
 A criação de um histórico detalhado de uso pode ajudar na tomada de decisões administrativas. Também é possível melhorar a comunicação com o cliente por meio de notificações durante todo o período de locação.
 
-![Exemplo de um Modelo BPMN do PROCESSO 4](images/Processo4.png "Modelo BPMN do Processo 4.")
+![Exemplo de um Modelo BPMN do PROCESSO 4](images//Processo-4-monitoramento-encerrar-locacao.png "Modelo BPMN do Processo 4.")
 
 
 #### Detalhamento das atividades
