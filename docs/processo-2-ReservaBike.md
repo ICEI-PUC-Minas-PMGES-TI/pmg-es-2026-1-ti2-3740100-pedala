@@ -4,6 +4,10 @@ O processo pode ser aprimorado com a implementação de filtros mais avançados 
 
 ![Exemplo de um Modelo BPMN do PROCESSO 2](images/Processo-2-Reserva-Bike.png "Modelo BPMN do Processo 2.")
 
+![processo reserva](Wireframes/reserva.png)
+
+![wireframe catálogo](Wireframes/bicicletas.jpeg)
+
 #### Detalhamento das atividades
 
 _Descreva aqui cada uma das propriedades das atividades do processo 2. Devem estar relacionadas com o modelo de processo apresentado anteriormente._
