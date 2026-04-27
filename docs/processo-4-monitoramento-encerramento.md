@@ -6,6 +6,8 @@ A criação de um histórico detalhado de uso pode ajudar na tomada de decisões
 
 ![Wireframe tela ADMIN](Wireframes/Telaadmin.jpg)
 
+![Wireframe painel funcionario](Wireframes/painel_funcionario.png)
+
 
 #### Detalhamento das atividades
 
