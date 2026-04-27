@@ -143,13 +143,16 @@ _Como melhoria, o sistema reduz processos manuais, aumenta o controle operaciona
 
 ### 3.3. Modelagem dos processos
 
-[PROCESSO 1 - Gestão de Clientes](processo-1-gestao_cliente.md "Detalhamento do Processo 1.")
+[PROCESSO 1 - Gestão de Clientes](processo-1-gestao_cliente.md "Processo referente a gestão do cliente")
 
-[PROCESSO 2 - ReservaBike](processo-2-ReservaBike.md "Detalhamento do Processo 2.")
+[PROCESSO 2 - ReservaBike](processo-2-ReservaBike.md "Processo referente as reservas de bicicletas")
 
-[PROCESSO 3 - Nome do Processo](processo-3-nome-do-processo.md "Detalhamento do Processo 3.")
+[PROCESSO 3 - Pagamento e Ativação GPS](processo-3-pagamento-gps.md "Processo que refere a etapa de pagamento da reserva/aluguel além do início do monitoramento.")
 
-[PROCESSO 4 - Nome do Processo](processo-4-nome-do-processo.md "Detalhamento do Processo 4.")
+[PROCESSO 4 - Monitoramento e Encerramento da locação](processo-4-monitoramento-encerramento.md "Processo destinado ao monitoramento e encerramento da locação.")
+
+[PROCESSO 5 - Cadastro Bicicleta](processo-5-cadastro-bicicleta.md "Cadastro de bicicletas para o catálogo")
+
 
 ## 4. Projeto da solução
 
