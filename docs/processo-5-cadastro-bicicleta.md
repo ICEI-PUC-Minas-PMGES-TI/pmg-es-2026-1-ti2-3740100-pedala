@@ -4,6 +4,8 @@ O processo tem como objetivo permitir que o administrador cadastre novas bicicle
 
 ![Modelo BPMN do Processo de Cadastro de Bicicletas](images/Processo-5-cadastro-bicicleta.png "Modelo BPMN do Processo de Cadastro de Bicicletas.")
 
+![Wireframe de Cadastro de Bicicletas](Wireframes/wfCadastrarbicicleta.jpeg)
+
 #### Detalhamento das atividades
 
 _Descreva aqui cada uma das propriedades das atividades do processo. Devem estar relacionadas com o modelo de processo apresentado anteriormente._
