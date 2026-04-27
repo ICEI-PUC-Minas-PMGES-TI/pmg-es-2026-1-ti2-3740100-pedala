@@ -50,7 +50,7 @@ A stack foi escolhida com foco em **agilidade de desenvolvimento**, **baixo cust
 |---|---|---|
 | **SGBD**             | MySQL                                       | Banco relacional robusto, amplamente utilizado no mercado e suportado nativamente pela maioria dos provedores de hospedagem gratuitos. |
 | **Front-end**        | HTML + CSS + JavaScript (Vanilla)           | Sem frameworks de build, garantindo portabilidade e compatibilidade com GitHub Pages. Design system próprio baseado em design tokens (cores, tipografia, espaçamentos). |
-| **Back-end**         | Node.js + Express.js                        | Runtime JavaScript leve e não bloqueante, ideal para APIs REST. Framework Express minimiza boilerplate mantendo flexibilidade. |
+| **Back-end**         | Java Spring Boot                        | Runtime JavaScript leve e não bloqueante, ideal para APIs REST. Framework Express minimiza boilerplate mantendo flexibilidade. |
 | **GPS / Tempo real** | Simulador GPS em Node.js (WebSocket-ready)  | Simula posições de bicicletas em movimento para demonstração do rastreamento em tempo real. |
 
 | **Testes**           | Postman                                     | Validação dos endpoints da API durante o desenvolvimento. |
