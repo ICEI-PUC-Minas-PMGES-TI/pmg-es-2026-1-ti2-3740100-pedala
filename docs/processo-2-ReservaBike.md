@@ -6,7 +6,7 @@ O processo pode ser aprimorado com a implementação de filtros mais avançados 
 
 ![processo reserva](Wireframes/reserva.jpeg)
 
-![wireframe catálogo](Wireframe/bicicletas.jpeg)
+![wireframe catálogo](Wireframes/bicicletas.jpeg)
 
 #### Detalhamento das atividades
 
