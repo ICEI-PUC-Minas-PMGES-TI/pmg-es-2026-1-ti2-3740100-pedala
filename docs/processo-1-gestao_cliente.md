@@ -9,7 +9,9 @@ Uma melhoria importante seria a implementação de validação automática em te
 _Descreva aqui cada uma das propriedades das atividades do processo 1. 
 Devem estar relacionadas com o modelo de processo apresentado anteriormente._
 
+![Wireframe cadastro](Wireframes/CadastrarUser.jpeg)
 
+![Wireframe Login](Wireframes/Login.jpeg)
 
 **Acessar Home**
 
