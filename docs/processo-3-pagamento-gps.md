@@ -4,6 +4,8 @@ O processo de pagamento pode ser aprimorado com a inclusão de múltiplas formas
 
 ![BPMN do PROCESSO 3](images/Processo-3-pagamento-gps.png "Modelo BPMN do Processo 3.")
 
+![pagamento](Wireframes/pagamento.png)
+
 
 #### Detalhamento das atividades
 
