@@ -6,6 +6,8 @@ O processo pode ser aprimorado com a implementação de filtros mais avançados 
 
 ![processo reserva](Wireframes/reserva.jpeg)
 
+![wireframe catálogo](Wireframe/bicicletas.jpeg)
+
 #### Detalhamento das atividades
 
 _Descreva aqui cada uma das propriedades das atividades do processo 2. Devem estar relacionadas com o modelo de processo apresentado anteriormente._
