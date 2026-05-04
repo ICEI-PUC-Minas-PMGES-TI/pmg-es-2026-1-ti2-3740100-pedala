@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dashboard | Pedala</title>
+  <meta name="description" content="Gerencie sua conta, acompanhe seus aluguéis e agende manutenções.">
+  <link rel="stylesheet" href="../css/style.css">
+  <script>(function(){document.documentElement.setAttribute('data-theme',localStorage.getItem('pedala_theme')||'dark');})();</script>
+</head>
+<body>
+  <nav class="navbar">
+    <a href="../index.html" class="navbar-logo">
+      <div class="logo-icon">P</div>
+      Pedala
+    </a>
+    <div class="navbar-actions">
+      <button class="theme-toggle" title="Mudar tema"></button>
+      <div class="nav-user-info">
+        <div class="nav-avatar" id="navAv">U</div>
+        <span class="nav-username" id="navNm">Usuário</span>
+      </div>
+      <button class="btn btn-secondary btn-sm" type="button" onclick="sair()">Sair</button>
+    </div>
+  </nav>
+
+  <div class="layout">
+    <aside class="sidebar">
+      <ul class="sidebar-nav">
+        <li><a href="#" class="active" onclick="showSec('inicio',this)">Visão Geral</a></li>
+        <li><a href="#" onclick="showSec('locar',this)">Nova Locação</a></li>
+        <li><a href="#" onclick="showSec('locacoes',this)">Histórico</a></li>
+        <li><a href="#" onclick="showSec('perfil',this)">Meus Dados</a></li>
+        <li><a href="../index.html">Página Inicial</a></li>
+      </ul>
+    </aside>
+
+    <main class="main-content">
+      <section id="sec-inicio" class="sec show">
+        <div class="page-banner">
+          <div class="page-banner-content">
+            <h1 id="greetMsg">Olá, Usuário.</h1>
+            <p>Gerencie seus aluguéis e agende manutenções de forma simples.</p>
+          </div>
+        </div>
+
+        <div class="stat-grid">
+          <div class="stat-card">
+            <div class="stat-card-label">Bikes disponíveis</div>
+            <div class="stat-card-value" id="wBikes">-</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-card-label">Locações totais</div>
+            <div class="stat-card-value" id="wLoc">0</div>
+          </div>
+          <div class="stat-card accent">
+            <div class="stat-card-label">Contratos ativos</div>
+            <div class="stat-card-value" id="wAtiv">0</div>
+          </div>
+        </div>
+
+        <div id="locAtivaResume"></div>
+      </section>
+
+      <section id="sec-locar" class="sec">
+        <div class="page-banner">
+          <div class="page-banner-content">
+            <h1>Novo aluguel</h1>
+            <p>Escolha o seu modelo preferido e receba na sua porta.</p>
+          </div>
+        </div>
+
+        <div id="locBloq" class="form-block" style="display:none;color:var(--warning);background:var(--warning-bg);border-color:var(--warning-border);"></div>
+
+        <div class="card">
+          <div class="card-header">
+            <span class="card-title">Modelos disponíveis</span>
+            <div class="bikes-filter" id="filterBtns">
+              <button class="filter-btn active" type="button" data-cat="">Todos</button>
+            </div>
+          </div>
+          <div class="card-body">
+            <div class="bikes-grid" id="dashBikeGrid">
+              <div class="empty-state">
+                <span>Buscando modelos disponíveis...</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section id="sec-locacoes" class="sec">
+        <div class="page-header-row">
+          <div class="page-header">
+            <h1>Histórico</h1>
+            <p>Acompanhe seus aluguéis passados e ativos.</p>
+          </div>
+          <button class="btn btn-secondary btn-sm" type="button" onclick="loadLocacoes()">Sincronizar</button>
+        </div>
+        <div id="locList"></div>
+      </section>
+
+      <section id="sec-perfil" class="sec">
+        <div class="page-header">
+          <h1>Meus dados</h1>
+          <p>Informações de contato e endereço de entrega.</p>
+        </div>
+        <div class="card">
+          <div class="card-body" id="perfilContent">
+            <div class="empty-state">
+              <span>Carregando seus dados...</span>
+            </div>
+          </div>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <div id="modalOverlay" class="modal-overlay">
+    <div class="modal">
+      <div id="modalStep1">
+        <div class="modal-bike-grid">
+          <div class="modal-bike-visual">
+            <img id="modalBikeImage" src="../assets/images/hero-bike.png" alt="Bike selecionada">
+          </div>
+          <div class="modal-bike-copy">
+            <div>
+              <div class="hero-floating-badge" id="modalBikeCatBadge">Categoria</div>
+              <h2 class="modal-title" id="modalBikeName" style="margin-top:12px;">Bike selecionada</h2>
+              <p id="modalBikeDesc">Descrição da bike selecionada.</p>
+            </div>
+
+            <div class="bike-features-grid">
+              <div class="modal-feature">
+                <span>Disponibilidade</span>
+                <strong id="modalBikeAvailability">-</strong>
+              </div>
+              <div class="modal-feature">
+                <span>Custo Base</span>
+                <strong id="modalBikePriceHint">-</strong>
+              </div>
+              <div class="modal-feature">
+                <span>Logística</span>
+                <strong>Entrega agendada</strong>
+              </div>
+              <div class="modal-feature">
+                <span>Gestão</span>
+                <strong>Ciclo monitorado</strong>
+              </div>
+            </div>
+
+            <div class="hero-actions">
+              <button class="btn btn-secondary" type="button" onclick="closeModal()">Fechar</button>
+              <button class="btn btn-primary" type="button" onclick="goToLocacao()">Continuar locação</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div id="modalStep2" style="display:none;">
+        <h2 class="modal-title">Planejar Assinatura</h2>
+        <p id="modalBikeDescStep2" style="color:var(--text-secondary);margin:8px 0 18px;"></p>
+        <div class="plan-options" id="planOptions"></div>
+        <div class="form-group">
+          <label class="form-label" for="dataInicio">Início da vigência</label>
+          <input type="date" id="dataInicio" class="form-input">
+          <p class="form-hint">A data selecionada não pode exceder quatro dias contados de hoje.</p>
+        </div>
+        <div id="modalError" class="form-block" style="display:none;color:var(--danger);background:var(--danger-bg);border-color:var(--danger-border);margin-top:12px;"></div>
+        <div class="hero-actions" style="margin-top:18px;">
+          <button class="btn btn-secondary" type="button" onclick="backToBikeInfo()">Voltar</button>
+          <button class="btn btn-primary" type="button" id="confirmBtn" onclick="confirmarLocacao()">Confirmar Assinatura</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="toast" class="toast" role="status" aria-live="polite"></div>
+  <button class="scroll-top" id="scrollTop" type="button">↑ Topo</button>
+
+  <script src="../js/core/app.js"></script>
+  <script src="../js/pages/dashboard.page.js"></script>
+</body>
+</html>

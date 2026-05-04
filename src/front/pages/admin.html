@@ -1,0 +1,351 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Painel Admin — Pedala</title>
+  <link rel="stylesheet" href="../css/style.css">
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin="">
+  <script>(function(){document.documentElement.setAttribute('data-theme',localStorage.getItem('pedala_theme')||'dark');})();</script>
+</head>
+<body>
+  <nav class="navbar">
+    <a href="../index.html" class="navbar-logo">
+      <div class="logo-icon">P</div>Pedala
+    </a>
+    <div class="navbar-actions">
+      <button class="theme-toggle" title="Mudar tema"></button>
+      <div class="nav-user-info">
+        <div class="nav-avatar" id="navAv">A</div>
+        <span class="nav-username" id="navNm">Admin</span>
+      </div>
+      <button class="btn btn-secondary btn-sm" onclick="sair()">Sair</button>
+    </div>
+  </nav>
+
+  <div class="layout">
+    <aside class="sidebar">
+      <ul class="sidebar-nav">
+        <li><a href="#" class="active" onclick="showSec('dashboard',this)">Dashboard</a></li>
+        <li><a href="#" onclick="showSec('bikes',this)">Bikes</a></li>
+        <li><a href="#" onclick="showSec('locacoes',this)">Locações</a></li>
+        <li><a href="#" onclick="showSec('pagamentos',this)">Pagamentos</a></li>
+        <li><a href="#" onclick="showSec('gps',this)">GPS / Rotas</a></li>
+        <li><a href="#" onclick="showSec('vistorias',this)">Vistorias</a></li>
+        <li><a href="#" onclick="showSec('usuarios',this)">Usuários</a></li>
+      </ul>
+    </aside>
+
+    <main class="main-content">
+
+      <!-- DASHBOARD -->
+      <div id="sec-dashboard" class="sec show">
+        <div class="page-banner">
+          <div class="page-banner-content">
+            <h1>Dashboard</h1>
+            <p>Visão geral de inventário, contratos e faturamento.</p>
+          </div>
+        </div>
+        <div class="stat-grid">
+          <div class="stat-card"><div class="stat-card-label">Modelos ativos</div><div class="stat-card-value" id="stTot">—</div></div>
+          <div class="stat-card"><div class="stat-card-label">Disponíveis</div><div class="stat-card-value" id="stDisp">—</div></div>
+          <div class="stat-card"><div class="stat-card-label">Em locação</div><div class="stat-card-value" id="stAlug">—</div></div>
+          <div class="stat-card"><div class="stat-card-label">Atrasos</div><div class="stat-card-value" id="stAtr">—</div></div>
+          <div class="stat-card"><div class="stat-card-label">Contratos ativos</div><div class="stat-card-value" id="stAtiv">—</div></div>
+          <div class="stat-card"><div class="stat-card-label">Pendentes envio</div><div class="stat-card-value" id="stAL">—</div></div>
+          <div class="stat-card"><div class="stat-card-label">Aguardando vistoria</div><div class="stat-card-value" id="stVist">—</div></div>
+          <div class="stat-card"><div class="stat-card-label">Faturamento (mês)</div><div class="stat-card-value" id="stRec" style="font-size:24px;">R$—</div></div>
+        </div>
+      </div>
+
+      <!-- BIKES -->
+      <div id="sec-bikes" class="sec">
+        <div class="card card-add-bike">
+          <div class="card-header">
+            <span class="card-title">Adicionar bike</span>
+          </div>
+          <div class="card-body">
+            <div class="add-bike-form">
+              <div>
+                <div class="section-label">Foto da bike</div>
+                <div id="uploadZone" class="upload-zone">
+                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5m-13.5-9L12 3m0 0l4.5 4.5M12 3v13.5"/>
+                  </svg>
+                  <div class="upload-text">Clique ou arraste a foto aqui</div>
+                  <div class="upload-hint">JPG, PNG ou WebP — máx. 8MB</div>
+                  <input type="file" id="bImagem" accept="image/jpeg,image/png,image/webp" onchange="previewUpload(this,'uploadPreview','uploadZone')">
+                </div>
+                <div id="uploadPreview" class="upload-preview" style="display:none;">
+                  <img id="uploadPreviewImg" src="" alt="Preview da foto">
+                  <button class="remove-preview" onclick="removePreview('uploadPreview','uploadZone','bImagem')" aria-label="Remover foto">×</button>
+                </div>
+              </div>
+
+              <div class="add-bike-fields">
+                <div>
+                  <div class="section-label">Informações básicas</div>
+                  <div class="form-group">
+                    <label class="form-label">Nome *</label>
+                    <input class="form-input" id="bNome" placeholder="Ex: Pedala City X">
+                  </div>
+                  <div class="fields-row">
+                    <div class="form-group mb-0">
+                      <label class="form-label">Categoria</label>
+                      <input class="form-input" id="bCat" placeholder="Urbana">
+                    </div>
+                    <div class="form-group mb-0">
+                      <label class="form-label">Quantidade *</label>
+                      <input class="form-input" type="number" id="bQtd" placeholder="1" min="1" value="1">
+                    </div>
+                  </div>
+                  <div class="form-group" style="margin-top:10px;">
+                    <label class="form-label">Descrição</label>
+                    <textarea class="form-input form-textarea" id="bDesc" placeholder="Descreva os diferenciais da bike..."></textarea>
+                  </div>
+                </div>
+
+                <div>
+                  <div class="section-label">Preços de aluguel</div>
+                  <div class="fields-row-3">
+                    <div class="form-group mb-0">
+                      <label class="form-label">R$ Semanal *</label>
+                      <input class="form-input" type="number" id="bPS" placeholder="89.90" step="0.01">
+                    </div>
+                    <div class="form-group mb-0">
+                      <label class="form-label">R$ Quinzenal *</label>
+                      <input class="form-input" type="number" id="bPQ" placeholder="159.90" step="0.01">
+                    </div>
+                    <div class="form-group mb-0">
+                      <label class="form-label">R$ Mensal *</label>
+                      <input class="form-input" type="number" id="bPM" placeholder="289.90" step="0.01">
+                    </div>
+                  </div>
+                </div>
+
+                <button class="btn btn-primary" onclick="addBike()" id="btnAddBike">
+                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5" style="width:16px;height:16px;"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15"/></svg>
+                  Adicionar ao catálogo
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="inventory-bar">
+            <div class="inventory-bar-left">
+              <span class="card-title">Gerenciamento de frotas</span>
+              <span class="inventory-count" id="bikeCount"></span>
+            </div>
+            <div class="flex-center gap-sm">
+              <input class="form-input" id="bikeSearch" placeholder="Buscar bike..." oninput="filterBikeCards()" aria-label="Buscar bike no inventário">
+              <button class="btn btn-secondary btn-sm" onclick="loadBikes()">Atualizar</button>
+            </div>
+          </div>
+          <div style="padding:18px;">
+            <div class="admin-bike-grid" id="bikeGrid">
+              <div class="loading-center">
+                <div class="loading-pulse">Carregando bikes...</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- LOCAÇÕES -->
+      <div id="sec-locacoes" class="sec">
+        <div class="page-header-row">
+          <h1>Locações</h1>
+          <button class="btn btn-secondary btn-sm" onclick="loadLocacoes()">Atualizar</button>
+        </div>
+        <div class="card">
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr><th>ID</th><th>Usuário</th><th>Bike</th><th>Plano</th><th>Início</th><th>Devolução</th><th>Status</th><th>Pagamento</th><th>Ações</th></tr>
+              </thead>
+              <tbody id="locTbody">
+                <tr><td colspan="9" style="text-align:center;padding:24px;color:var(--text-muted);">Carregando...</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- PAGAMENTOS -->
+      <div id="sec-pagamentos" class="sec">
+        <div class="page-header-row">
+          <div class="page-header">
+            <h1>Pagamentos</h1>
+            <p>Aprovação de pagamentos pendentes.</p>
+          </div>
+          <button class="btn btn-secondary btn-sm" onclick="loadPagamentos()">Sincronizar</button>
+        </div>
+        <div class="card">
+          <div class="card-body">
+            <div id="pagList"><p style="color:var(--text-muted);">Carregando...</p></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- GPS -->
+      <div id="sec-gps" class="sec">
+        <div class="page-header-row" style="margin-bottom:16px;">
+          <div class="page-header">
+            <h1>GPS em Tempo Real</h1>
+            <p>Bikes em locação ativa — posição atualizada a cada 4 segundos.</p>
+          </div>
+          <div class="flex-center gap-sm">
+            <span class="gps-status-dot" id="gpsDot"></span>
+            <span id="gpsStatusText" style="font-size:0.82rem;color:var(--text-muted);">Desconectado</span>
+            <button class="btn btn-secondary btn-sm" onclick="reconnectGPS()">Reconectar</button>
+          </div>
+        </div>
+
+        <div class="gps-layout">
+          <div class="card gps-sidebar">
+            <div class="gps-sidebar-header">
+              <span class="card-title">Bikes ativas</span>
+              <span class="badge badge-accent" id="gpsActiveCount">0</span>
+            </div>
+            <div class="gps-bike-list" id="gpsBikeList">
+              <div style="padding:20px;text-align:center;color:var(--text-muted);font-size:0.84rem;">
+                Nenhuma bike em rastreamento ativo.<br>
+                <span style="font-size:0.76rem;">Ative uma locação para iniciar.</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="gps-map-wrap">
+            <div class="gps-map-header">
+              <div class="gps-map-header-title">Mapa de rastreamento</div>
+              <span style="font-size:0.78rem;color:var(--text-muted);">OpenStreetMap — São Paulo</span>
+            </div>
+            <div id="gpsMapContainer"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- VISTORIAS -->
+      <div id="sec-vistorias" class="sec">
+        <div class="page-header-row">
+          <h1>Vistorias</h1>
+          <button class="btn btn-secondary btn-sm" onclick="loadVist()">Atualizar</button>
+        </div>
+        <div class="card">
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr><th>ID</th><th>Locação</th><th>Bike</th><th>Usuário</th><th>Status</th><th>Observação</th><th>Data</th></tr>
+              </thead>
+              <tbody id="vistTbody">
+                <tr><td colspan="7" style="text-align:center;padding:24px;color:var(--text-muted);">Carregando...</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- USUÁRIOS -->
+      <div id="sec-usuarios" class="sec">
+        <div class="page-header-row">
+          <h1>Usuários</h1>
+          <button class="btn btn-secondary btn-sm" onclick="loadUsers()">Sincronizar</button>
+        </div>
+        <div class="card">
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr><th>ID</th><th>Nome</th><th>Email</th><th>Perfil</th><th>Adesão</th></tr>
+              </thead>
+              <tbody id="userTbody">
+                <tr><td colspan="5" style="text-align:center;padding:24px;color:var(--text-muted);">Carregando...</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+    </main>
+  </div>
+
+  <!-- MODAL EDITAR BIKE -->
+  <div class="edit-modal-overlay" id="editModalOverlay" onclick="closeEditModal(event)">
+    <div class="edit-modal" id="editModal">
+      <div class="edit-modal-header">
+        <div class="edit-modal-title">Editar bike</div>
+        <button class="edit-modal-close" onclick="closeEditModal()" aria-label="Fechar modal">×</button>
+      </div>
+
+      <input type="hidden" id="editBikeId">
+
+      <div class="edit-fields-grid">
+        <div>
+          <div class="section-label" style="margin-bottom:8px;">Foto da bike</div>
+          <div id="editUploadZone" class="upload-zone" style="min-height:200px;">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5m-13.5-9L12 3m0 0l4.5 4.5M12 3v13.5"/>
+            </svg>
+            <div class="upload-text">Trocar foto</div>
+            <div class="upload-hint">Deixe em branco para manter atual</div>
+            <input type="file" id="editImagem" accept="image/jpeg,image/png,image/webp" onchange="previewUpload(this,'editPreview','editUploadZone')">
+          </div>
+          <div id="editPreview" class="upload-preview" style="display:none;min-height:200px;">
+            <img id="editPreviewImg" src="" alt="Preview da nova foto">
+            <button class="remove-preview" onclick="removePreview('editPreview','editUploadZone','editImagem')" aria-label="Remover foto">×</button>
+          </div>
+          <div id="editCurrentPhoto" style="margin-top:10px;display:none;">
+            <div class="section-label" style="margin-bottom:6px;">Foto atual</div>
+            <img id="editCurrentPhotoImg" src="" alt="Foto atual" style="max-height:80px;border-radius:8px;object-fit:contain;">
+          </div>
+        </div>
+
+        <div class="add-bike-fields">
+          <div>
+            <div class="section-label">Informações básicas</div>
+            <div class="form-group">
+              <label class="form-label">Nome *</label>
+              <input class="form-input" id="editNome" placeholder="Nome da bike">
+            </div>
+            <div class="fields-row">
+              <div class="form-group mb-0">
+                <label class="form-label">Categoria</label>
+                <input class="form-input" id="editCat" placeholder="Urbana">
+              </div>
+              <div class="form-group mb-0"></div>
+            </div>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Descrição</label>
+            <textarea class="form-input form-textarea" id="editDesc"></textarea>
+          </div>
+          <div>
+            <div class="section-label">Preços</div>
+            <div class="fields-row-3">
+              <div class="form-group mb-0">
+                <label class="form-label">Semanal</label>
+                <input class="form-input" type="number" id="editPS" step="0.01">
+              </div>
+              <div class="form-group mb-0">
+                <label class="form-label">Quinzenal</label>
+                <input class="form-input" type="number" id="editPQ" step="0.01">
+              </div>
+              <div class="form-group mb-0">
+                <label class="form-label">Mensal</label>
+                <input class="form-input" type="number" id="editPM" step="0.01">
+              </div>
+            </div>
+          </div>
+          <button class="btn btn-primary" onclick="saveEditBike()" id="btnSaveEdit">Salvar alterações</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="toast" class="toast" role="status" aria-live="polite"></div>
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
+  <script src="../js/core/app.js"></script>
+  <script src="../js/pages/admin.page.js"></script>
+</body>
+</html>
