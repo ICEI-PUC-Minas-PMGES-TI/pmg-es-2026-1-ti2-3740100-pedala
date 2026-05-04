@@ -1,0 +1,24 @@
+CREATE TABLE users (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    nome VARCHAR(100) NOT NULL,
+    email VARCHAR(150) NOT NULL UNIQUE,
+    senha VARCHAR(255) NOT NULL,
+    cpf VARCHAR(14),
+    telefone VARCHAR(20),
+    role ENUM('USER', 'FUNCIONARIO', 'ADMIN') NOT NULL DEFAULT 'USER',
+    plano VARCHAR(50),
+    criado_em TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE user_addresses (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    user_id BIGINT NOT NULL UNIQUE,
+    cep VARCHAR(10),
+    logradouro VARCHAR(200),
+    numero VARCHAR(20),
+    bairro VARCHAR(100),
+    cidade VARCHAR(100),
+    uf VARCHAR(2),
+    complemento VARCHAR(100),
+    CONSTRAINT fk_address_user FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;

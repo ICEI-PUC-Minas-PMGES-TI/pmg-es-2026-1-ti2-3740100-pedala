@@ -1,0 +1,5 @@
+#!/bin/sh
+# Maven Wrapper script
+# This is a simplified version - for full version use 'mvn wrapper:wrapper'
+MAVEN_HOME="${MAVEN_HOME:-$(dirname "$0")/.mvn/wrapper}"
+exec mvn "$@"

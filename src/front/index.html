@@ -1,0 +1,280 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Pedala | Assinatura de Bicicletas</title>
+  <meta name="description" content="Bicicletas premium com manutenção inclusa e entrega em casa. Assine online, sem burocracia.">
+  <link rel="stylesheet" href="css/style.css">
+  <script>(function(){document.documentElement.setAttribute('data-theme',localStorage.getItem('pedala_theme')||'dark');})();</script>
+  <script src="https://unpkg.com/lucide@latest"></script>
+</head>
+<body>
+  <nav class="navbar" id="navbar">
+    <div class="site-wrap navbar-inner">
+      <a href="#" class="logo">
+        <svg width="32" height="32" viewBox="0 0 32 32" fill="none">
+          <rect width="32" height="32" rx="8" fill="var(--color-primary)"/>
+          <path d="M12 20V12C12 10.8954 12.8954 10 14 10H18C19.6569 10 21 11.3431 21 13C21 14.6569 19.6569 16 18 16H14V20H12Z" fill="var(--color-primary-text)"/>
+        </svg>
+        <span>Pedala</span>
+      </a>
+      <div class="nav-links">
+        <a href="#catalogo">Catálogo</a>
+        <a href="#como-funciona">Como Funciona</a>
+        <a href="#faq">Dúvidas</a>
+      </div>
+      <div class="nav-actions" id="navActions">
+        <button class="theme-toggle" title="Mudar tema"></button>
+        <a href="pages/login.html" class="btn btn-ghost btn-sm">Entrar</a>
+        <a href="pages/register.html" class="btn btn-primary btn-sm">Começar</a>
+      </div>
+    </div>
+  </nav>
+
+  <main>
+    <section class="hero-bebike" id="home">
+      <div class="site-wrap hero-grid">
+        <div class="hero-content" data-reveal>
+          <span class="badge-new">Assinatura urbana premium</span>
+          <h1>Sua cidade, <br>suas regras, <br><span class="text-primary">sua Pedala.</span></h1>
+          <p>Bicicletas premium com manutenção inclusa e entrega em casa. A liberdade que você merece para pedalar por aí.</p>
+          <div class="hero-buttons">
+            <a href="#catalogo" class="btn btn-primary btn-lg">Assinar agora</a>
+            <div class="hero-delivery">
+              <i data-lucide="truck"></i>
+              <span>Entrega em <strong>1 dia útil</strong></span>
+            </div>
+          </div>
+          <div class="hero-trust">
+            <span>Manutenção inclusa</span>
+            <span>GPS em tempo real</span>
+            <span>Sem fiador</span>
+          </div>
+          <div class="hero-metrics">
+            <div class="metric">
+              <strong id="heroFleetCount">...</strong>
+              <span>Modelos</span>
+            </div>
+            <div class="metric">
+              <strong id="heroCategoryCount">...</strong>
+              <span>Estilos</span>
+            </div>
+            <div class="metric">
+              <strong>100%</strong>
+              <span>Seguro</span>
+            </div>
+          </div>
+        </div>
+        <div class="hero-visual" data-reveal>
+          <div class="bike-circle"></div>
+          <div class="bike-orbit bike-orbit-one"></div>
+          <div class="bike-orbit bike-orbit-two"></div>
+          <img id="heroBikeImage" src="assets/images/hero-bike.png" alt="Bicicleta Pedala">
+          <div class="hero-mini-card hero-mini-card-left">
+            <i data-lucide="shield-check"></i>
+            <span>Proteção e suporte técnico</span>
+          </div>
+          <div class="hero-bike-card" id="heroBikePriceCard">
+            <div class="hb-header">
+              <span id="heroBikeCategory">Urban</span>
+              <span class="hb-badge" id="heroBikeBadge">Destaque</span>
+            </div>
+            <h3 id="heroBikeName">Pedala Pro</h3>
+            <p class="hb-desc" id="heroBikeDescription">Bike revisada e pronta para o seu trajeto.</p>
+            <div class="hb-price">
+              <span id="heroBikePrice">R$ 169</span><small>/mês</small>
+            </div>
+            <div class="hb-meta">
+              <span id="heroBikeAvailability">Disponível</span>
+              <span id="heroBikeRange">Entrega agendada</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="section-partners section-benefits-strip">
+      <div class="site-wrap">
+        <div class="partners-row benefits-row">
+          <span>Incluído na assinatura</span>
+          <div class="logos benefit-logos">
+            <div class="logo-item">Entrega agendada</div>
+            <div class="logo-item">Manutenção preventiva</div>
+            <div class="logo-item">Planos flexíveis</div>
+            <div class="logo-item">Rastreamento GPS</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="section" id="como-funciona">
+      <div class="site-wrap">
+        <div class="section-header centered" data-reveal>
+          <h2 class="title-lg">Como a Pedala funciona?</h2>
+          <p class="subtitle">Três passos simples para você começar a pedalar hoje mesmo.</p>
+        </div>
+        <div class="steps-grid" data-reveal>
+          <div class="step-card">
+            <div class="step-num">01</div>
+            <h3>Escolha sua bike</h3>
+            <p>Navegue pelo catálogo e selecione o modelo ideal para seu trajeto.</p>
+          </div>
+          <div class="step-card">
+            <div class="step-num">02</div>
+            <h3>Assine online</h3>
+            <p>Escolha o plano semanal ou mensal. Sem burocracia, 100% digital.</p>
+          </div>
+          <div class="step-card">
+            <div class="step-num">03</div>
+            <h3>Receba em casa</h3>
+            <p>Nós entregamos a bike revisada e pronta para rodar em até 24h.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="section bg-light" id="catalogo">
+      <div class="site-wrap">
+        <div class="section-header" data-reveal>
+          <div>
+            <span class="section-eyebrow">Catálogo vivo</span>
+            <h2 class="title-lg">Nossa Frota</h2>
+            <p class="subtitle">Modelos revisados, prontos para entrega e com plano sob medida para sua rotina.</p>
+          </div>
+          <div class="catalog-controls">
+            <div id="filterBtns" class="filter-group"></div>
+            <span id="catalogSummary" class="summary-text"></span>
+          </div>
+        </div>
+        <div class="bikes-grid" id="bikeGrid" data-reveal>
+          <!-- Injected by JS -->
+        </div>
+      </div>
+    </section>
+
+    <section class="faq-section" id="faq">
+      <div class="site-wrap">
+        <div class="section-header centered" data-reveal>
+          <h2 class="title-lg">Dúvidas frequentes</h2>
+          <p class="subtitle">Respostas rápidas para as perguntas mais comuns.</p>
+        </div>
+        <div class="faq-list" data-reveal>
+          <div class="faq-item">
+            <button class="faq-q">
+              Como funciona a assinatura?
+              <svg class="faq-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m6 9 6 6 6-6"/></svg>
+            </button>
+            <div class="faq-a">
+              <div class="faq-a-inner">A assinatura é flexível: semanal, quinzenal ou mensal. Você escolhe o modelo, assina digitalmente e recebe em casa. Sem fiador, sem burocracia — apenas seu CPF e endereço.</div>
+            </div>
+          </div>
+          <div class="faq-item">
+            <button class="faq-q">
+              A manutenção está inclusa no plano?
+              <svg class="faq-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m6 9 6 6 6-6"/></svg>
+            </button>
+            <div class="faq-a">
+              <div class="faq-a-inner">Sim! Toda manutenção preventiva está inclusa. Em caso de defeito ou problema mecânico, nossa equipe busca e devolve a bike revisada em até 48 horas.</div>
+            </div>
+          </div>
+          <div class="faq-item">
+            <button class="faq-q">
+              Posso cancelar a qualquer momento?
+              <svg class="faq-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m6 9 6 6 6-6"/></svg>
+            </button>
+            <div class="faq-a">
+              <div class="faq-a-inner">Sim. Não cobramos multa por cancelamento antecipado. Basta solicitar a devolução pelo painel, agendar a retirada e nossa equipe vai buscar a bike no endereço cadastrado.</div>
+            </div>
+          </div>
+          <div class="faq-item">
+            <button class="faq-q">
+              Quais documentos são necessários para cadastro?
+              <svg class="faq-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m6 9 6 6 6-6"/></svg>
+            </button>
+            <div class="faq-a">
+              <div class="faq-a-inner">Apenas CPF e um endereço válido para entrega. Sem comprovante de renda, sem fiador. O processo é 100% digital e a confirmação chega por e-mail em minutos.</div>
+            </div>
+          </div>
+          <div class="faq-item">
+            <button class="faq-q">
+              A bike vem com rastreamento GPS?
+              <svg class="faq-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m6 9 6 6 6-6"/></svg>
+            </button>
+            <div class="faq-a">
+              <div class="faq-a-inner">Todas as nossas bikes possuem rastreamento GPS integrado. Isso garante mais segurança para você e nos permite oferecer suporte mais rápido em caso de roubo ou perda.</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="section-cta" data-reveal>
+      <div class="site-wrap">
+        <div class="cta-box">
+          <h2>Pronto para transformar <br>seu trajeto?</h2>
+          <p>Junte-se a milhares de pessoas que já descobriram a praticidade da assinatura.</p>
+          <a href="pages/register.html" class="btn btn-primary btn-lg">Quero minha Pedala</a>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="footer-bebike">
+    <div class="site-wrap">
+      <div class="footer-grid">
+        <div class="footer-info">
+          <div class="logo">Pedala</div>
+          <p>Sua mobilidade urbana, elevada ao próximo nível. Assinatura de bikes premium.</p>
+        </div>
+        <div class="footer-nav">
+          <div class="col">
+            <h4>Produto</h4>
+            <a href="#catalogo">Frota</a>
+            <a href="#como-funciona">Planos</a>
+          </div>
+          <div class="col">
+            <h4>Suporte</h4>
+            <a href="#faq">Dúvidas</a>
+            <a href="#">Contato</a>
+          </div>
+        </div>
+      </div>
+      <div class="footer-bottom">
+        <p>&copy; 2026 Pedala. Todos os direitos reservados.</p>
+      </div>
+    </div>
+  </footer>
+
+  <!-- CHATBOT -->
+  <button class="chatbot-trigger" id="chatbotToggle"><i data-lucide="message-square"></i></button>
+  <div class="chatbot-panel" id="chatbotContainer">
+    <div class="chat-header">
+      <span>Pedala Assistente</span>
+      <button id="chatbotClose">&times;</button>
+    </div>
+    <div class="chat-body" id="chatbotMessages">
+      <div class="msg bot">Olá! Como posso te ajudar com sua assinatura hoje?</div>
+    </div>
+    <div class="chat-footer">
+      <input type="text" id="chatbotInput" placeholder="Sua mensagem...">
+      <button id="chatbotSend"><i data-lucide="send"></i></button>
+    </div>
+  </div>
+
+  <script src="js/core/app.js"></script>
+  <script src="js/pages/index.page.js"></script>
+  <script src="js/core/chatbot.js"></script>
+  <script>
+    lucide.createIcons();
+
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) entry.target.classList.add('revealed');
+      });
+    }, { threshold: 0.1 });
+
+    document.querySelectorAll('[data-reveal]').forEach(el => observer.observe(el));
+  </script>
+</body>
+</html>

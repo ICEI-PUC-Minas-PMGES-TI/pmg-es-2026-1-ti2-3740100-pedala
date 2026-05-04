@@ -1,0 +1,37 @@
+version: '3.8'
+
+services:
+  mysql:
+    image: mysql:8.0
+    container_name: pedala-mysql
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: pedala
+    ports:
+      - "3306:3306"
+    volumes:
+      - pedala-mysql-data:/var/lib/mysql
+    command: --default-authentication-plugin=mysql_native_password
+
+  api:
+    build:
+      context: ./backend-spring
+      dockerfile: Dockerfile
+    container_name: pedala-api
+    depends_on:
+      - mysql
+    environment:
+      DB_URL: jdbc:mysql://mysql:3306/pedala?createDatabaseIfNotExist=true&useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
+      DB_USER: root
+      DB_PASSWORD: root
+      JWT_SECRET: pedala_secret_key_2024_production_very_long_secure_key_256bits
+      PORT: 8080
+      GEMINI_API_KEY: ${GEMINI_API_KEY}
+    ports:
+      - "8080:8080"
+    volumes:
+      - pedala-uploads:/app/uploads
+
+volumes:
+  pedala-mysql-data:
+  pedala-uploads:
