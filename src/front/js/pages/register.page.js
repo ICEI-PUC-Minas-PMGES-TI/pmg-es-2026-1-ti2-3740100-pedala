@@ -65,7 +65,7 @@ document.getElementById('cpf')?.addEventListener('input', e => {
     e.target.value = v;
 });
 
-// CEP mask and auto-fill ViaCEP
+// CEP  ViaCEP
 document.getElementById('cep')?.addEventListener('input', async e => {
     let v = e.target.value.replace(/\D/g, '').slice(0, 8);
     if (v.length > 5) v = v.replace(/^(\d{5})(\d)/, '$1-$2');

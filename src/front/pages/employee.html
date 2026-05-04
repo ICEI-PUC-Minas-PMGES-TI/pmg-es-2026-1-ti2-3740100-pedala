@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Área Operacional — Pedala</title>
+  <link rel="stylesheet" href="../css/style.css">
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin="">
+  <script>(function(){document.documentElement.setAttribute('data-theme',localStorage.getItem('pedala_theme')||'dark');})();</script>
+</head>
+<body>
+  <nav class="navbar">
+    <a href="../index.html" class="navbar-logo">
+      <div class="logo-icon">P</div>Pedala
+    </a>
+    <div class="navbar-actions">
+      <button class="theme-toggle" title="Mudar tema"></button>
+      <div class="nav-user-info">
+        <div class="nav-avatar" id="navAv">F</div>
+        <span class="nav-username" id="navNm">Funcionário</span>
+      </div>
+      <button class="btn btn-secondary btn-sm" onclick="sair()">Sair</button>
+    </div>
+  </nav>
+
+  <div class="layout">
+    <aside class="sidebar">
+      <ul class="sidebar-nav">
+        <li><a href="#" class="active" onclick="showSec('vistorias',this)">Vistorias</a></li>
+        <li><a href="#" onclick="showSec('locacoes',this)">Entregas</a></li>
+        <li><a href="#" onclick="showSec('gps',this)">Mapa GPS</a></li>
+      </ul>
+    </aside>
+
+    <main class="main-content">
+      <!-- VISTORIAS -->
+      <div id="sec-vistorias" class="sec show">
+        <div class="page-banner">
+          <div class="page-banner-content">
+            <h1>Vistorias</h1>
+            <p>Realize as inspeções de rotina na frota para garantir a segurança e conservação.</p>
+          </div>
+        </div>
+        <div class="page-header-row">
+          <div class="page-header">
+            <h2>Pendentes</h2>
+            <p>Avalie o estado das bicicletas que retornaram.</p>
+          </div>
+          <button class="btn btn-secondary btn-sm" onclick="loadVist()">Sincronizar</button>
+        </div>
+        <div id="vistList">
+          <p style="color:var(--text-secondary);">Carregando...</p>
+        </div>
+      </div>
+
+      <!-- ENTREGAS -->
+      <div id="sec-locacoes" class="sec">
+        <div class="page-header-row">
+          <div class="page-header">
+            <h1>Entregas</h1>
+            <p>Confirme a entrega da bicicleta para o cliente.</p>
+          </div>
+          <button class="btn btn-secondary btn-sm" onclick="loadLoc()">Sincronizar</button>
+        </div>
+        <div id="locList">
+          <p style="color:var(--text-secondary);">Carregando...</p>
+        </div>
+      </div>
+
+      <!-- GPS -->
+      <div id="sec-gps" class="sec">
+        <div class="page-header-row" style="margin-bottom:16px;">
+          <div class="page-header">
+            <h1>GPS em Tempo Real</h1>
+            <p>Bikes em locação ativa — posição atualizada a cada 4 segundos.</p>
+          </div>
+          <div class="flex-center gap-sm">
+            <span class="gps-status-dot" id="gpsDot"></span>
+            <span id="gpsStatusText" style="font-size:0.82rem;color:var(--text-muted);">Desconectado</span>
+            <button class="btn btn-secondary btn-sm" onclick="reconnectGPS()">Reconectar</button>
+          </div>
+        </div>
+
+        <div class="gps-layout">
+          <div class="card gps-sidebar">
+            <div class="gps-sidebar-header">
+              <span class="card-title">Bikes ativas</span>
+              <span class="badge badge-accent" id="gpsActiveCount">0</span>
+            </div>
+            <div class="gps-bike-list" id="gpsBikeList">
+              <div style="padding:20px;text-align:center;color:var(--text-muted);font-size:0.84rem;">
+                Nenhuma bike em rastreamento ativo.<br>
+                <span style="font-size:0.76rem;">Ative uma locação para iniciar.</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="gps-map-wrap">
+            <div class="gps-map-header">
+              <div class="gps-map-header-title">Mapa de rastreamento</div>
+              <span style="font-size:0.78rem;color:var(--text-muted);">OpenStreetMap — São Paulo</span>
+            </div>
+            <div id="gpsMapContainer"></div>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <div id="toast" class="toast" role="status" aria-live="polite"></div>
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
+  <script src="../js/core/app.js"></script>
+  <script src="../js/pages/employee.page.js"></script>
+</body>
+</html>

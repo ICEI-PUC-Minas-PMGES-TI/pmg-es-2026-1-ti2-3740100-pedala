@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Criar conta | Pedala</title>
+  <meta name="description" content="Cadastre-se na Pedala e receba a bike ideal em casa.">
+  <link rel="stylesheet" href="../css/style.css">
+  <script>(function(){document.documentElement.setAttribute('data-theme',localStorage.getItem('pedala_theme')||'dark');})();</script>
+</head>
+<body>
+  <main class="auth-page">
+    <div class="auth-shell">
+      <section class="auth-intro">
+        <div class="auth-intro-copy">
+          <h1>Crie sua conta</h1>
+          <p>Cadastre-se em poucos minutos para alugar sua bicicleta premium e recebê-la no conforto da sua casa.</p>
+          <div class="auth-points">
+            <div class="auth-point">
+              <strong>Entrega agendada</strong>
+              <p>Defina seu endereço e escolha o melhor horário para receber sua bike.</p>
+            </div>
+            <div class="auth-point">
+              <strong>Pagamento seguro</strong>
+              <p>Plataforma protegida e opções de planos flexíveis para sua necessidade.</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="auth-card">
+        <div class="auth-theme-toggle">
+          <button class="theme-toggle" title="Mudar tema"></button>
+        </div>
+        <div class="auth-logo">
+          <div class="navbar-logo">
+            <div class="logo-icon">P</div>
+            Pedala
+          </div>
+          <h2>Cadastre-se</h2>
+          <p>Preencha os campos abaixo para criar seu perfil.</p>
+        </div>
+
+        <div id="regError" class="form-block" style="display:none;color:var(--danger);background:var(--danger-bg);border-color:var(--danger-border);margin-bottom:18px;"></div>
+
+        <form id="regForm">
+          <div class="form-block" style="margin-bottom:18px;">
+            <span class="section-label-form">Dados pessoais</span>
+            <div class="form-row">
+              <div class="form-group">
+                <label class="form-label" for="nome">Nome completo</label>
+                <input class="form-input" type="text" id="nome" placeholder="João Silva" required>
+              </div>
+              <div class="form-group">
+                <label class="form-label" for="cpf">CPF</label>
+                <input class="form-input" type="text" id="cpf" placeholder="000.000.000-00" maxlength="14" required>
+              </div>
+            </div>
+            <div class="form-row">
+              <div class="form-group">
+                <label class="form-label" for="email">E-mail</label>
+                <input class="form-input" type="email" id="email" placeholder="voce@pedala.com" autocomplete="email" required>
+              </div>
+              <div class="form-group">
+                <label class="form-label" for="telefone">Telefone</label>
+                <input class="form-input" type="tel" id="telefone" placeholder="(11) 99999-9999" required>
+              </div>
+            </div>
+            <div class="form-row">
+              <div class="form-group input-wrapper">
+                <label class="form-label" for="senha">Senha</label>
+                <input class="form-input" type="password" id="senha" placeholder="Mínimo 6 caracteres" minlength="6" autocomplete="new-password" required>
+                <button type="button" class="input-eye" onclick="toggleField('senha','eyeReg1')" aria-label="Mostrar senha">
+                  <svg id="eyeReg1" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M2.036 12.322a1.012 1.012 0 010-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178z"/><path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+                </button>
+              </div>
+              <div class="form-group input-wrapper">
+                <label class="form-label" for="confirmarSenha">Confirmar senha</label>
+                <input class="form-input" type="password" id="confirmarSenha" placeholder="Repita a senha" autocomplete="new-password" required>
+                <button type="button" class="input-eye" onclick="toggleField('confirmarSenha','eyeReg2')" aria-label="Mostrar confirmar senha">
+                  <svg id="eyeReg2" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M2.036 12.322a1.012 1.012 0 010-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178z"/><path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <div class="form-block" style="margin-bottom:18px;">
+            <span class="section-label-form">Endereço de entrega</span>
+            <div class="form-group">
+              <label class="form-label" for="logradouro">Logradouro</label>
+              <input class="form-input" type="text" id="logradouro" placeholder="Av. Paulista" required>
+            </div>
+            <div class="form-row-3">
+              <div class="form-group">
+                <label class="form-label" for="numero">Número</label>
+                <input class="form-input" type="text" id="numero" placeholder="1000" required>
+              </div>
+              <div class="form-group">
+                <label class="form-label" for="complemento">Complemento</label>
+                <input class="form-input" type="text" id="complemento" placeholder="Apto 42">
+              </div>
+              <div class="form-group">
+                <label class="form-label" for="cep">CEP</label>
+                <input class="form-input" type="text" id="cep" placeholder="01310-100" maxlength="9">
+              </div>
+            </div>
+            <div class="form-row">
+              <div class="form-group">
+                <label class="form-label" for="bairro">Bairro</label>
+                <input class="form-input" type="text" id="bairro" placeholder="Bela Vista" required>
+              </div>
+              <div class="form-group">
+                <label class="form-label" for="cidade">Cidade</label>
+                <input class="form-input" type="text" id="cidade" placeholder="São Paulo" required>
+              </div>
+            </div>
+            <div class="form-group uf-wrap">
+              <label class="form-label" for="uf">UF</label>
+              <input class="form-input" type="text" id="uf" placeholder="SP" maxlength="2" required>
+            </div>
+          </div>
+
+          <label class="form-block" style="display:flex;gap:12px;align-items:flex-start;cursor:pointer;margin-bottom:18px;">
+            <input type="checkbox" id="termos" required style="width:18px;height:18px;margin-top:2px;accent-color:var(--accent);">
+            <span style="color:var(--text-secondary);font-size:0.9rem;">
+              Li e concordo com os Termos de Uso e a Política de Privacidade da Pedala.
+            </span>
+          </label>
+
+          <button type="submit" class="btn btn-primary btn-full btn-lg" id="submitBtn">Criar minha conta</button>
+        </form>
+
+        <div class="auth-footer" style="margin-top:16px;">
+          <span>Já tem uma conta? <a href="login.html">Entrar</a></span>
+        </div>
+        <div class="auth-back">
+          <a href="../index.html">Voltar para o site</a>
+        </div>
+      </section>
+    </div>
+  </main>
+
+  <div id="toast" class="toast" role="status" aria-live="polite"></div>
+  <script src="../js/core/app.js"></script>
+  <script src="../js/pages/register.page.js"></script>
+  <script>
+    function toggleField(inputId, iconId) {
+      const input = document.getElementById(inputId);
+      const icon = document.getElementById(iconId);
+      const eyeOpen = '<path stroke-linecap="round" stroke-linejoin="round" d="M2.036 12.322a1.012 1.012 0 010-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178z"/><path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>';
+      const eyeOff = '<path stroke-linecap="round" stroke-linejoin="round" d="M3.98 8.223A10.477 10.477 0 001.934 12C3.226 16.338 7.244 19.5 12 19.5c.993 0 1.953-.138 2.863-.395M6.228 6.228A10.45 10.45 0 0112 4.5c4.756 0 8.773 3.162 10.065 7.498a10.523 10.523 0 01-4.293 5.774M6.228 6.228L3 3m3.228 3.228l3.65 3.65m7.894 7.894L21 21m-3.228-3.228l-3.65-3.65m0 0a3 3 0 10-4.243-4.243m4.242 4.242L9.88 9.88"/>';
+      if (input.type === 'password') { input.type = 'text'; icon.innerHTML = eyeOff; }
+      else { input.type = 'password'; icon.innerHTML = eyeOpen; }
+    }
+  </script>
+</body>
+</html>

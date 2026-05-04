@@ -104,7 +104,7 @@ async function loadInicio() {
 
     let rentals = rentalResponse.alugueis || [];
 
-    // MOCK DATA FOR PREVIEW
+    // MOCK DATA 
     if (rentals.length === 0) {
       rentals = [
         {
@@ -251,7 +251,7 @@ async function loadLocar() {
     const data = await fetch(`${dashboardApi}/bikes`).then(response => response.json());
     let bikes = (data.bikes || []).filter(bike => !bike.removida && !bike.bloqueada);
 
-    // MOCK DATA FOR PREVIEW
+    // MOCK DATA 
     if (bikes.length === 0) {
       bikes = [
         { id: 1, nome: 'Pedala Pro Trail', categoria: 'Mountain Bike', preco: 259.90, quantidadeDisponivel: 5, imagem: 'assets/images/hero-bike.png', precos: { semanal: 89, quinzenal: 159, mensal: 259 } },
@@ -274,7 +274,7 @@ async function loadLocacoes() {
     const response = await fetch(`${dashboardApi}/rentals/meus`, { headers: dashboardHeaders }).then(request => request.json());
     let rentals = response.alugueis || [];
 
-    // MOCK DATA FOR PREVIEW (Remove or comment out when DB is ready)
+    // MOCK DATA 
     if (rentals.length === 0) {
       rentals = [
         {
