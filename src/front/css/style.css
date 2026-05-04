@@ -650,17 +650,17 @@ tr:hover td { background: var(--color-bg-soft); }
 
 .hero-mini-card {
   position: absolute;
-  left: 0;
-  top: 18%;
-  max-width: 190px;
+  right: 4%;
+  top: 8%;
+  max-width: 220px;
   display: flex;
   align-items: center;
   gap: 10px;
   padding: 12px 14px;
   border-radius: var(--r-lg);
   background: var(--color-surface);
-  border: 1px solid var(--color-border);
-  box-shadow: var(--shadow-sm);
+  border: 1px solid rgba(247, 184, 76, 0.35);
+  box-shadow: 0 16px 36px rgba(20, 16, 10, 0.16);
   color: var(--color-text);
   font-size: 0.82rem;
   font-weight: 700;
@@ -2047,9 +2047,18 @@ tr:hover td { background: var(--color-bg-soft); }
 .chat-footer { padding: 16px; display: flex; gap: 10px; border-top: 1px solid var(--color-border); }
 .chat-footer input { flex: 1; border: 1px solid var(--color-border); padding: 10px 14px; border-radius: var(--r-pill); outline: none; font-family: var(--font-sans); font-size: 0.88rem; background: var(--color-surface); color: var(--color-text); transition: border-color var(--transition); }
 .chat-footer input:focus { border-color: var(--color-primary); }
+.chat-footer input:disabled { opacity: 0.6; cursor: not-allowed; }
 .chat-footer button { background: var(--color-primary); border: none; width: 40px; height: 40px; border-radius: 50%; cursor: pointer; display: flex; align-items: center; justify-content: center; flex-shrink: 0; transition: var(--transition); }
 .chat-footer button:hover { filter: brightness(0.92); transform: scale(1.05); }
+.chat-footer button:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
 .chat-footer button svg { width: 16px; height: 16px; color: var(--color-primary-text); }
+
+.chat-link {
+  color: var(--color-primary-dark);
+  font-weight: 700;
+  text-decoration: none;
+}
+.chat-link:hover { text-decoration: underline; }
 
 /* ══════════════════════════════════════════════════
    RESPONSIVE
@@ -2060,7 +2069,7 @@ tr:hover td { background: var(--color-bg-soft); }
   .hero-content h1 { font-size: 3.2rem; }
   .hero-visual { order: -1; min-height: 470px; }
   .hero-visual img { width: min(520px, 86%); transform: none; }
-  .hero-mini-card { left: 6%; }
+  .hero-mini-card { right: 6%; left: auto; }
   .hero-bike-card { right: 6%; }
   .hero-metrics { justify-content: center; flex-wrap: wrap; }
   .steps-grid { grid-template-columns: 1fr; max-width: 480px; margin: 0 auto; }
@@ -2109,7 +2118,7 @@ tr:hover td { background: var(--color-bg-soft); }
   .hero-bebike { padding: 120px 0 64px; }
   .hero-bebike::before { inset: 88px 12px 24px; border-radius: 30px; }
   .hero-visual { min-height: 430px; }
-  .hero-mini-card { left: 0; top: 10%; }
+  .hero-mini-card { right: 2%; left: auto; top: 6%; }
   .hero-bike-card { right: 0; bottom: 0; }
   .benefits-row { justify-content: center; text-align: center; }
   .benefit-logos { justify-content: center; }

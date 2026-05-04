@@ -3,6 +3,8 @@ const landingState = {
   activeCategory: ''
 };
 
+window.PEDALA_BIKES = [];
+
 function escapeHtml(value) {
   return String(value ?? '')
     .replace(/&/g, '&amp;')
@@ -169,8 +171,10 @@ async function loadLandingBikes() {
     const bikes = (data.bikes || []).filter(bike => !bike.removida);
     landingState.bikes = bikes;
     landingState.activeCategory = '';
+    window.PEDALA_BIKES = bikes;
 
     if (!bikes.length) {
+      window.PEDALA_BIKES = [];
       grid.innerHTML = `
         <div class="empty-state">
           <strong>Catálogo vazio</strong>
@@ -188,6 +192,7 @@ async function loadLandingBikes() {
     renderFilters();
     renderCatalog();
   } catch (error) {
+    window.PEDALA_BIKES = [];
     grid.innerHTML = `
       <div class="empty-state">
         <strong>Falha ao carregar o catálogo</strong>
