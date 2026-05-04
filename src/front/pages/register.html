@@ -9,21 +9,39 @@
   <script>(function(){document.documentElement.setAttribute('data-theme',localStorage.getItem('pedala_theme')||'dark');})();</script>
 </head>
 <body>
-  <main class="auth-page">
-    <div class="auth-shell">
+  <main class="auth-page auth-page-login auth-page-register">
+    <div class="auth-shell auth-shell-login">
       <section class="auth-intro">
         <div class="auth-intro-copy">
-          <h1>Crie sua conta</h1>
-          <p>Cadastre-se em poucos minutos para alugar sua bicicleta premium e recebê-la no conforto da sua casa.</p>
+          <span class="auth-kicker">Nova conta Pedala</span>
+          <h1>Crie sua jornada com a bike ideal</h1>
+          <p>Cadastre-se para escolher seu plano, agendar entregas e acompanhar suas locacoes com praticidade.</p>
           <div class="auth-points">
             <div class="auth-point">
-              <strong>Entrega agendada</strong>
-              <p>Defina seu endereço e escolha o melhor horário para receber sua bike.</p>
+              <span class="auth-point-icon">01</span>
+              <div>
+                <strong>Entrega sob medida</strong>
+                <p>Escolha data, horario e endereco para receber a bike pronta para pedalar.</p>
+              </div>
             </div>
             <div class="auth-point">
-              <strong>Pagamento seguro</strong>
-              <p>Plataforma protegida e opções de planos flexíveis para sua necessidade.</p>
+              <span class="auth-point-icon">02</span>
+              <div>
+                <strong>Planos flexiveis</strong>
+                <p>Personalize a assinatura e mantenha o controle de pagamentos em um painel seguro.</p>
+              </div>
             </div>
+          </div>
+        </div>
+
+        <div class="auth-ride-card" aria-hidden="true">
+          <div>
+            <span>Primeiros passos</span>
+            <strong>Cadastro rapido, passeio garantido.</strong>
+          </div>
+          <div class="auth-ride-metrics">
+            <span>5 min cadastro</span>
+            <span>Entrega agendada</span>
           </div>
         </div>
       </section>
@@ -37,8 +55,9 @@
             <div class="logo-icon">P</div>
             Pedala
           </div>
-          <h2>Cadastre-se</h2>
-          <p>Preencha os campos abaixo para criar seu perfil.</p>
+          <span class="auth-card-eyebrow">Cadastro seguro</span>
+          <h2>Crie sua conta</h2>
+          <p>Preencha os dados para iniciar sua assinatura.</p>
         </div>
 
         <div id="regError" class="form-block" style="display:none;color:var(--danger);background:var(--danger-bg);border-color:var(--danger-border);margin-bottom:18px;"></div>

@@ -1,9 +1,28 @@
 // @ts-check
 
+/**
+ * @template {HTMLElement} T
+ * @param {string} id
+ * @param {new () => T} ExpectedElement
+ * @returns {T}
+ */
+function getRequiredElement(id, ExpectedElement) {
+    const element = document.getElementById(id);
+    if (!(element instanceof ExpectedElement)) {
+        throw new Error(`Elemento #${id} não encontrado ou inválido.`);
+    }
+    return element;
+}
+
+/**
+ * @param {Event} e
+ */
 async function handleLogin(e) {
     e.preventDefault();
-    const btn = document.getElementById('submitBtn');
-    const errEl = document.getElementById('loginError');
+    const btn = getRequiredElement('submitBtn', HTMLButtonElement);
+    const errEl = getRequiredElement('loginError', HTMLDivElement);
+    const emailInput = getRequiredElement('email', HTMLInputElement);
+    const passwordInput = getRequiredElement('senha', HTMLInputElement);
 
     btn.disabled = true;
     btn.textContent = 'Entrando...';
@@ -13,8 +32,8 @@ async function handleLogin(e) {
         const { ok, data } = await apiJson('/auth/login', {
             method: 'POST',
             body: {
-                email: document.getElementById('email').value.trim(),
-                senha: document.getElementById('senha').value
+                email: emailInput.value.trim(),
+                senha: passwordInput.value
             }
         });
 
@@ -33,13 +52,12 @@ async function handleLogin(e) {
                 : 'dashboard.html';
         window.location.href = dest;
     } catch (e) {
-        errEl.textContent = 'Erro de conexao com o servidor.';
+        errEl.textContent = 'Erro de conexão com o servidor.';
         errEl.style.display = 'block';
     } finally {
         btn.disabled = false;
-        btn.textContent = 'Entrar na Pedala';
+        btn.textContent = 'Entrar';
     }
 }
 
-window.handleLogin = handleLogin;
 document.getElementById('loginForm')?.addEventListener('submit', handleLogin);

@@ -9,21 +9,39 @@
   <script>(function(){document.documentElement.setAttribute('data-theme',localStorage.getItem('pedala_theme')||'dark');})();</script>
 </head>
 <body>
-  <main class="auth-page">
-    <div class="auth-shell">
+  <main class="auth-page auth-page-login">
+    <div class="auth-shell auth-shell-login">
       <section class="auth-intro">
         <div class="auth-intro-copy">
+          <span class="auth-kicker">Área do cliente Pedala</span>
           <h1>Bem-vindo de volta</h1>
           <p>Acesse sua conta para gerenciar suas locações, pagamentos e agendar manutenções de forma simples e rápida.</p>
           <div class="auth-points">
             <div class="auth-point">
-              <strong>Gestão de locações</strong>
-              <p>Controle total sobre seus planos ativos e histórico de pedaladas.</p>
+              <span class="auth-point-icon">01</span>
+              <div>
+                <strong>Gestão de locações</strong>
+                <p>Controle seus planos ativos, prazos e histórico de pedaladas em um só lugar.</p>
+              </div>
             </div>
             <div class="auth-point">
-              <strong>Suporte especializado</strong>
-              <p>Canal direto para solicitações de manutenção e dúvidas técnicas.</p>
+              <span class="auth-point-icon">02</span>
+              <div>
+                <strong>Suporte especializado</strong>
+                <p>Abra solicitações de manutenção e fale com a equipe técnica quando precisar.</p>
+              </div>
             </div>
+          </div>
+        </div>
+
+        <div class="auth-ride-card" aria-hidden="true">
+          <div>
+            <span>Resumo da jornada</span>
+            <strong>Bike pronta, rota livre.</strong>
+          </div>
+          <div class="auth-ride-metrics">
+            <span>24h suporte</span>
+            <span>100% online</span>
           </div>
         </div>
       </section>
@@ -37,6 +55,7 @@
             <div class="logo-icon">P</div>
             Pedala
           </div>
+          <span class="auth-card-eyebrow">Login seguro</span>
           <h2>Entrar na sua conta</h2>
           <p>Insira seus dados para continuar.</p>
         </div>

@@ -15,11 +15,11 @@ function escapeHtml(value) {
 function bikeTraits(bike) {
   const category = String(bike.categoria || '').toLowerCase();
   if (category.includes('speed')) return ['Aero e leve', 'Alta performance', 'Uso esportivo'];
-  if (category.includes('mountain')) return ['Suspensao dianteira', 'Terreno misto', 'Mais controle'];
-  if (category.includes('eletrica')) return ['Assistencia eletrica', 'Longos percursos', 'Menos esforco'];
-  if (category.includes('dobravel')) return ['Compacta', 'Transporte facil', 'Uso multimodal'];
-  if (category.includes('infantil')) return ['Altura reduzida', 'Mais seguranca', 'Uso recreativo'];
-  return ['Conforto urbano', 'Uso diario', 'Entrega rapida'];
+  if (category.includes('mountain')) return ['Suspensão dianteira', 'Terreno misto', 'Mais controle'];
+  if (category.includes('eletrica')) return ['Assistência elétrica', 'Longos percursos', 'Menos esforço'];
+  if (category.includes('dobravel')) return ['Compacta', 'Transporte fácil', 'Uso multimodal'];
+  if (category.includes('infantil')) return ['Altura reduzida', 'Mais segurança', 'Uso recreativo'];
+  return ['Conforto urbano', 'Uso diário', 'Entrega rápida'];
 }
 
 function badgeLabel(bike) {
@@ -44,11 +44,11 @@ function renderHeroBike(bike) {
   if (heroImage) heroImage.src = normalizeImagePath(bike.imagem);
   if (heroBadge) {
     heroBadge.textContent = status.text;
-    heroBadge.className = `hero-floating-badge ${status.class}`;
+    heroBadge.className = `hb-badge ${status.class}`;
   }
   if (heroName) heroName.textContent = bike.nome;
   if (heroDescription) heroDescription.textContent = bike.descricao || 'Bicicleta pronta para uso urbano com entrega agendada.';
-  if (heroPrice) heroPrice.textContent = formatCurrency(bike.precos?.semanal);
+  if (heroPrice) heroPrice.textContent = formatCurrency(bike.precos?.mensal);
   if (heroAvailability) heroAvailability.textContent = bike.quantidadeDisponivel > 0 ? `${bike.quantidadeDisponivel} unidades` : 'Indisponível';
   if (heroRange) heroRange.textContent = `A partir de ${formatCurrency(bike.precos?.mensal)}/mês`;
   if (heroCategory) heroCategory.textContent = bike.categoria;
@@ -93,14 +93,14 @@ function renderCatalog() {
 
   const units = visibleBikes.reduce((total, bike) => total + (bike.quantidadeDisponivel || 0), 0);
   if (summary) {
-    summary.textContent = `${visibleBikes.length} modelos visiveis e ${units} unidades com disponibilidade atual.`;
+    summary.textContent = `${visibleBikes.length} modelos visíveis · ${units} unidades disponíveis`;
   }
 
   if (!visibleBikes.length) {
     grid.innerHTML = `
       <div class="empty-state">
         <strong>Nenhuma bike encontrada</strong>
-        <span>Tente outra categoria para explorar o restante do catalogo.</span>
+        <span>Tente outra categoria para explorar o restante do catálogo.</span>
       </div>
     `;
     return;
@@ -124,7 +124,8 @@ function renderCatalog() {
           <div class="bike-body">
             <div class="bike-cat">${escapeHtml(bike.categoria)}</div>
             <h3 class="bike-name">${escapeHtml(bike.nome)}</h3>
-            <p class="bike-desc" style="font-size: 0.9rem; color: var(--color-text-muted); height: 3.2em; overflow: hidden;">${escapeHtml(bike.descricao || 'Ideal para o dia a dia urbano.')}</p>
+            <p class="bike-desc">${escapeHtml(bike.descricao || 'Ideal para o dia a dia urbano.')}</p>
+            <div class="bike-specs">${traits}</div>
             <div class="bike-footer">
               <div class="bike-price">${escapeHtml(formatCurrency(bike.precos?.semanal))}<span>/semana</span></div>
               <button class="btn btn-primary btn-sm" type="button" data-bike-action="rent" data-bike-id="${bike.id}" ${available ? '' : 'disabled'}>
@@ -172,7 +173,7 @@ async function loadLandingBikes() {
     if (!bikes.length) {
       grid.innerHTML = `
         <div class="empty-state">
-          <strong>Catalogo vazio</strong>
+          <strong>Catálogo vazio</strong>
           <span>Cadastre novas bikes no painel administrativo para popular a vitrine.</span>
         </div>
       `;
@@ -189,12 +190,12 @@ async function loadLandingBikes() {
   } catch (error) {
     grid.innerHTML = `
       <div class="empty-state">
-        <strong>Falha ao carregar o catalogo</strong>
+        <strong>Falha ao carregar o catálogo</strong>
         <span>Verifique se o backend esta rodando em http://localhost:8080.</span>
       </div>
     `;
     const summary = document.getElementById('catalogSummary');
-    if (summary) summary.textContent = 'Nao foi possivel buscar as bicicletas agora.';
+    if (summary) summary.textContent = 'Não foi possível buscar as bicicletas agora.';
   }
 }
 

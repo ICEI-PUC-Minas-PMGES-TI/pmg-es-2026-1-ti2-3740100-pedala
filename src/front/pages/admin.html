@@ -270,6 +270,66 @@
     </main>
   </div>
 
+  <!-- MODAL GERENCIAR BIKE -->
+  <div class="bike-modal-overlay" id="bikeDetailsModalOverlay" onclick="closeBikeDetailsModal(event)">
+    <div class="bike-detail-modal" role="dialog" aria-modal="true" aria-labelledby="bikeDetailTitle">
+      <div class="bike-detail-header">
+        <div>
+          <span class="section-label">Gerenciar bike</span>
+          <h2 class="bike-detail-title" id="bikeDetailTitle">Bike</h2>
+          <p class="bike-detail-desc" id="bikeDetailDesc">Detalhes do modelo selecionado.</p>
+        </div>
+        <button class="edit-modal-close" onclick="closeBikeDetailsModal()" aria-label="Fechar modal">×</button>
+      </div>
+
+      <div class="bike-detail-grid">
+        <div class="bike-detail-photo" id="bikeDetailPhoto"></div>
+
+        <div class="bike-detail-panel">
+          <div class="bike-detail-badges" id="bikeDetailBadges"></div>
+
+          <div class="bike-detail-stats">
+            <div class="bike-stat">
+              <span>Disponíveis</span>
+              <strong id="bikeDetailAvailable">0</strong>
+            </div>
+            <div class="bike-stat">
+              <span>Total</span>
+              <strong id="bikeDetailTotal">0</strong>
+            </div>
+          </div>
+
+          <div class="bike-detail-prices" id="bikeDetailPrices"></div>
+
+          <div class="stock-control">
+            <label class="form-label" for="stockIncrement">Adicionar estoque</label>
+            <div class="stock-control-row">
+              <input class="form-input" type="number" id="stockIncrement" min="1" value="1">
+              <button class="btn btn-primary btn-sm" onclick="submitEstoque()" id="btnAddStock">Adicionar</button>
+            </div>
+          </div>
+
+          <div class="bike-detail-actions">
+            <button class="btn btn-secondary btn-sm" onclick="editSelectedBike()">Editar</button>
+            <button class="btn btn-secondary btn-sm" onclick="toggleSelectedBikeBlock()" id="btnBikeBlock">Bloquear</button>
+            <button class="btn btn-danger btn-sm" onclick="requestBikeRemoval()">Remover</button>
+          </div>
+
+          <div class="bike-action-confirm" id="bikeActionConfirm" hidden>
+            <div>
+              <div class="bike-action-confirm-title" id="bikeActionConfirmTitle">Confirmar ação?</div>
+              <div class="bike-action-confirm-body" id="bikeActionConfirmBody">Essa ação será aplicada ao modelo selecionado.</div>
+            </div>
+            <div class="bike-action-confirm-actions">
+              <button class="btn btn-secondary btn-sm" onclick="cancelPendingBikeAction()">Cancelar</button>
+              <button class="btn btn-danger btn-sm" onclick="confirmPendingBikeAction()" id="btnConfirmBikeAction">Confirmar</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <!-- MODAL EDITAR BIKE -->
   <div class="edit-modal-overlay" id="editModalOverlay" onclick="closeEditModal(event)">
     <div class="edit-modal" id="editModal">

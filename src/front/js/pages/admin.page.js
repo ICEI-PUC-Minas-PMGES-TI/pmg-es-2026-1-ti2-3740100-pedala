@@ -1,4 +1,3 @@
-// @ts-check
 // ── Auth ──────────────────────────────────────────────
 const token = localStorage.getItem('pedala_token');
 const user = JSON.parse(localStorage.getItem('pedala_user') || '{}');
@@ -16,7 +15,7 @@ function sair() {
     location.href = 'login.html';
 }
 
-// ── section navigation ───────────────────
+// ── Section Navigation ────────────────────────────────
 function showSec(s, el) {
     document.querySelectorAll('.sec').forEach(x => x.classList.remove('show'));
     document.getElementById('sec-' + s).classList.add('show');
@@ -30,7 +29,7 @@ function showSec(s, el) {
     if (loaders[s]) loaders[s]();
 }
 
-// ── badge helpers ────────────────────────
+// ── Badge helpers ─────────────────────────────────────
 function sBadge(s) {
     const m = { ativo: 'badge-warning', aguardando_locacao: 'badge-purple', agendada: 'badge-purple', aguardando_vistoria: 'badge-info', finalizado: 'badge-muted' };
     const l = { ativo: 'Em uso', aguardando_locacao: 'Pendente', agendada: 'Agendada', aguardando_vistoria: 'Vistoria', finalizado: 'Finalizado' };
@@ -44,7 +43,7 @@ function pBadge(p) {
     return `<span class="badge ${m[p.status]}">${l[p.status] || p.status}</span>`;
 }
 
-// ── image upload  ─────────────────
+// ── Image Upload Helpers ──────────────────────────────
 function previewUpload(input, previewId, zoneId) {
     const file = input.files[0];
     if (!file) return;
@@ -69,7 +68,7 @@ function removePreview(previewId, zoneId, inputId) {
     if (input) input.value = '';
 }
 
-// ── drag drop ─────────────────────
+// ── Drag & Drop for Upload Zones ─────────────────────
 function setupDragDrop(zoneId, inputId, previewId) {
     const zone = document.getElementById(zoneId);
     if (!zone) return;
@@ -92,7 +91,7 @@ function setupDragDrop(zoneId, inputId, previewId) {
     });
 }
 
-// ── dashboard ────────────────────
+// ── Dashboard ─────────────────────────────────────────
 async function loadDash() {
     try {
         const d = await fetch(`${API_BASE}/admin/stats`, { headers: authH }).then(r => r.json());
@@ -107,8 +106,10 @@ async function loadDash() {
     } catch (e) { showToast('Erro ao carregar dashboard.', 'error'); }
 }
 
-// ── bikes — state for search filter ────────────
+// ── Bikes — state for search filter ──────────────────
 let allBikes = [];
+let selectedBikeId = null;
+let pendingBikeAction = null;
 
 function filterBikeCards() {
     const query = (document.getElementById('bikeSearch')?.value || '').toLowerCase().trim();
@@ -116,6 +117,40 @@ function filterBikeCards() {
         ? allBikes.filter(b => b.nome.toLowerCase().includes(query) || b.categoria.toLowerCase().includes(query))
         : allBikes;
     renderBikeCards(filtered);
+}
+
+function getBikeById(id) {
+    return allBikes.find(b => Number(b.id) === Number(id));
+}
+
+function getSelectedBike() {
+    return selectedBikeId ? getBikeById(selectedBikeId) : null;
+}
+
+function bikeStatusBadge(bike) {
+    const available = bike.quantidadeDisponivel > 0 && !bike.bloqueada;
+    if (bike.bloqueada) return '<span class="badge badge-danger">Bloqueada</span>';
+    if (available) return '<span class="badge badge-success">Disponível</span>';
+    return '<span class="badge badge-muted">Sem estoque</span>';
+}
+
+function bikeQtyClass(bike) {
+    if (bike.quantidadeDisponivel === 0) return 'qty-zero';
+    return bike.quantidadeDisponivel <= 2 ? 'qty-low' : 'qty-ok';
+}
+
+function money(value) {
+    return 'R$' + Number(value || 0).toFixed(2);
+}
+
+function noPhotoHtml() {
+    return `<div class="no-photo"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M2.25 15.75l5.159-5.159a2.25 2.25 0 013.182 0l5.159 5.159m-1.5-1.5l1.409-1.409a2.25 2.25 0 013.182 0l2.909 2.909m-18 3.75h16.5a1.5 1.5 0 001.5-1.5V6a1.5 1.5 0 00-1.5-1.5H3.75A1.5 1.5 0 002.25 6v12a1.5 1.5 0 001.5 1.5zm10.5-11.25h.008v.008h-.008V8.25zm.375 0a.375.375 0 11-.75 0 .375.375 0 01.75 0z"/></svg><span>Sem foto</span></div>`;
+}
+
+function bikePhotoHtml(bike) {
+    const imgSrc = bike.imagem ? normalizeImagePath(bike.imagem) : null;
+    if (!imgSrc) return noPhotoHtml();
+    return `<img src="${escHtml(imgSrc)}" alt="${escHtml(bike.nome)}" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';">${noPhotoHtml().replace('class="no-photo"', 'class="no-photo" style="display:none;"')}`;
 }
 
 function renderBikeCards(bikes) {
@@ -126,65 +161,81 @@ function renderBikeCards(bikes) {
     }
 
     grid.innerHTML = bikes.map(b => {
-        const disp = b.quantidadeDisponivel > 0 && !b.bloqueada;
-        const statusBadge = b.bloqueada
-            ? `<span class="badge badge-danger">Bloqueada</span>`
-            : disp
-                ? `<span class="badge badge-success">Disponível</span>`
-                : `<span class="badge badge-muted">Sem estoque</span>`;
-
-        const qColor = b.quantidadeDisponivel === 0 ? 'qty-zero' : b.quantidadeDisponivel <= 2 ? 'qty-low' : 'qty-ok';
-
-        const imgSrc = b.imagem ? normalizeImagePath(b.imagem) : null;
-        const thumbHtml = imgSrc
-            ? `<img src="${imgSrc}" alt="${escHtml(b.nome)}" onerror="this.parentElement.innerHTML='<div class=\\'no-photo\\'><svg xmlns=\\'http://www.w3.org/2000/svg\\' fill=\\'none\\' viewBox=\\'0 0 24 24\\' stroke=\\'currentColor\\'><path stroke-linecap=\\'round\\' stroke-linejoin=\\'round\\' stroke-width=\\'1.5\\' d=\\'M2.25 15.75l5.159-5.159a2.25 2.25 0 013.182 0l5.159 5.159m-1.5-1.5l1.409-1.409a2.25 2.25 0 013.182 0l2.909 2.909m-18 3.75h16.5a1.5 1.5 0 001.5-1.5V6a1.5 1.5 0 00-1.5-1.5H3.75A1.5 1.5 0 002.25 6v12a1.5 1.5 0 001.5 1.5zm10.5-11.25h.008v.008h-.008V8.25zm.375 0a.375.375 0 11-.75 0 .375.375 0 01.75 0z\\'/></svg><span>Sem foto</span></div>';">`
-            : `<div class="no-photo"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M2.25 15.75l5.159-5.159a2.25 2.25 0 013.182 0l5.159 5.159m-1.5-1.5l1.409-1.409a2.25 2.25 0 013.182 0l2.909 2.909m-18 3.75h16.5a1.5 1.5 0 001.5-1.5V6a1.5 1.5 0 00-1.5-1.5H3.75A1.5 1.5 0 002.25 6v12a1.5 1.5 0 001.5 1.5zm10.5-11.25h.008v.008h-.008V8.25zm.375 0a.375.375 0 11-.75 0 .375.375 0 01.75 0z"/></svg><span>Sem foto</span></div>`;
-
-        const activateBtn = b.bloqueada
-            ? `<button class="btn btn-secondary btn-sm" onclick="bAction(${b.id},'ativar')">Ativar</button>`
-            : `<button class="btn btn-secondary btn-sm" onclick="bAction(${b.id},'bloquear')">Bloquear</button>`;
+        const qColor = bikeQtyClass(b);
 
         return `
-        <div class="admin-bike-card animate-in" id="bcard-${b.id}">
+        <div class="admin-bike-card animate-in" id="bcard-${b.id}" onclick="openBikeDetailsModal(${b.id})" role="button" tabindex="0" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();openBikeDetailsModal(${b.id});}" title="Clique para gerenciar">
             <div class="admin-bike-thumb">
-                ${thumbHtml}
+                ${bikePhotoHtml(b)}
             </div>
-            <div class="admin-bike-body">
-                <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:8px;">
-                    <div class="admin-bike-name">${escHtml(b.nome)}</div>
-                    ${statusBadge}
-                </div>
-                <div class="admin-bike-meta">
-                    <span class="badge badge-accent">${escHtml(b.categoria)}</span>
+            <div class="admin-bike-summary">
+                <div class="admin-bike-name">${escHtml(b.nome)}</div>
+                <div class="admin-bike-card-status">
+                    ${bikeStatusBadge(b)}
                     <span class="qty-badge">
                         <span class="${qColor}">${b.quantidadeDisponivel}</span>
                         <span style="color:var(--text-muted)">/</span>
                         <span>${b.quantidade}</span>
                     </span>
-                    <button class="btn btn-ghost btn-sm" style="padding:4px 10px;" onclick="addEstoque(${b.id})" title="Adicionar unidades">+ Estoque</button>
                 </div>
-                <div class="admin-bike-prices">
-                    <div class="price-cell">
-                        <div class="price-label">Semanal</div>
-                        <div class="price-value">R$${b.precos.semanal.toFixed(2)}</div>
-                    </div>
-                    <div class="price-cell">
-                        <div class="price-label">Quinzenal</div>
-                        <div class="price-value">R$${b.precos.quinzenal.toFixed(2)}</div>
-                    </div>
-                    <div class="price-cell">
-                        <div class="price-label">Mensal</div>
-                        <div class="price-value">R$${b.precos.mensal.toFixed(2)}</div>
-                    </div>
-                </div>
-                <div class="admin-bike-actions">
-                    <button class="btn btn-secondary btn-sm" onclick="openEditModal(${b.id})">Editar</button>
-                    ${activateBtn}
-                    <button class="btn btn-danger btn-sm" onclick="bAction(${b.id},'remover')">Remover</button>
-                </div>
+                <span class="bike-card-action">Abrir detalhes</span>
             </div>
         </div>`;
     }).join('');
+}
+
+function renderBikeDetailsModal() {
+    const bike = getSelectedBike();
+    if (!bike) return;
+
+    document.getElementById('bikeDetailTitle').textContent = bike.nome || 'Bike';
+    document.getElementById('bikeDetailDesc').textContent = bike.descricao || 'Sem descrição cadastrada.';
+    document.getElementById('bikeDetailPhoto').innerHTML = bikePhotoHtml(bike);
+    document.getElementById('bikeDetailBadges').innerHTML = `
+        ${bikeStatusBadge(bike)}
+        <span class="badge badge-accent">${escHtml(bike.categoria || 'Sem categoria')}</span>
+    `;
+    document.getElementById('bikeDetailAvailable').textContent = String(bike.quantidadeDisponivel || 0);
+    document.getElementById('bikeDetailTotal').textContent = String(bike.quantidade || 0);
+    document.getElementById('bikeDetailPrices').innerHTML = `
+        <div class="price-cell">
+            <div class="price-label">Semanal</div>
+            <div class="price-value">${money(bike.precos?.semanal)}</div>
+        </div>
+        <div class="price-cell">
+            <div class="price-label">Quinzenal</div>
+            <div class="price-value">${money(bike.precos?.quinzenal)}</div>
+        </div>
+        <div class="price-cell">
+            <div class="price-label">Mensal</div>
+            <div class="price-value">${money(bike.precos?.mensal)}</div>
+        </div>
+    `;
+
+    const blockBtn = document.getElementById('btnBikeBlock');
+    blockBtn.textContent = bike.bloqueada ? 'Ativar bike' : 'Bloquear bike';
+    blockBtn.className = bike.bloqueada ? 'btn btn-primary btn-sm' : 'btn btn-secondary btn-sm';
+
+    const stockInput = document.getElementById('stockIncrement');
+    if (stockInput) stockInput.value = '1';
+    cancelPendingBikeAction();
+}
+
+function openBikeDetailsModal(bikeId) {
+    const bike = getBikeById(bikeId);
+    if (!bike) return;
+    selectedBikeId = Number(bike.id);
+    pendingBikeAction = null;
+    renderBikeDetailsModal();
+    document.getElementById('bikeDetailsModalOverlay').classList.add('open');
+}
+
+function closeBikeDetailsModal(event) {
+    if (event && event.target !== document.getElementById('bikeDetailsModalOverlay')) return;
+    document.getElementById('bikeDetailsModalOverlay').classList.remove('open');
+    selectedBikeId = null;
+    pendingBikeAction = null;
+    cancelPendingBikeAction();
 }
 
 async function loadBikes() {
@@ -204,7 +255,7 @@ function escHtml(str) {
     return String(str ?? '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
 }
 
-// ── add Bike ───────────────────────────────
+// ── Add Bike ──────────────────────────────────────────
 async function addBike() {
     const nome = document.getElementById('bNome').value.trim();
     if (!nome) { showToast('Nome é obrigatório.', 'warning'); return; }
@@ -252,31 +303,151 @@ async function addBike() {
     }
 }
 
-// ── add estoqu ─────────────────────────────────
-async function addEstoque(id) {
-    const n = prompt('Quantas unidades adicionar?', '1');
-    if (!n || isNaN(n) || parseInt(n) < 1) return;
-    const r = await fetch(`${API_BASE}/bikes/${id}/estoque`, {
-        method: 'PUT', headers: authHJ, body: JSON.stringify({ incremento: parseInt(n) })
-    });
-    const d = await r.json();
-    showToast(d.message || d.error || '', r.ok ? 'success' : 'error');
-    if (r.ok) loadBikes();
+// ── Add Stock ─────────────────────────────────────────
+function addEstoque(id) {
+    openBikeDetailsModal(id);
+    setTimeout(() => document.getElementById('stockIncrement')?.focus(), 0);
 }
 
-// ── Block / Activate / Remove ───────────────────
-async function bAction(id, action) {
-    const labels = { bloquear: 'bloquear', ativar: 'ativar', remover: 'remover permanentemente' };
-    if (!confirm(`Confirmar: ${labels[action] || action} bike #${id}?`)) return;
-    let url = `${API_BASE}/bikes/${id}/${action}`, method = 'PUT';
-    if (action === 'remover') { url = `${API_BASE}/bikes/${id}`; method = 'DELETE'; }
-    const r = await fetch(url, { method, headers: authH });
-    const d = await r.json();
-    showToast(d.message || d.error || '', r.ok ? 'success' : 'error');
-    if (r.ok) loadBikes();
+async function submitEstoque() {
+    const bike = getSelectedBike();
+    if (!bike) return;
+
+    const input = document.getElementById('stockIncrement');
+    const incremento = parseInt(input.value, 10);
+    if (!Number.isFinite(incremento) || incremento < 1) {
+        showToast('Informe uma quantidade válida para o estoque.', 'warning');
+        return;
+    }
+
+    const btn = document.getElementById('btnAddStock');
+    btn.disabled = true;
+    btn.textContent = 'Adicionando...';
+
+    try {
+        const r = await fetch(`${API_BASE}/bikes/${bike.id}/estoque`, {
+            method: 'PUT', headers: authHJ, body: JSON.stringify({ incremento })
+        });
+        const d = await r.json();
+        showToast(d.message || d.error || '', r.ok ? 'success' : 'error');
+        if (r.ok) {
+            await loadBikes();
+            selectedBikeId = bike.id;
+            renderBikeDetailsModal();
+        }
+    } catch (e) {
+        showToast('Erro ao adicionar estoque.', 'error');
+    } finally {
+        btn.disabled = false;
+        btn.textContent = 'Adicionar';
+    }
 }
 
-// ── Edit o  Modal ────────────────────────────────────────
+// ── Block / Activate / Remove ─────────────────────────
+function actionConfig(action, bike) {
+    const name = bike ? bike.nome : 'esta bike';
+    const configs = {
+        bloquear: {
+            title: 'Bloquear bike?',
+            body: `O modelo "${name}" ficará indisponível para novas locações até ser ativado novamente.`,
+            confirm: 'Bloquear bike',
+            className: 'btn btn-secondary btn-sm'
+        },
+        ativar: {
+            title: 'Ativar bike?',
+            body: `O modelo "${name}" voltará a aparecer como disponível quando houver estoque.`,
+            confirm: 'Ativar bike',
+            className: 'btn btn-primary btn-sm'
+        },
+        remover: {
+            title: 'Remover permanentemente?',
+            body: `O modelo "${name}" será removido do catálogo. Essa ação não deve ser usada se você só quiser ocultar temporariamente.`,
+            confirm: 'Remover',
+            className: 'btn btn-danger btn-sm'
+        }
+    };
+    return configs[action] || configs.bloquear;
+}
+
+function requestBikeAction(action) {
+    const bike = getSelectedBike();
+    if (!bike) return;
+
+    pendingBikeAction = action;
+    const config = actionConfig(action, bike);
+    document.getElementById('bikeActionConfirmTitle').textContent = config.title;
+    document.getElementById('bikeActionConfirmBody').textContent = config.body;
+
+    const confirmBtn = document.getElementById('btnConfirmBikeAction');
+    confirmBtn.textContent = config.confirm;
+    confirmBtn.className = config.className;
+    confirmBtn.disabled = false;
+
+    document.getElementById('bikeActionConfirm').hidden = false;
+}
+
+function cancelPendingBikeAction() {
+    pendingBikeAction = null;
+    const confirm = document.getElementById('bikeActionConfirm');
+    if (confirm) confirm.hidden = true;
+}
+
+function toggleSelectedBikeBlock() {
+    const bike = getSelectedBike();
+    if (!bike) return;
+    requestBikeAction(bike.bloqueada ? 'ativar' : 'bloquear');
+}
+
+function requestBikeRemoval() {
+    requestBikeAction('remover');
+}
+
+async function confirmPendingBikeAction() {
+    const bike = getSelectedBike();
+    const action = pendingBikeAction;
+    if (!bike || !action) return;
+
+    const btn = document.getElementById('btnConfirmBikeAction');
+    btn.disabled = true;
+    btn.textContent = 'Aplicando...';
+
+    let url = `${API_BASE}/bikes/${bike.id}/${action}`, method = 'PUT';
+    if (action === 'remover') { url = `${API_BASE}/bikes/${bike.id}`; method = 'DELETE'; }
+
+    try {
+        const r = await fetch(url, { method, headers: authH });
+        const d = await r.json();
+        showToast(d.message || d.error || '', r.ok ? 'success' : 'error');
+
+        if (r.ok) {
+            cancelPendingBikeAction();
+            if (action === 'remover') closeBikeDetailsModal();
+            await loadBikes();
+            if (action !== 'remover') {
+                selectedBikeId = bike.id;
+                renderBikeDetailsModal();
+            }
+        }
+    } catch (e) {
+        showToast('Erro ao aplicar ação na bike.', 'error');
+    } finally {
+        btn.disabled = false;
+    }
+}
+
+function bAction(id, action) {
+    openBikeDetailsModal(id);
+    requestBikeAction(action);
+}
+
+function editSelectedBike() {
+    const bike = getSelectedBike();
+    if (!bike) return;
+    closeBikeDetailsModal();
+    openEditModal(bike.id);
+}
+
+// ── Edit Modal ────────────────────────────────────────
 function openEditModal(bikeId) {
     const bike = allBikes.find(b => b.id === bikeId);
     if (!bike) return;
@@ -289,10 +460,10 @@ function openEditModal(bikeId) {
     document.getElementById('editPQ').value = bike.precos?.quinzenal || '';
     document.getElementById('editPM').value = bike.precos?.mensal || '';
 
-    // resett upload state
+    // Reset upload state
     removePreview('editPreview','editUploadZone','editImagem');
 
-    // Mostrar foto atual se existe
+    // Mostrar foto atual se existir
     const currentPhotoDiv = document.getElementById('editCurrentPhoto');
     const currentPhotoImg = document.getElementById('editCurrentPhotoImg');
     if (bike.imagem) {
@@ -348,7 +519,7 @@ async function saveEditBike() {
     }
 }
 
-// ── locaçoes ───────────────────────────────────
+// ── Locações ──────────────────────────────────────────
 async function loadLocacoes() {
     try {
         const d = await fetch(`${API_BASE}/admin/alugueis`, { headers: authH }).then(r => r.json());
@@ -375,7 +546,7 @@ async function ativarLoc(id) {
     if (r.ok) loadLocacoes();
 }
 
-// ── pagamentos ────────────────────
+// ── Pagamentos ────────────────────────────────────────
 async function loadPagamentos() {
     try {
         const d = await fetch(`${API_BASE}/admin/pagamentos`, { headers: authH }).then(r => r.json());
@@ -437,13 +608,13 @@ async function rejPag(id) {
     if (r.ok) loadPagamentos();
 }
 
-// ── GPS Mapa  Leaflet + SSE ───────────────────────────
+// ── GPS Map — Leaflet + SSE ───────────────────────────
 let _gpsMap = null;          // instância Leaflet
 let _gpsMarkers = {};        // bikeId → L.marker
 let _gpsSSE = null;          // EventSource
 let _gpsInitialized = false; // evitar dupla init
 
-// icone personalizado de bike
+// Ícone personalizado de bike
 function _bikeIcon(color) {
     return L.divIcon({
         className: '',
@@ -537,7 +708,7 @@ function initGpsMap() {
     // Inicializar mapa Leaflet na primeira abertura
     if (!_gpsInitialized) {
         _gpsInitialized = true;
-        // Aguardar o container ficar visivel (seção '.show' aplicada)
+        // Aguardar o container ficar visível (seção '.show' aplicada)
         setTimeout(() => {
             _gpsMap = L.map('gpsMapContainer', {
                 center: [-23.5505, -46.6333],
@@ -553,7 +724,7 @@ function initGpsMap() {
             _gpsStartSSE();
         }, 80);
     } else {
-        // Seção reaberta: invalidar tamanho do mapa 
+        // Seção reaberta: invalidar tamanho do mapa (Leaflet precisa disso)
         if (_gpsMap) setTimeout(() => _gpsMap.invalidateSize(), 80);
     }
 }
@@ -580,7 +751,7 @@ function reconnectGPS() {
     _gpsStartSSE();
 }
 
-// ── Vistorias ──────────────
+// ── Vistorias ─────────────────────────────────────────
 async function loadVist() {
     const d = await fetch(`${API_BASE}/vistorias`, { headers: authH }).then(r => r.json());
     const m = { pendente: 'badge-warning', aprovada: 'badge-success', reprovada: 'badge-danger' };
@@ -589,7 +760,7 @@ async function loadVist() {
     ).join('') || '<tr><td colspan="7" style="text-align:center;color:var(--text-muted);padding:24px;">Nenhuma vistoria.</td></tr>';
 }
 
-// ── Usuários ────────────────────
+// ── Usuários ──────────────────────────────────────────
 async function loadUsers() {
     const d = await fetch(`${API_BASE}/admin/usuarios`, { headers: authH }).then(r => r.json());
     const m = { user: 'badge-success', funcionario: 'badge-warning', admin: 'badge-purple' };
@@ -600,14 +771,23 @@ async function loadUsers() {
 
 // ── Close edit modal on Escape ────────────────────────
 document.addEventListener('keydown', e => {
-    if (e.key === 'Escape') document.getElementById('editModalOverlay').classList.remove('open');
+    if (e.key === 'Escape') {
+        document.getElementById('editModalOverlay').classList.remove('open');
+        closeBikeDetailsModal();
+    }
 });
 
-
+// ── Setup drag & drop after DOM ready ────────────────
 document.addEventListener('DOMContentLoaded', () => {
     setupDragDrop('uploadZone', 'bImagem', 'uploadPreview');
     setupDragDrop('editUploadZone', 'editImagem', 'editPreview');
+    const stockInput = document.getElementById('stockIncrement');
+    if (stockInput) {
+        stockInput.addEventListener('keydown', e => {
+            if (e.key === 'Enter') submitEstoque();
+        });
+    }
 });
 
-// ── init ───────────────────
+// ── Init ──────────────────────────────────────────────
 loadDash();

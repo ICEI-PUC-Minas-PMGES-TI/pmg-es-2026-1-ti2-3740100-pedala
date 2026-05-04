@@ -1,0 +1,128 @@
+%%{init: {'theme': 'base', 'themeVariables': { 'background': '#ffffff'}}}%%
+erDiagram
+  USERS ||--o| USER_ADDRESSES : has
+  USERS ||--o{ RENTALS : creates
+  BIKES ||--o{ RENTALS : is_rented_in
+  BIKES ||--o{ BIKE_PRICES : has
+
+  RENTALS ||--|| RENTAL_PAYMENTS : has
+  RENTALS ||--o{ RENTAL_INVOICES : has
+  RENTALS ||--o{ RENTAL_RENEWALS : has
+  RENTALS ||--o{ INSPECTIONS : requires
+
+  USERS ||--o{ INSPECTIONS : evaluates
+  USERS ||--o{ RENTAL_PAYMENTS : approves
+
+  BIKES ||--o| GPS_POSITIONS_CURRENT : tracks
+  RENTALS ||--o{ GPS_POSITIONS_HISTORY : generates
+  BIKES ||--o{ GPS_POSITIONS_HISTORY : generates
+
+  USERS {
+    bigint id PK
+    string nome
+    string email UQ
+    string senha_hash
+    string cpf UQ
+    string telefone
+    string role
+  }
+
+  USER_ADDRESSES {
+    bigint id PK
+    bigint user_id FK
+    string cep
+    string logradouro
+    string numero
+    string bairro
+    string cidade
+    string uf
+    string complemento
+  }
+
+  BIKES {
+    bigint id PK
+    string nome
+    string categoria
+    int quantidade_total
+    int quantidade_disponivel
+    boolean bloqueada
+    boolean removida
+    string imagem_url
+  }
+
+  BIKE_PRICES {
+    bigint id PK
+    bigint bike_id FK
+    string plano
+    decimal valor
+  }
+
+  RENTALS {
+    bigint id PK
+    bigint user_id FK
+    bigint bike_id FK
+    string tipo_plano
+    string status
+    decimal valor_total
+    datetime data_inicio
+    datetime data_devolucao_prevista
+  }
+
+  RENTAL_PAYMENTS {
+    bigint id PK
+    bigint rental_id FK
+    string status
+    datetime solicitado_em
+    datetime aprovado_em
+    bigint aprovado_por_user_id FK
+  }
+
+  RENTAL_INVOICES {
+    bigint id PK
+    bigint rental_id FK
+    string codigo_externo UQ
+    decimal valor
+    string status
+    datetime data_vencimento
+    datetime pago_em
+  }
+
+  RENTAL_RENEWALS {
+    bigint id PK
+    bigint rental_id FK
+    string tipo_plano
+    int dias
+    decimal valor
+    datetime renovado_em
+  }
+
+  INSPECTIONS {
+    bigint id PK
+    bigint rental_id FK
+    bigint user_id FK
+    bigint bike_id FK
+    bigint funcionario_id FK
+    string status
+    string observacao
+    datetime criada_em
+    datetime avaliada_em
+  }
+
+  GPS_POSITIONS_CURRENT {
+    bigint bike_id PK, FK
+    bigint rental_id FK
+    decimal lat
+    decimal lng
+    decimal speed_kmh
+    datetime updated_at
+  }
+
+  GPS_POSITIONS_HISTORY {
+    bigint id PK
+    bigint bike_id FK
+    bigint rental_id FK
+    decimal lat
+    decimal lng
+    decimal speed_kmh
+    datetime captured_at
+  }

@@ -5,9 +5,9 @@ FROM eclipse-temurin:17-jdk-alpine AS build
 RUN apk add --no-cache maven
 
 WORKDIR /app
-COPY pom.xml .
-COPY .mvn .mvn
-COPY src src
+COPY src/pom.xml .
+COPY src/.mvn .mvn
+COPY src/main src/main
 RUN mvn -B dependency:go-offline
 RUN mvn -B package -DskipTests
 

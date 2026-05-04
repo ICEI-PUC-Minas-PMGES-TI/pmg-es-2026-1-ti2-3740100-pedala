@@ -42,7 +42,8 @@ document.addEventListener('DOMContentLoaded', () => {
             if (!response.ok) throw new Error('Erro na resposta do servidor');
 
             const data = await response.json();
-            updateMessage(loadingId, data.reply || 'Consigo ajudar com aluguel, pagamento, entrega e vistoria.');
+            const replyText = sanitizeChatbotReply(data.reply || 'Consigo ajudar com aluguel, pagamento, entrega e vistoria.');
+            updateMessage(loadingId, replyText);
         } catch (error) {
             console.error('Chatbot Error:', error);
             updateMessage(loadingId, 'Desculpe, nao consegui falar com a IA agora. Tente novamente em instantes.');
@@ -75,6 +76,17 @@ document.addEventListener('DOMContentLoaded', () => {
             msgDiv.textContent = text;
         }
         scrollToBottom();
+    }
+
+    function sanitizeChatbotReply(text) {
+        if (!text) return text;
+
+        let sanitized = text;
+        sanitized = sanitized.replace(/flash\s*lite\s*preview/gi, 'flash lite');
+        sanitized = sanitized.replace(/-preview\b/gi, '');
+        sanitized = sanitized.replace(/\(\s*preview\s*\)/gi, '');
+        sanitized = sanitized.replace(/\s{2,}/g, ' ').trim();
+        return sanitized;
     }
 
     function scrollToBottom() {
