@@ -78,6 +78,48 @@
   --info-border: rgba(43, 123, 185, 0.36);
 }
 
+[data-theme="light"] .auth-page-login {
+  background:
+    radial-gradient(900px 520px at 14% 12%, rgba(247, 184, 76, 0.12), transparent 58%),
+    radial-gradient(760px 460px at 92% 12%, rgba(43, 123, 185, 0.08), transparent 54%),
+    var(--color-bg);
+}
+
+[data-theme="light"] .auth-shell-login .auth-intro {
+  background:
+    linear-gradient(145deg, #f3eee6, #eae4da);
+  color: var(--color-text);
+}
+
+[data-theme="light"] .auth-shell-login .auth-intro h1,
+[data-theme="light"] .auth-shell-login .auth-intro p,
+[data-theme="light"] .auth-shell-login .auth-intro strong {
+  color: var(--color-text);
+}
+
+[data-theme="light"] .auth-shell-login .auth-point p {
+  color: var(--color-text-muted);
+}
+
+[data-theme="light"] .auth-ride-card {
+  background: #f3eee6;
+  border: 1px solid var(--color-border);
+}
+
+[data-theme="light"] .auth-ride-card span {
+  color: var(--color-text-muted);
+}
+
+[data-theme="light"] .auth-ride-card strong {
+  color: var(--color-text);
+}
+
+[data-theme="light"] .auth-ride-metrics span {
+  background: #e7dfd3;
+  color: var(--color-text);
+  border: 1px solid var(--color-border);
+}
+
 /* ══════════════════════════════════════════════════
    RESET & BASE
 ══════════════════════════════════════════════════ */
