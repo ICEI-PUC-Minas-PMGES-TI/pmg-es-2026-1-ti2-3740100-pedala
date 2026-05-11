@@ -1,4 +1,4 @@
-### 3.3.3 Processo 3 – Cadastro de Bicicletas
+### 3.3.3 Processo 2 – Cadastro de Bicicletas
 
 O processo tem como objetivo permitir que o administrador cadastre novas bicicletas no sistema, garantindo que estejam prontas para locação. Uma oportunidade de melhoria futura seria a inclusão de integração com uma API de fabricantes para preenchimento automático das especificações técnicas com base no modelo, reduzindo o tempo de digitação do administrador.
 
