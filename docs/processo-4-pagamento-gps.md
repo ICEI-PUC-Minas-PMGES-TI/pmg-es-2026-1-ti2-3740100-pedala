@@ -1,4 +1,4 @@
-### 3.3.3 Processo – Pagamento e Monitoramento da Locação (GPS)
+### 3.3.3 Processo 4 – Pagamento e Monitoramento da Locação (GPS)
 
 O processo de pagamento pode ser aprimorado com a inclusão de múltiplas formas de pagamento, como PIX, cartão de crédito e carteiras digitais. Além disso, a implementação de notificações em tempo real permite informar o cliente sobre o status da transação, tornando a experiência mais transparente e eficiente. Após a confirmação do pagamento, inicia-se o monitoramento da bicicleta durante o período da locação.
 
