@@ -26,6 +26,45 @@ function dashEscape(value) {
     .replace(/'/g, '&#39;');
 }
 
+function formatDashboardDate(value, fallback = 'Data indisponivel') {
+  if (!value) return fallback;
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return fallback;
+  return date.toLocaleDateString('pt-BR');
+}
+
+function getRentalPlanDays(type) {
+  const daysByType = { semanal: 7, quinzenal: 15, mensal: 30 };
+  return daysByType[type] || 30;
+}
+
+function getRentalDaysRemaining(rental) {
+  if (rental.diasRestantes !== null && rental.diasRestantes !== undefined) {
+    const explicitDays = Number(rental.diasRestantes);
+    if (Number.isFinite(explicitDays)) return explicitDays;
+  }
+
+  const dueDate = new Date(rental.dataDevolucaoPrevista);
+  if (Number.isNaN(dueDate.getTime())) return null;
+  return Math.ceil((dueDate.getTime() - Date.now()) / 864e5);
+}
+
+function getRentalProgress(rental) {
+  const daysRemaining = getRentalDaysRemaining(rental);
+  if (daysRemaining === null) return 0;
+  const totalDays = getRentalPlanDays(rental.tipo);
+  return Math.max(0, Math.min(100, 100 - (daysRemaining / totalDays) * 100));
+}
+
+function formatRentalDaysRemaining(rental) {
+  const daysRemaining = getRentalDaysRemaining(rental);
+  if (daysRemaining === null) {
+    return rental.status === 'finalizado' ? 'Finalizado' : 'Nao informado';
+  }
+  if (daysRemaining > 0) return `${daysRemaining} dias`;
+  return rental.status === 'finalizado' ? 'Finalizado' : 'Vencida';
+}
+
 function bikeTraits(category) {
   const key = String(category || '').toLowerCase();
   if (key.includes('speed')) return ['Leve', 'Rapida', 'Performance'];
@@ -102,25 +141,7 @@ async function loadInicio() {
       fetch(`${dashboardApi}/rentals/meus`, { headers: dashboardHeaders }).then(response => response.json())
     ]);
 
-    let rentals = rentalResponse.alugueis || [];
-
-    // MOCK DATA FOR PREVIEW
-    if (rentals.length === 0) {
-      rentals = [
-        {
-          id: 101,
-          bikeNome: 'Pedala Pro Trail',
-          planoLabel: 'Plano Mensal',
-          tipo: 'mensal',
-          dataInicio: new Date(Date.now() - 10 * 864e5).toISOString(),
-          dataDevolucaoPrevista: new Date(Date.now() + 20 * 864e5).toISOString(),
-          status: 'ativo',
-          preco: 259.90,
-          diasRestantes: 20,
-          pagamento: { status: 'aprovado' }
-        }
-      ];
-    }
+    const rentals = rentalResponse.alugueis || [];
     const available = (bikeResponse.bikes || []).filter(bike => bike.quantidadeDisponivel > 0 && !bike.bloqueada).length;
     const active = rentals.filter(rental => ['ativo', 'aguardando_locacao', 'agendada'].includes(rental.status)).length;
 
@@ -145,8 +166,7 @@ async function loadInicio() {
       return;
     }
 
-    const totalDays = highlight.tipo === 'semanal' ? 7 : highlight.tipo === 'quinzenal' ? 15 : 30;
-    const progress = Math.max(0, Math.min(100, 100 - ((highlight.diasRestantes || 0) / totalDays) * 100));
+    const progress = getRentalProgress(highlight);
     target.innerHTML = `
       <div class="card">
         <div class="card-header">
@@ -155,7 +175,7 @@ async function loadInicio() {
         </div>
         <div class="card-body">
           <div class="rental-bike-name">${dashEscape(highlight.bikeNome)}</div>
-          <div class="rental-meta">${dashEscape(highlight.planoLabel)} | Devolucao prevista em ${new Date(highlight.dataDevolucaoPrevista).toLocaleDateString('pt-BR')}</div>
+          <div class="rental-meta">${dashEscape(highlight.planoLabel)} | Devolucao prevista em ${formatDashboardDate(highlight.dataDevolucaoPrevista)}</div>
           <div class="rental-progress-bar" style="margin:16px 0 10px;"><div class="rental-progress-fill" style="width:${progress}%"></div></div>
           <div class="rental-actions">
             ${paymentBadge(highlight.pagamento)}
@@ -272,38 +292,7 @@ async function loadLocacoes() {
   const target = document.getElementById('locList');
   try {
     const response = await fetch(`${dashboardApi}/rentals/meus`, { headers: dashboardHeaders }).then(request => request.json());
-    let rentals = response.alugueis || [];
-
-    // MOCK DATA FOR PREVIEW (Remove or comment out when DB is ready)
-    if (rentals.length === 0) {
-      rentals = [
-        {
-          id: 101,
-          bikeNome: 'Pedala Pro Trail',
-          planoLabel: 'Plano Mensal',
-          tipo: 'mensal',
-          dataInicio: new Date(Date.now() - 10 * 864e5).toISOString(),
-          dataDevolucaoPrevista: new Date(Date.now() + 20 * 864e5).toISOString(),
-          status: 'ativo',
-          preco: 259.90,
-          diasRestantes: 20,
-          pagamento: { status: 'aprovado' }
-        },
-        {
-          id: 102,
-          bikeNome: 'Pedala City Plus',
-          planoLabel: 'Plano Semanal',
-          tipo: 'semanal',
-          dataInicio: new Date().toISOString(),
-          dataDevolucaoPrevista: new Date(Date.now() + 7 * 864e5).toISOString(),
-          status: 'aguardando_locacao',
-          preco: 89.00,
-          diasRestantes: 7,
-          pagamento: { status: 'nao_pago' },
-          faturas: [{ id: 'f_1', valor: 89.00, status: 'pendente' }]
-        }
-      ];
-    }
+    const rentals = response.alugueis || [];
 
     if (!rentals.length) {
       target.innerHTML = `<div class="empty-state"><strong>Nenhum aluguel encontrado</strong><span>Escolha sua bicicleta e comece a pedalar.</span><button class="btn btn-primary" type="button" onclick="showSec('locar',document.getElementById('nav-locar'))">Ver catálogo</button></div>`;
@@ -312,21 +301,20 @@ async function loadLocacoes() {
 
     target.innerHTML = rentals
       .map(rental => {
-        const totalDays = rental.tipo === 'semanal' ? 7 : rental.tipo === 'quinzenal' ? 15 : 30;
-        const progress = Math.max(0, Math.min(100, 100 - ((rental.diasRestantes || 0) / totalDays) * 100));
+        const progress = getRentalProgress(rental);
         const pendingBill = (rental.faturas || []).find(bill => bill.status === 'pendente' || bill.status === 'rejeitado');
         return `
           <article class="rental-card">
             <div class="rental-header">
               <div>
                 <div class="rental-bike-name">${dashEscape(rental.bikeNome)}</div>
-                <div class="rental-meta">${dashEscape(rental.planoLabel)} | Inicio em ${new Date(rental.dataInicio).toLocaleDateString('pt-BR')}</div>
+                <div class="rental-meta">${dashEscape(rental.planoLabel)} | Inicio em ${formatDashboardDate(rental.dataInicio)}</div>
               </div>
               <div class="rental-actions">${statusBadge(rental.status)}${paymentBadge(rental.pagamento)}</div>
             </div>
-            <div class="info-row"><span class="info-label">Devolucao prevista</span><span class="info-value">${new Date(rental.dataDevolucaoPrevista).toLocaleDateString('pt-BR')}</span></div>
+            <div class="info-row"><span class="info-label">Devolucao prevista</span><span class="info-value">${formatDashboardDate(rental.dataDevolucaoPrevista)}</span></div>
             <div class="info-row"><span class="info-label">Valor atual</span><span class="info-value">${dashEscape(formatCurrency(rental.preco))}</span></div>
-            <div class="info-row"><span class="info-label">Dias restantes</span><span class="info-value">${rental.diasRestantes > 0 ? `${rental.diasRestantes} dias` : rental.status === 'finalizado' ? 'Finalizado' : 'Vencida'}</span></div>
+            <div class="info-row"><span class="info-label">Dias restantes</span><span class="info-value">${formatRentalDaysRemaining(rental)}</span></div>
             ${pendingBill ? `<div class="info-row"><span class="info-label">Proxima fatura</span><span class="info-value">${dashEscape(formatCurrency(pendingBill.valor))}</span></div>` : ''}
             ${['ativo', 'aguardando_locacao', 'agendada'].includes(rental.status) ? `<div class="rental-progress-bar" style="margin:16px 0 10px;"><div class="rental-progress-fill" style="width:${progress}%"></div></div>` : ''}
             <div class="rental-actions">
