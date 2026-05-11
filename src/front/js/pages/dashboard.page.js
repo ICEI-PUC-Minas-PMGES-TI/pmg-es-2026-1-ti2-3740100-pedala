@@ -14,6 +14,7 @@ const dashboardState = {
   activeCategory: '',
   selectedBike: null,
   selectedPlan: '',
+  selectedInsurance: 'Básico',
   pendingBikeId: Number(new URLSearchParams(window.location.search).get('bike')) || null
 };
 
@@ -398,6 +399,21 @@ function openModal(id) {
     `)
     .join('');
 
+  document.getElementById('seguroOptions').innerHTML = [
+    ['Básico', 'Básico', '+ R$ 0,00', 'Sem proteção extra'],
+    ['Intermediário', 'Intermediário', '+ R$ 15,00', 'Cobre avarias leves'],
+    ['Premium', 'Premium', '+ R$ 30,00', 'Proteção total']
+  ]
+    .map(([key, label, price, text], idx) => `
+      <div class="plan-option ${idx === 0 ? 'selected' : ''}" onclick="selSeguro('${key}',this)">
+        <div class="plan-option-name">${label}</div>
+        <div class="plan-option-price" style="font-size: 1.1rem; color: var(--primary);">${price}</div>
+        <div style="color:var(--text-secondary);font-size:0.9rem;margin-top:6px;">${text}</div>
+      </div>
+    `)
+    .join('');
+  dashboardState.selectedInsurance = 'Básico';
+
   document.getElementById('modalStep1').style.display = '';
   document.getElementById('modalStep2').style.display = 'none';
   document.getElementById('modalOverlay').classList.add('open');
@@ -421,7 +437,13 @@ function backToBikeInfo() {
 
 function selPlan(plan, element) {
   dashboardState.selectedPlan = plan;
-  document.querySelectorAll('.plan-option').forEach(option => option.classList.remove('selected'));
+  element.parentElement.querySelectorAll('.plan-option').forEach(option => option.classList.remove('selected'));
+  element.classList.add('selected');
+}
+
+function selSeguro(plan, element) {
+  dashboardState.selectedInsurance = plan;
+  element.parentElement.querySelectorAll('.plan-option').forEach(option => option.classList.remove('selected'));
   element.classList.add('selected');
 }
 
@@ -446,7 +468,8 @@ async function confirmarLocacao() {
       body: JSON.stringify({
         bikeId: dashboardState.selectedBike.id,
         tipo: dashboardState.selectedPlan,
-        dataInicio: document.getElementById('dataInicio').value
+        dataInicio: document.getElementById('dataInicio').value,
+        tipoSeguro: dashboardState.selectedInsurance
       })
     });
 
@@ -531,6 +554,7 @@ window.closeModal = closeModal;
 window.goToLocacao = goToLocacao;
 window.backToBikeInfo = backToBikeInfo;
 window.selPlan = selPlan;
+window.selSeguro = selSeguro;
 window.confirmarLocacao = confirmarLocacao;
 window.solicitarPagFatura = solicitarPagFatura;
 window.solicDevol = solicDevol;

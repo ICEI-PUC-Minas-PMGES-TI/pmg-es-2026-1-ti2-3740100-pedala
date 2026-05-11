@@ -91,6 +91,17 @@ public class Rental {
     @Column(name = "multa_aplicada", precision = 10, scale = 2)
     private BigDecimal multaAplicada;
 
+    @Column(name = "tipo_seguro", length = 50)
+    private String tipoSeguro;
+
+    @Column(name = "valor_seguro", precision = 10, scale = 2)
+    @Builder.Default
+    private BigDecimal valorSeguro = BigDecimal.ZERO;
+
+    @Column(name = "alerta_desvio", nullable = false)
+    @Builder.Default
+    private Boolean alertaDesvio = false;
+
     // Endereco de entrega (embedded columns)
     @Column(name = "endereco_logradouro", length = 200)
     private String enderecoLogradouro;

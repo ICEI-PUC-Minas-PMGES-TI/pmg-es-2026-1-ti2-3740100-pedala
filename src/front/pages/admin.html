@@ -56,6 +56,21 @@
           <div class="stat-card"><div class="stat-card-label">Aguardando vistoria</div><div class="stat-card-value" id="stVist">—</div></div>
           <div class="stat-card"><div class="stat-card-label">Faturamento (mês)</div><div class="stat-card-value" id="stRec" style="font-size:24px;">R$—</div></div>
         </div>
+        
+        <div class="stat-grid" style="grid-template-columns: 1fr 1fr; margin-top: 24px;">
+          <div class="card">
+            <div class="card-header"><span class="card-title">Status das Locações</span></div>
+            <div class="card-body" style="padding: 16px; display: flex; justify-content: center;">
+              <canvas id="chartLocacoes" style="max-height: 250px;"></canvas>
+            </div>
+          </div>
+          <div class="card">
+            <div class="card-header"><span class="card-title">Status da Frota</span></div>
+            <div class="card-body" style="padding: 16px; display: flex; justify-content: center;">
+              <canvas id="chartFrota" style="max-height: 250px;"></canvas>
+            </div>
+          </div>
+        </div>
       </div>
 
       <!-- BIKES -->
@@ -405,6 +420,7 @@
 
   <div id="toast" class="toast" role="status" aria-live="polite"></div>
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <script src="../js/core/app.js"></script>
   <script src="../js/pages/admin.page.js"></script>
 </body>

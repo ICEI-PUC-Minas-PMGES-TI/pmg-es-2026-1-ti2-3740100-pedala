@@ -109,6 +109,7 @@ public class AdminService {
                 det.put("dataInicio", r.getDataInicio().toString()); det.put("ativadoEm", r.getAtivadoEm() != null ? r.getAtivadoEm().toString() : null);
                 det.put("dataDevolucaoPrevista", r.getDataDevolucaoPrevista().toString());
                 det.put("diasEmUso", diasEmUso); det.put("diasRestantes", diasRestantes); det.put("atrasado", diasRestantes < 0);
+                det.put("alertaDesvio", r.getAlertaDesvio());
                 m.put("aluguelAtivo", det);
             } else {
                 m.put("aluguelAtivo", null);
