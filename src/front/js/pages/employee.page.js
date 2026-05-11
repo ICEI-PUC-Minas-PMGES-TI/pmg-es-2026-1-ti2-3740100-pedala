@@ -1,11 +1,11 @@
 // @ts-check
 
-const token = localStorage.getItem('pedala_token');
-const user = JSON.parse(localStorage.getItem('pedala_user') || '{}');
-if (!token || !['funcionario', 'admin'].includes(user.role)) { alert('Acesso negado.'); location.href = 'login.html'; }
-document.getElementById('navAv').textContent = user.nome ? user.nome[0].toUpperCase() : 'F';
-document.getElementById('navNm').textContent = user.nome ? user.nome.split(' ')[0] : 'Funcionário';
-const h = { Authorization: 'Bearer ' + token }, hj = { ...h, 'Content-Type': 'application/json' };
+const empToken = localStorage.getItem('pedala_token');
+const empUser = JSON.parse(localStorage.getItem('pedala_user') || '{}');
+if (!empToken || !['funcionario', 'admin'].includes(empUser.role)) { alert('Acesso negado.'); location.href = 'login.html'; }
+document.getElementById('navAv').textContent = empUser.nome ? empUser.nome[0].toUpperCase() : 'F';
+document.getElementById('navNm').textContent = empUser.nome ? empUser.nome.split(' ')[0] : 'Funcionário';
+const h = { Authorization: 'Bearer ' + empToken }, hj = { ...h, 'Content-Type': 'application/json' };
 function sair() { localStorage.removeItem('pedala_token'); localStorage.removeItem('pedala_user'); location.href = 'login.html'; }
 
 function escHtml(s) {
@@ -163,10 +163,23 @@ function _gpsFlyTo(bikeId) {
 }
 
 function _gpsPopupHtml(d) {
+    const btnHtml = `<button class="btn btn-danger btn-sm" style="width:100%;margin-top:8px;padding:4px;" onclick="bloquearBikeGPS(${d.bikeId})">Bloquear Bike</button>`;
     return `<div class="gps-popup-name">Bike: ${escHtml(d.bikeNome)}</div>
         <div class="gps-popup-row">Endereço: ${escHtml(d.endereco)}</div>
         <div class="gps-popup-row">Velocidade: ${d.speed ? d.speed + ' km/h' : 'Parada'}</div>
-        <div class="gps-popup-row" style="color:var(--text-muted);font-size:0.72rem;">Locação #${d.rentalId}</div>`;
+        <div class="gps-popup-row" style="color:var(--text-muted);font-size:0.72rem;">Locação #${d.rentalId}</div>
+        ${btnHtml}`;
+}
+
+async function bloquearBikeGPS(id) {
+    if(!confirm('Tem certeza que deseja bloquear esta bike remotamente?')) return;
+    try {
+        const r = await fetch(`${API_BASE}/bikes/${id}/bloquear`, { method: 'PUT', headers: h });
+        const d = await r.json();
+        showToast(d.message || d.error || 'Ação concluída', r.ok ? 'success' : 'error');
+    } catch(e) {
+        showToast('Erro ao bloquear a bike.', 'error');
+    }
 }
 
 function _gpsHandleEvent(evt) {
@@ -214,6 +227,17 @@ function initGpsMap() {
                 attribution: '© <a href="https://openstreetmap.org">OpenStreetMap</a> contributors',
                 maxZoom: 19
             }).addTo(_gpsMap);
+            
+            // Desenhar Zona de Segurança (MASP, raio 2.5km)
+            L.circle([-23.5615, -46.6560], {
+                color: '#ef4444',
+                fillColor: '#ef4444',
+                fillOpacity: 0.1,
+                radius: 2500,
+                weight: 2,
+                dashArray: '5, 5'
+            }).addTo(_gpsMap).bindPopup('<b>Zona de Monitoramento</b><br>Limite de 2.5km do centro.');
+
             _gpsStartSSE();
         }, 80);
     } else {
@@ -224,7 +248,7 @@ function initGpsMap() {
 function _gpsStartSSE() {
     if (_gpsSSE) { _gpsSSE.close(); _gpsSSE = null; }
     _gpsSetStatus(false, 'Conectando...');
-    const url = `${API_BASE}/gps/stream?token=${encodeURIComponent(token)}`;
+    const url = `${API_BASE}/gps/stream?token=${encodeURIComponent(empToken)}`;
     _gpsSSE = new EventSource(url);
     _gpsSSE.addEventListener('message', _gpsHandleEvent);
     _gpsSSE.addEventListener('open', () => _gpsSetStatus(true, 'Conectado'));
@@ -240,6 +264,8 @@ function reconnectGPS() {
     _gpsUpdateSidebar();
     _gpsStartSSE();
 }
+
+window.bloquearBikeGPS = bloquearBikeGPS;
 
 // ── Init ──────────────────────────────────────────────
 loadVist();

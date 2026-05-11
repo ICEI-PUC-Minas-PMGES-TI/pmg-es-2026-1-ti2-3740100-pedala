@@ -20,6 +20,7 @@ import java.util.concurrent.CopyOnWriteArrayList;
 public class GpsSimulatorService {
 
     private final RentalRepository rentalRepository;
+    private final com.pedala.api.bike.repository.BikeRepository bikeRepository;
 
     private static final double[][] WAYPOINTS = {
         {-23.5505, -46.6333}, {-23.5519, -46.6355}, {-23.5538, -46.6381},
@@ -112,7 +113,14 @@ public class GpsSimulatorService {
                 }
             }
             
-            broadcastUpdate(buildPayload(track));
+            // Verifica se a bike esta bloqueada
+            boolean isBlocked = bikeRepository.findById(track.bikeId)
+                    .map(com.pedala.api.bike.domain.Bike::getBloqueada)
+                    .orElse(false);
+
+            if (!isBlocked) {
+                broadcastUpdate(buildPayload(track));
+            }
         }
     }
 
