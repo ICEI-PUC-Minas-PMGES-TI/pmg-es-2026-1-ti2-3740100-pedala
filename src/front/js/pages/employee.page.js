@@ -56,8 +56,9 @@ async function loadVist() {
 }
 
 async function aprovVist(id) {
-    const obs = document.getElementById('obs-' + id)?.value || '';
-    const r = await fetch(`${API_BASE}/vistorias/${id}/aprovar`, { method: 'PUT', headers: hj, body: JSON.stringify({ observacao: obs || 'Aprovada pelo funcionário' }) });
+    const obs = document.getElementById('obs-' + id)?.value?.trim() || '';
+    if (!obs) { showToast('Informe a observação técnica ao aprovar a vistoria.', 'warning'); return; }
+    const r = await fetch(`${API_BASE}/vistorias/${id}/aprovar`, { method: 'PUT', headers: hj, body: JSON.stringify({ observacao: obs }) });
     const d = await r.json();
     showToast(d.message || d.error || '', r.ok ? 'success' : 'error');
     if (r.ok) loadVist();
