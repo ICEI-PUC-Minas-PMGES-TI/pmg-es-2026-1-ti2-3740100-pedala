@@ -39,7 +39,7 @@ public class RentalService {
 
     @Transactional
     public Map<String, Object> createRental(Long userId, String userNome, String userEmail,
-                                             Long bikeId, String tipo, String dataInicio, Integer recorrenciaMeses) {
+                                             Long bikeId, String tipo, String dataInicio, Integer recorrenciaMeses, String tipoSeguro) {
         if (bikeId == null || tipo == null || tipo.isBlank()) {
             throw new BusinessException("bikeId e tipo sao obrigatorios.");
         }
@@ -81,7 +81,16 @@ public class RentalService {
             case quinzenal -> bike.getPrecoQuinzenal(); 
             case mensal -> bike.getPrecoMensal(); 
         };
-        BigDecimal precoTotal = precoPorCiclo.multiply(BigDecimal.valueOf(ciclosRecorrencia));
+        
+        String seguroDesc = (tipoSeguro != null && !tipoSeguro.isBlank()) ? tipoSeguro : "Básico";
+        BigDecimal valorSeguroPorCiclo = switch (seguroDesc.toLowerCase()) {
+            case "intermediário", "intermediario" -> BigDecimal.valueOf(15.00);
+            case "premium" -> BigDecimal.valueOf(30.00);
+            default -> BigDecimal.ZERO;
+        };
+
+        BigDecimal precoTotalPorCiclo = precoPorCiclo.add(valorSeguroPorCiclo);
+        BigDecimal precoTotal = precoTotalPorCiclo.multiply(BigDecimal.valueOf(ciclosRecorrencia));
         Instant dataDevolucaoPrevista = inicio.plus(diasTotais, ChronoUnit.DAYS);
         boolean isAgendada = inicio.isAfter(agora);
         RentalStatus statusInicial = isAgendada ? RentalStatus.agendada : RentalStatus.aguardando_locacao;
@@ -93,6 +102,7 @@ public class RentalService {
         Rental rental = Rental.builder().usuarioId(userId).usuarioNome(userNome).usuarioEmail(userEmail)
                 .bikeId(bike.getId()).bikeNome(bike.getNome()).bikeCategoria(bike.getCategoria())
                 .tipo(rentalType).planoLabel(planoLabel).ciclosRecorrencia(ciclosRecorrencia)
+                .tipoSeguro(seguroDesc).valorSeguro(valorSeguroPorCiclo)
                 .preco(precoTotal).status(statusInicial).dataInicio(inicio).dataDevolucaoPrevista(dataDevolucaoPrevista).criadoEm(agora).build();
         if (usuario.getEndereco() != null) {
             var addr = usuario.getEndereco();
@@ -103,7 +113,7 @@ public class RentalService {
         rental = rentalRepository.save(rental);
         for (int i = 0; i < ciclosRecorrencia; i++) {
             RentalInvoice fatura = RentalInvoice.builder().id("FAT-" + System.currentTimeMillis() + "-" + (i + 1))
-                    .dataVencimento(inicio.plus((long) i * diasPorCiclo, ChronoUnit.DAYS)).valor(precoPorCiclo).status("pendente").build();
+                    .dataVencimento(inicio.plus((long) i * diasPorCiclo, ChronoUnit.DAYS)).valor(precoTotalPorCiclo).status("pendente").build();
             rental.addFatura(fatura);
         }
         rental = rentalRepository.save(rental);
@@ -222,6 +232,8 @@ public class RentalService {
         m.put("usuarioEmail", r.getUsuarioEmail()); m.put("bikeId", r.getBikeId()); m.put("bikeNome", r.getBikeNome());
         m.put("bikeCategoria", r.getBikeCategoria()); m.put("tipo", r.getTipo().name()); m.put("planoLabel", r.getPlanoLabel());
         m.put("ciclosRecorrencia", r.getCiclosRecorrencia()); m.put("preco", r.getPreco());
+        m.put("tipoSeguro", r.getTipoSeguro()); m.put("valorSeguro", r.getValorSeguro());
+        m.put("alertaDesvio", r.getAlertaDesvio());
         if (r.getEnderecoLogradouro() != null) {
             m.put("enderecoEntrega", Map.of("logradouro", r.getEnderecoLogradouro(), "numero", r.getEnderecoNumero() != null ? r.getEnderecoNumero() : "",
                     "bairro", r.getEnderecoBairro() != null ? r.getEnderecoBairro() : "", "cidade", r.getEnderecoCidade() != null ? r.getEnderecoCidade() : "", "uf", r.getEnderecoUf() != null ? r.getEnderecoUf() : ""));

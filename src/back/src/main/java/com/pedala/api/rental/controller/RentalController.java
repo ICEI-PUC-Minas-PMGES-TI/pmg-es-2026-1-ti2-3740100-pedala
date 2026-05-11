@@ -31,8 +31,9 @@ public class RentalController {
         String tipo = (String) body.get("tipo");
         String dataInicio = (String) body.get("dataInicio");
         Integer recorrencia = body.get("recorrenciaMeses") != null ? Integer.valueOf(body.get("recorrenciaMeses").toString()) : null;
+        String tipoSeguro = (String) body.get("tipoSeguro");
         return ResponseEntity.status(HttpStatus.CREATED)
-                .body(rentalService.createRental(p.getId(), p.getNome(), p.getEmail(), bikeId, tipo, dataInicio, recorrencia));
+                .body(rentalService.createRental(p.getId(), p.getNome(), p.getEmail(), bikeId, tipo, dataInicio, recorrencia, tipoSeguro));
     }
 
     @Operation(summary = "Minhas locacoes")

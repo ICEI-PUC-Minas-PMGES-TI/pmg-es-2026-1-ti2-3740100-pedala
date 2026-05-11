@@ -1,5 +1,8 @@
 package com.pedala.api.gps.service;
 
+import com.pedala.api.rental.domain.Rental;
+import com.pedala.api.rental.repository.RentalRepository;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
@@ -13,7 +16,11 @@ import java.util.concurrent.CopyOnWriteArrayList;
 
 @Slf4j
 @Service
+@RequiredArgsConstructor
 public class GpsSimulatorService {
+
+    private final RentalRepository rentalRepository;
+    private final com.pedala.api.bike.repository.BikeRepository bikeRepository;
 
     private static final double[][] WAYPOINTS = {
         {-23.5505, -46.6333}, {-23.5519, -46.6355}, {-23.5538, -46.6381},
@@ -51,7 +58,7 @@ public class GpsSimulatorService {
         int[] route = ROUTE_TEMPLATES[random.nextInt(ROUTE_TEMPLATES.length)];
         int startIdx = route[0];
         TrackData track = new TrackData(bikeId, rentalId, bikeNome, route, 0, 1,
-                WAYPOINTS[startIdx][0], WAYPOINTS[startIdx][1], ENDERECOS[startIdx], 0, Instant.now());
+                WAYPOINTS[startIdx][0], WAYPOINTS[startIdx][1], ENDERECOS[startIdx], 0, Instant.now(), false);
         tracks.put(bikeId, track);
         broadcastUpdate(buildPayload(track));
     }
@@ -93,8 +100,39 @@ public class GpsSimulatorService {
             track.lng = WAYPOINTS[wpIdx][1];
             track.endereco = ENDERECOS[wpIdx];
             track.speed = 8 + random.nextDouble() * 10;
-            broadcastUpdate(buildPayload(track));
+            
+            // Geofencing Check (Centro: MASP -23.5615, -46.6560)
+            double distance = calculateDistance(-23.5615, -46.6560, track.lat, track.lng);
+            if (distance > 2.5 && !track.isSuspeito) { // Using 2.5km to ensure it triggers with current waypoints
+                track.isSuspeito = true;
+                if (track.rentalId != null) {
+                    rentalRepository.findById(track.rentalId).ifPresent(r -> {
+                        r.setAlertaDesvio(true);
+                        rentalRepository.save(r);
+                    });
+                }
+            }
+            
+            // Verifica se a bike esta bloqueada
+            boolean isBlocked = bikeRepository.findById(track.bikeId)
+                    .map(com.pedala.api.bike.domain.Bike::getBloqueada)
+                    .orElse(false);
+
+            if (!isBlocked) {
+                broadcastUpdate(buildPayload(track));
+            }
         }
+    }
+
+    private double calculateDistance(double lat1, double lon1, double lat2, double lon2) {
+        final int R = 6371;
+        double latDistance = Math.toRadians(lat2 - lat1);
+        double lonDistance = Math.toRadians(lon2 - lon1);
+        double a = Math.sin(latDistance / 2) * Math.sin(latDistance / 2)
+                + Math.cos(Math.toRadians(lat1)) * Math.cos(Math.toRadians(lat2))
+                * Math.sin(lonDistance / 2) * Math.sin(lonDistance / 2);
+        double c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+        return R * c;
     }
 
     private Map<String, Object> buildPayload(TrackData t) {
@@ -102,6 +140,7 @@ public class GpsSimulatorService {
         m.put("bikeId", t.bikeId); m.put("rentalId", t.rentalId); m.put("bikeNome", t.bikeNome);
         m.put("lat", t.lat); m.put("lng", t.lng); m.put("endereco", t.endereco);
         m.put("speed", Math.round(t.speed * 10.0) / 10.0);
+        m.put("isSuspeito", t.isSuspeito);
         m.put("startedAt", t.startedAt.toString()); m.put("updatedAt", Instant.now().toString());
         return m;
     }
@@ -129,13 +168,13 @@ public class GpsSimulatorService {
 
     private static class TrackData {
         Long bikeId, rentalId; String bikeNome; int[] route;
-        int index, direction; double lat, lng, speed; String endereco; Instant startedAt;
+        int index, direction; double lat, lng, speed; String endereco; Instant startedAt; boolean isSuspeito;
         TrackData(Long bikeId, Long rentalId, String bikeNome, int[] route, int index, int direction,
-                  double lat, double lng, String endereco, double speed, Instant startedAt) {
+                  double lat, double lng, String endereco, double speed, Instant startedAt, boolean isSuspeito) {
             this.bikeId = bikeId; this.rentalId = rentalId; this.bikeNome = bikeNome;
             this.route = route; this.index = index; this.direction = direction;
             this.lat = lat; this.lng = lng; this.endereco = endereco;
-            this.speed = speed; this.startedAt = startedAt;
+            this.speed = speed; this.startedAt = startedAt; this.isSuspeito = isSuspeito;
         }
     }
 }

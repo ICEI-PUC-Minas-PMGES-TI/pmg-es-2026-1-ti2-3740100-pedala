@@ -92,6 +92,9 @@ function setupDragDrop(zoneId, inputId, previewId) {
 }
 
 // ── Dashboard ─────────────────────────────────────────
+let chartLocacoesInst = null;
+let chartFrotaInst = null;
+
 async function loadDash() {
     try {
         const d = await fetch(`${API_BASE}/admin/stats`, { headers: authH }).then(r => r.json());
@@ -103,6 +106,42 @@ async function loadDash() {
         document.getElementById('stAL').textContent = d.alugueis.aguardandoEntrega || 0;
         document.getElementById('stVist').textContent = d.vistorias.pendentes;
         document.getElementById('stRec').textContent = 'R$' + Number(d.receitaTotal || 0).toFixed(2);
+
+        const textColor = getComputedStyle(document.documentElement).getPropertyValue('--text-primary').trim() || '#f8fafc';
+
+        if (chartLocacoesInst) chartLocacoesInst.destroy();
+        const ctxLocacoes = document.getElementById('chartLocacoes');
+        if (ctxLocacoes && window.Chart) {
+            chartLocacoesInst = new Chart(ctxLocacoes, {
+                type: 'pie',
+                data: {
+                    labels: ['Ativas', 'Aguard. Entrega', 'Agendadas', 'Finalizadas'],
+                    datasets: [{
+                        data: [d.alugueis.ativos, d.alugueis.aguardandoEntrega, d.alugueis.agendadas, d.alugueis.finalizados],
+                        backgroundColor: ['#10b981', '#f59e0b', '#8b5cf6', '#64748b'],
+                        borderColor: 'transparent'
+                    }]
+                },
+                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'right', labels: { color: textColor } } } }
+            });
+        }
+
+        if (chartFrotaInst) chartFrotaInst.destroy();
+        const ctxFrota = document.getElementById('chartFrota');
+        if (ctxFrota && window.Chart) {
+            chartFrotaInst = new Chart(ctxFrota, {
+                type: 'doughnut',
+                data: {
+                    labels: ['Disponíveis', 'Alugadas'],
+                    datasets: [{
+                        data: [d.bikes.disponiveis, d.bikes.alugadas],
+                        backgroundColor: ['#3b82f6', '#ef4444'],
+                        borderWidth: 0
+                    }]
+                },
+                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'right', labels: { color: textColor } } } }
+            });
+        }
     } catch (e) { showToast('Erro ao carregar dashboard.', 'error'); }
 }
 
@@ -698,10 +737,23 @@ function _gpsHandleEvent(evt) {
 }
 
 function _gpsPopupHtml(d) {
+    const btnHtml = `<button class="btn btn-danger btn-sm" style="width:100%;margin-top:8px;padding:4px;" onclick="bloquearBikeGPS(${d.bikeId})">Bloquear Bike</button>`;
     return `<div class="gps-popup-name">Bike: ${escHtml(d.bikeNome)}</div>
         <div class="gps-popup-row">Endereço: ${escHtml(d.endereco)}</div>
         <div class="gps-popup-row">Velocidade: ${d.speed ? d.speed + ' km/h' : 'Parada'}</div>
-        <div class="gps-popup-row" style="color:var(--text-muted);font-size:0.72rem;">Locação #${d.rentalId}</div>`;
+        <div class="gps-popup-row" style="color:var(--text-muted);font-size:0.72rem;">Locação #${d.rentalId}</div>
+        ${btnHtml}`;
+}
+
+async function bloquearBikeGPS(id) {
+    if(!confirm('Tem certeza que deseja bloquear esta bike remotamente?')) return;
+    try {
+        const r = await fetch(`${API_BASE}/bikes/${id}/bloquear`, { method: 'PUT', headers: authH });
+        const d = await r.json();
+        showToast(d.message || d.error || 'Ação concluída', r.ok ? 'success' : 'error');
+    } catch(e) {
+        showToast('Erro ao bloquear a bike.', 'error');
+    }
 }
 
 function initGpsMap() {
@@ -720,6 +772,17 @@ function initGpsMap() {
                 attribution: '© <a href="https://openstreetmap.org">OpenStreetMap</a> contributors',
                 maxZoom: 19
             }).addTo(_gpsMap);
+            
+            // Desenhar Zona de Segurança (MASP, raio 2.5km)
+            L.circle([-23.5615, -46.6560], {
+                color: '#ef4444',
+                fillColor: '#ef4444',
+                fillOpacity: 0.1,
+                radius: 2500,
+                weight: 2,
+                dashArray: '5, 5'
+            }).addTo(_gpsMap).bindPopup('<b>Zona de Monitoramento</b><br>Limite de 2.5km do centro.');
+
             // Iniciar SSE após mapa criado
             _gpsStartSSE();
         }, 80);
@@ -788,6 +851,8 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 });
+
+window.bloquearBikeGPS = bloquearBikeGPS;
 
 // ── Init ──────────────────────────────────────────────
 loadDash();
