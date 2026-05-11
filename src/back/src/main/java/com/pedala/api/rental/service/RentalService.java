@@ -74,10 +74,13 @@ public class RentalService {
         if (rentalType == RentalType.mensal && recorrenciaMeses != null && recorrenciaMeses > 1) {
             ciclosRecorrencia = Math.min(recorrenciaMeses, 12);
         }
-        int diasPorCiclo = (rentalType == RentalType.mensal && ciclosRecorrencia > 1) ? 7 : rentalType.getDias();
+        int diasPorCiclo = rentalType.getDias();
         int diasTotais = diasPorCiclo * ciclosRecorrencia;
-        BigDecimal precoPorCiclo = (rentalType == RentalType.mensal && ciclosRecorrencia > 1) ? bike.getPrecoSemanal()
-                : switch (rentalType) { case semanal -> bike.getPrecoSemanal(); case quinzenal -> bike.getPrecoQuinzenal(); case mensal -> bike.getPrecoMensal(); };
+        BigDecimal precoPorCiclo = switch (rentalType) { 
+            case semanal -> bike.getPrecoSemanal(); 
+            case quinzenal -> bike.getPrecoQuinzenal(); 
+            case mensal -> bike.getPrecoMensal(); 
+        };
         BigDecimal precoTotal = precoPorCiclo.multiply(BigDecimal.valueOf(ciclosRecorrencia));
         Instant dataDevolucaoPrevista = inicio.plus(diasTotais, ChronoUnit.DAYS);
         boolean isAgendada = inicio.isAfter(agora);
@@ -86,7 +89,7 @@ public class RentalService {
         bike.decrementarEstoque();
         bikeRepository.save(bike);
 
-        String planoLabel = ciclosRecorrencia > 1 ? "Mensal Recorrente (" + ciclosRecorrencia + " semanas)" : rentalType.getLabel();
+        String planoLabel = ciclosRecorrencia > 1 ? "Mensal Recorrente (" + ciclosRecorrencia + " meses)" : rentalType.getLabel();
         Rental rental = Rental.builder().usuarioId(userId).usuarioNome(userNome).usuarioEmail(userEmail)
                 .bikeId(bike.getId()).bikeNome(bike.getNome()).bikeCategoria(bike.getCategoria())
                 .tipo(rentalType).planoLabel(planoLabel).ciclosRecorrencia(ciclosRecorrencia)
