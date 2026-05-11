@@ -37,12 +37,14 @@ public class AuthController {
 
     @Operation(summary = "Perfil do usuario logado")
     @GetMapping("/me")
+    @PreAuthorize("isAuthenticated()")
     public ResponseEntity<Map<String, Object>> me(@AuthenticationPrincipal UserPrincipal principal) {
         return ResponseEntity.ok(userService.getProfile(principal.getId()));
     }
 
     @Operation(summary = "Atualizar perfil")
     @PutMapping("/me")
+    @PreAuthorize("isAuthenticated()")
     public ResponseEntity<Map<String, Object>> updateProfile(
             @AuthenticationPrincipal UserPrincipal principal,
             @RequestBody UpdateProfileRequest request) {

@@ -685,8 +685,11 @@ function _gpsUpdateSidebar() {
     }
     list.innerHTML = active.map(m => {
         const d = m._gpsData || {};
+        const statusHtml = d.bloqueada
+            ? `<span style="color:#ef4444;font-size:0.7rem;font-weight:700;">&#128274; Bloqueada</span>`
+            : (d.isSuspeito ? `<span style="color:#f59e0b;font-size:0.7rem;font-weight:700;">&#9888; Fora da zona</span>` : '');
         return `<div class="gps-bike-item" onclick="_gpsFlyTo(${d.bikeId})">
-            <div class="gps-bike-name">${escHtml(d.bikeNome || 'Bike #' + d.bikeId)}</div>
+            <div class="gps-bike-name">${escHtml(d.bikeNome || 'Bike #' + d.bikeId)} ${statusHtml}</div>
             <div class="gps-bike-addr">${escHtml(d.endereco || '—')}</div>
             <div class="gps-bike-speed">${d.speed ? d.speed + ' km/h' : 'Parada'}</div>
         </div>`;
@@ -720,13 +723,18 @@ function _gpsHandleEvent(evt) {
 
     if (data.type === 'update') {
         const latlng = [data.lat, data.lng];
+        const prev = _gpsMarkers[data.bikeId]?._gpsData;
+        if (data.isSuspeito && (!prev || !prev.isSuspeito)) {
+            showToast(`Alerta: ${data.bikeNome} saiu da zona segura!`, 'error');
+        }
+        const iconColor = data.bloqueada ? '#ef4444' : (data.isSuspeito ? '#f59e0b' : '#F5C000');
         if (_gpsMarkers[data.bikeId]) {
             _gpsMarkers[data.bikeId].setLatLng(latlng);
             _gpsMarkers[data.bikeId]._gpsData = data;
-            // atualizar popup se aberto
+            _gpsMarkers[data.bikeId].setIcon(_bikeIcon(iconColor));
             _gpsMarkers[data.bikeId].setPopupContent(_gpsPopupHtml(data));
         } else {
-            const marker = L.marker(latlng, { icon: _bikeIcon('#F5C000') })
+            const marker = L.marker(latlng, { icon: _bikeIcon(iconColor) })
                 .addTo(_gpsMap)
                 .bindPopup(_gpsPopupHtml(data));
             marker._gpsData = data;
@@ -737,8 +745,13 @@ function _gpsHandleEvent(evt) {
 }
 
 function _gpsPopupHtml(d) {
-    const btnHtml = `<button class="btn btn-danger btn-sm" style="width:100%;margin-top:8px;padding:4px;" onclick="bloquearBikeGPS(${d.bikeId})">Bloquear Bike</button>`;
-    return `<div class="gps-popup-name">Bike: ${escHtml(d.bikeNome)}</div>
+    const alertHtml = d.isSuspeito
+        ? `<div style="background:#fef3c7;border:1px solid #f59e0b;border-radius:4px;padding:4px 6px;margin-bottom:6px;font-size:0.72rem;color:#92400e;">&#9888; Fora da zona segura!</div>`
+        : '';
+    const btnHtml = d.bloqueada
+        ? `<button class="btn btn-success btn-sm" style="width:100%;margin-top:8px;padding:4px;" onclick="desbloquearBikeGPS(${d.bikeId})">&#128275; Desbloquear Bike</button>`
+        : `<button class="btn btn-danger btn-sm" style="width:100%;margin-top:8px;padding:4px;" onclick="bloquearBikeGPS(${d.bikeId})">&#128274; Bloquear Bike</button>`;
+    return `${alertHtml}<div class="gps-popup-name">Bike: ${escHtml(d.bikeNome)}</div>
         <div class="gps-popup-row">Endereço: ${escHtml(d.endereco)}</div>
         <div class="gps-popup-row">Velocidade: ${d.speed ? d.speed + ' km/h' : 'Parada'}</div>
         <div class="gps-popup-row" style="color:var(--text-muted);font-size:0.72rem;">Locação #${d.rentalId}</div>
@@ -748,11 +761,22 @@ function _gpsPopupHtml(d) {
 async function bloquearBikeGPS(id) {
     if(!confirm('Tem certeza que deseja bloquear esta bike remotamente?')) return;
     try {
-        const r = await fetch(`${API_BASE}/bikes/${id}/bloquear`, { method: 'PUT', headers: authH });
+        const r = await fetch(`${API_BASE}/bikes/${id}/bloquear`, { method: 'PUT', headers: authHJ, body: JSON.stringify({}) });
         const d = await r.json();
         showToast(d.message || d.error || 'Ação concluída', r.ok ? 'success' : 'error');
     } catch(e) {
         showToast('Erro ao bloquear a bike.', 'error');
+    }
+}
+
+async function desbloquearBikeGPS(id) {
+    if(!confirm('Deseja desbloquear esta bike remotamente?')) return;
+    try {
+        const r = await fetch(`${API_BASE}/bikes/${id}/ativar`, { method: 'PUT', headers: authHJ });
+        const d = await r.json();
+        showToast(d.message || d.error || 'Bike desbloqueada', r.ok ? 'success' : 'error');
+    } catch(e) {
+        showToast('Erro ao desbloquear a bike.', 'error');
     }
 }
 
@@ -853,6 +877,7 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 window.bloquearBikeGPS = bloquearBikeGPS;
+window.desbloquearBikeGPS = desbloquearBikeGPS;
 
 // ── Init ──────────────────────────────────────────────
 loadDash();

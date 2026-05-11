@@ -6,6 +6,7 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
@@ -21,6 +22,7 @@ public class ContractController {
 
     @Operation(summary = "Gerar contrato HTML")
     @GetMapping("/{aluguelId}")
+    @PreAuthorize("isAuthenticated()")
     public ResponseEntity<Map<String, Object>> getContract(
             @PathVariable Long aluguelId,
             @AuthenticationPrincipal UserPrincipal p) {

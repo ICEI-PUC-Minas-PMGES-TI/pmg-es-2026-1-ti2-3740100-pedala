@@ -85,9 +85,9 @@ public class BikeController {
         return ResponseEntity.ok(bikeService.incrementStock(id, body.get("incremento")));
     }
 
-    @Operation(summary = "Bloquear bike (admin)")
+    @Operation(summary = "Bloquear bike (admin/funcionario)")
     @PutMapping("/{id}/bloquear")
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasRole('ADMIN') or hasRole('FUNCIONARIO')")
     public ResponseEntity<Map<String, Object>> block(
             @PathVariable Long id,
             @RequestBody(required = false) Map<String, String> body) {
@@ -95,9 +95,9 @@ public class BikeController {
         return ResponseEntity.ok(bikeService.blockBike(id, motivo));
     }
 
-    @Operation(summary = "Ativar bike (admin)")
+    @Operation(summary = "Ativar bike (admin/funcionario)")
     @PutMapping("/{id}/ativar")
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasRole('ADMIN') or hasRole('FUNCIONARIO')")
     public ResponseEntity<Map<String, Object>> activate(@PathVariable Long id) {
         return ResponseEntity.ok(bikeService.activateBike(id));
     }

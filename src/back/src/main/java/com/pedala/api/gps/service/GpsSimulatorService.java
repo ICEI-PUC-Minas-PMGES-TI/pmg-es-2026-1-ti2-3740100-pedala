@@ -1,6 +1,5 @@
 package com.pedala.api.gps.service;
 
-import com.pedala.api.rental.domain.Rental;
 import com.pedala.api.rental.repository.RentalRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -20,7 +19,6 @@ import java.util.concurrent.CopyOnWriteArrayList;
 public class GpsSimulatorService {
 
     private final RentalRepository rentalRepository;
-    private final com.pedala.api.bike.repository.BikeRepository bikeRepository;
 
     private static final double[][] WAYPOINTS = {
         {-23.5505, -46.6333}, {-23.5519, -46.6355}, {-23.5538, -46.6381},
@@ -87,40 +85,52 @@ public class GpsSimulatorService {
         return emitter;
     }
 
+    public void lockBike(Long bikeId) {
+        TrackData track = tracks.get(bikeId);
+        if (track == null) return;
+        track.bloqueada = true;
+        track.speed = 0.0;
+        broadcastUpdate(buildPayload(track));
+    }
+
+    public void unlockBike(Long bikeId) {
+        TrackData track = tracks.get(bikeId);
+        if (track == null) return;
+        track.bloqueada = false;
+        broadcastUpdate(buildPayload(track));
+    }
+
     @Scheduled(fixedRate = 4000)
     public void tick() {
         for (TrackData track : tracks.values()) {
-            int next = track.index + track.direction;
-            if (next >= track.route.length) { track.direction = -1; track.index = track.route.length - 2; }
-            else if (next < 0) { track.direction = 1; track.index = 1; }
-            else { track.index = next; }
+            if (!track.bloqueada) {
+                int next = track.index + track.direction;
+                if (next >= track.route.length) { track.direction = -1; track.index = track.route.length - 2; }
+                else if (next < 0) { track.direction = 1; track.index = 1; }
+                else { track.index = next; }
 
-            int wpIdx = track.route[track.index];
-            track.lat = WAYPOINTS[wpIdx][0];
-            track.lng = WAYPOINTS[wpIdx][1];
-            track.endereco = ENDERECOS[wpIdx];
-            track.speed = 8 + random.nextDouble() * 10;
-            
-            // Geofencing Check (Centro: MASP -23.5615, -46.6560)
-            double distance = calculateDistance(-23.5615, -46.6560, track.lat, track.lng);
-            if (distance > 2.5 && !track.isSuspeito) { // Using 2.5km to ensure it triggers with current waypoints
-                track.isSuspeito = true;
-                if (track.rentalId != null) {
-                    rentalRepository.findById(track.rentalId).ifPresent(r -> {
-                        r.setAlertaDesvio(true);
-                        rentalRepository.save(r);
-                    });
+                int wpIdx = track.route[track.index];
+                track.lat = WAYPOINTS[wpIdx][0];
+                track.lng = WAYPOINTS[wpIdx][1];
+                track.endereco = ENDERECOS[wpIdx];
+                track.speed = 8 + random.nextDouble() * 10;
+
+                // Geofencing Check (Centro: MASP -23.5615, -46.6560)
+                double distance = calculateDistance(-23.5615, -46.6560, track.lat, track.lng);
+                if (distance > 2.5 && !track.isSuspeito) {
+                    track.isSuspeito = true;
+                    if (track.rentalId != null) {
+                        rentalRepository.findById(track.rentalId).ifPresent(r -> {
+                            r.setAlertaDesvio(true);
+                            rentalRepository.save(r);
+                        });
+                    }
                 }
+            } else {
+                track.speed = 0.0;
             }
-            
-            // Verifica se a bike esta bloqueada
-            boolean isBlocked = bikeRepository.findById(track.bikeId)
-                    .map(com.pedala.api.bike.domain.Bike::getBloqueada)
-                    .orElse(false);
 
-            if (!isBlocked) {
-                broadcastUpdate(buildPayload(track));
-            }
+            broadcastUpdate(buildPayload(track));
         }
     }
 
@@ -141,6 +151,7 @@ public class GpsSimulatorService {
         m.put("lat", t.lat); m.put("lng", t.lng); m.put("endereco", t.endereco);
         m.put("speed", Math.round(t.speed * 10.0) / 10.0);
         m.put("isSuspeito", t.isSuspeito);
+        m.put("bloqueada", t.bloqueada);
         m.put("startedAt", t.startedAt.toString()); m.put("updatedAt", Instant.now().toString());
         return m;
     }
@@ -168,13 +179,13 @@ public class GpsSimulatorService {
 
     private static class TrackData {
         Long bikeId, rentalId; String bikeNome; int[] route;
-        int index, direction; double lat, lng, speed; String endereco; Instant startedAt; boolean isSuspeito;
+        int index, direction; double lat, lng, speed; String endereco; Instant startedAt; boolean isSuspeito; boolean bloqueada;
         TrackData(Long bikeId, Long rentalId, String bikeNome, int[] route, int index, int direction,
                   double lat, double lng, String endereco, double speed, Instant startedAt, boolean isSuspeito) {
             this.bikeId = bikeId; this.rentalId = rentalId; this.bikeNome = bikeNome;
             this.route = route; this.index = index; this.direction = direction;
             this.lat = lat; this.lng = lng; this.endereco = endereco;
-            this.speed = speed; this.startedAt = startedAt; this.isSuspeito = isSuspeito;
+            this.speed = speed; this.startedAt = startedAt; this.isSuspeito = isSuspeito; this.bloqueada = false;
         }
     }
 }

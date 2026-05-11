@@ -38,6 +38,7 @@ public class RentalController {
 
     @Operation(summary = "Minhas locacoes")
     @GetMapping("/meus")
+    @PreAuthorize("isAuthenticated()")
     public ResponseEntity<Map<String, Object>> myRentals(@AuthenticationPrincipal UserPrincipal p) {
         return ResponseEntity.ok(rentalService.getMyRentals(p.getId()));
     }

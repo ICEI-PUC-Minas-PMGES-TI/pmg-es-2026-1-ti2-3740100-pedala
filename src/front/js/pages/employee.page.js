@@ -115,13 +115,13 @@ let _gpsMarkers = {};
 let _gpsSSE = null;
 let _gpsInitialized = false;
 
-function _bikeIcon() {
+function _bikeIcon(color) {
     return L.divIcon({
         className: '',
         iconSize: [36, 36],
         iconAnchor: [18, 18],
         popupAnchor: [0, -20],
-        html: `<div style="width:36px;height:36px;background:#6366f1;border-radius:50%;display:flex;align-items:center;justify-content:center;box-shadow:0 2px 8px rgba(0,0,0,0.35);border:3px solid #fff;font-size:10px;font-weight:800;color:#fff;letter-spacing:.04em;">BIKE</div>`
+        html: `<div style="width:36px;height:36px;background:${color || '#6366f1'};border-radius:50%;display:flex;align-items:center;justify-content:center;box-shadow:0 2px 8px rgba(0,0,0,0.35);border:3px solid #fff;font-size:10px;font-weight:800;color:#fff;letter-spacing:.04em;">BIKE</div>`
     });
 }
 
@@ -146,8 +146,11 @@ function _gpsUpdateSidebar() {
     }
     list.innerHTML = active.map(m => {
         const d = m._gpsData || {};
+        const statusHtml = d.bloqueada
+            ? `<span style="color:#ef4444;font-size:0.7rem;font-weight:700;">&#128274; Bloqueada</span>`
+            : (d.isSuspeito ? `<span style="color:#f59e0b;font-size:0.7rem;font-weight:700;">&#9888; Fora da zona</span>` : '');
         return `<div class="gps-bike-item" onclick="_gpsFlyTo(${d.bikeId})">
-            <div class="gps-bike-name">${escHtml(d.bikeNome || 'Bike #' + d.bikeId)}</div>
+            <div class="gps-bike-name">${escHtml(d.bikeNome || 'Bike #' + d.bikeId)} ${statusHtml}</div>
             <div class="gps-bike-addr">${escHtml(d.endereco || '—')}</div>
             <div class="gps-bike-speed">${d.speed ? d.speed + ' km/h' : 'Parada'}</div>
         </div>`;
@@ -163,8 +166,13 @@ function _gpsFlyTo(bikeId) {
 }
 
 function _gpsPopupHtml(d) {
-    const btnHtml = `<button class="btn btn-danger btn-sm" style="width:100%;margin-top:8px;padding:4px;" onclick="bloquearBikeGPS(${d.bikeId})">Bloquear Bike</button>`;
-    return `<div class="gps-popup-name">Bike: ${escHtml(d.bikeNome)}</div>
+    const alertHtml = d.isSuspeito
+        ? `<div style="background:#fef3c7;border:1px solid #f59e0b;border-radius:4px;padding:4px 6px;margin-bottom:6px;font-size:0.72rem;color:#92400e;">&#9888; Fora da zona segura!</div>`
+        : '';
+    const btnHtml = d.bloqueada
+        ? `<button class="btn btn-success btn-sm" style="width:100%;margin-top:8px;padding:4px;" onclick="desbloquearBikeGPS(${d.bikeId})">&#128275; Desbloquear Bike</button>`
+        : `<button class="btn btn-danger btn-sm" style="width:100%;margin-top:8px;padding:4px;" onclick="bloquearBikeGPS(${d.bikeId})">&#128274; Bloquear Bike</button>`;
+    return `${alertHtml}<div class="gps-popup-name">Bike: ${escHtml(d.bikeNome)}</div>
         <div class="gps-popup-row">Endereço: ${escHtml(d.endereco)}</div>
         <div class="gps-popup-row">Velocidade: ${d.speed ? d.speed + ' km/h' : 'Parada'}</div>
         <div class="gps-popup-row" style="color:var(--text-muted);font-size:0.72rem;">Locação #${d.rentalId}</div>
@@ -174,11 +182,22 @@ function _gpsPopupHtml(d) {
 async function bloquearBikeGPS(id) {
     if(!confirm('Tem certeza que deseja bloquear esta bike remotamente?')) return;
     try {
-        const r = await fetch(`${API_BASE}/bikes/${id}/bloquear`, { method: 'PUT', headers: h });
+        const r = await fetch(`${API_BASE}/bikes/${id}/bloquear`, { method: 'PUT', headers: hj, body: JSON.stringify({}) });
         const d = await r.json();
         showToast(d.message || d.error || 'Ação concluída', r.ok ? 'success' : 'error');
     } catch(e) {
         showToast('Erro ao bloquear a bike.', 'error');
+    }
+}
+
+async function desbloquearBikeGPS(id) {
+    if(!confirm('Deseja desbloquear esta bike remotamente?')) return;
+    try {
+        const r = await fetch(`${API_BASE}/bikes/${id}/ativar`, { method: 'PUT', headers: hj });
+        const d = await r.json();
+        showToast(d.message || d.error || 'Bike desbloqueada', r.ok ? 'success' : 'error');
+    } catch(e) {
+        showToast('Erro ao desbloquear a bike.', 'error');
     }
 }
 
@@ -199,12 +218,18 @@ function _gpsHandleEvent(evt) {
     }
     if (data.type === 'update') {
         const latlng = [data.lat, data.lng];
+        const prev = _gpsMarkers[data.bikeId]?._gpsData;
+        if (data.isSuspeito && (!prev || !prev.isSuspeito)) {
+            showToast(`Alerta: ${data.bikeNome} saiu da zona segura!`, 'error');
+        }
+        const iconColor = data.bloqueada ? '#ef4444' : (data.isSuspeito ? '#f59e0b' : '#6366f1');
         if (_gpsMarkers[data.bikeId]) {
             _gpsMarkers[data.bikeId].setLatLng(latlng);
             _gpsMarkers[data.bikeId]._gpsData = data;
+            _gpsMarkers[data.bikeId].setIcon(_bikeIcon(iconColor));
             _gpsMarkers[data.bikeId].setPopupContent(_gpsPopupHtml(data));
         } else {
-            const marker = L.marker(latlng, { icon: _bikeIcon() })
+            const marker = L.marker(latlng, { icon: _bikeIcon(iconColor) })
                 .addTo(_gpsMap)
                 .bindPopup(_gpsPopupHtml(data));
             marker._gpsData = data;
@@ -266,6 +291,7 @@ function reconnectGPS() {
 }
 
 window.bloquearBikeGPS = bloquearBikeGPS;
+window.desbloquearBikeGPS = desbloquearBikeGPS;
 
 // ── Init ──────────────────────────────────────────────
 loadVist();

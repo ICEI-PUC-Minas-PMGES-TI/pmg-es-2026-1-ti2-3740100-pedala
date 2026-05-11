@@ -1,0 +1,64 @@
+spring:
+  application:
+    name: pedala-api
+
+
+  datasource:
+    url: ${DB_URL:jdbc:mysql://localhost:3306/pedala?createDatabaseIfNotExist=true&useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC}
+    username: ${DB_USER:root}
+    password: ${DB_PASSWORD:root}
+    driver-class-name: com.mysql.cj.jdbc.Driver
+
+  jpa:
+    open-in-view: false
+    hibernate:
+      ddl-auto: update
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.MySQLDialect
+        format_sql: true
+
+  flyway:
+    enabled: true
+    locations: classpath:db/migration
+    baseline-on-migrate: true
+
+  servlet:
+    multipart:
+      max-file-size: 8MB
+      max-request-size: 10MB
+
+  jackson:
+    serialization:
+      write-dates-as-timestamps: false
+    default-property-inclusion: non_null
+
+server:
+  port: ${PORT:8080}
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics
+  endpoint:
+    health:
+      show-details: when-authorized
+
+app:
+  jwt:
+    secret: ${JWT_SECRET:pedala_secret_key_2024_poc_spring_boot_migration_very_long_key_256bits}
+    expiration-ms: 604800000  # 7 days
+  upload:
+    dir: ${UPLOAD_DIR:./uploads}
+    allowed-types: image/jpeg,image/png,image/webp,image/gif
+    max-size-mb: 8
+
+  gemini:
+    api-key: ${GEMINI_API_KEY:}
+    model: ${GEMINI_MODEL:gemini-3.1-flash-lite}
+logging:
+  level:
+    com.pedala: DEBUG
+    org.springframework.security: INFO
+    org.hibernate.SQL: DEBUG

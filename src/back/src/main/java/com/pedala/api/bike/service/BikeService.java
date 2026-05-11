@@ -4,6 +4,7 @@ import com.pedala.api.bike.domain.Bike;
 import com.pedala.api.bike.repository.BikeRepository;
 import com.pedala.api.exception.BusinessException;
 import com.pedala.api.exception.ResourceNotFoundException;
+import com.pedala.api.gps.service.GpsSimulatorService;
 import com.pedala.api.rental.domain.RentalStatus;
 import com.pedala.api.rental.repository.RentalRepository;
 import com.pedala.api.shared.FileStorageService;
@@ -27,6 +28,7 @@ public class BikeService {
     private final BikeRepository bikeRepository;
     private final RentalRepository rentalRepository;
     private final FileStorageService fileStorageService;
+    private final GpsSimulatorService gpsSimulatorService;
 
     @Transactional(readOnly = true)
     public Map<String, Object> listBikes(String categoria, String disponivel) {
@@ -166,6 +168,7 @@ public class BikeService {
         bike.setMotivoBloqueio(motivo != null ? motivo : "Bloqueada pelo administrador");
         bike.setBloqueadaEm(Instant.now());
         bike = bikeRepository.save(bike);
+        gpsSimulatorService.lockBike(id);
 
         Map<String, Object> result = new LinkedHashMap<>();
         result.put("message", "Bike bloqueada.");
@@ -182,6 +185,7 @@ public class BikeService {
         bike.setMotivoBloqueio(null);
         bike.setBloqueadaEm(null);
         bike = bikeRepository.save(bike);
+        gpsSimulatorService.unlockBike(id);
 
         Map<String, Object> result = new LinkedHashMap<>();
         result.put("message", "Bike ativada!");

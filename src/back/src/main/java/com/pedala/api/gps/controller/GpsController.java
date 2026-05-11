@@ -44,12 +44,12 @@ public class GpsController {
     @PreAuthorize("hasAnyRole('ADMIN','FUNCIONARIO')")
     public SseEmitter stream() {
         SseEmitter emitter = gpsService.createEmitter();
-        // Send initial snapshot
         try {
             List<Map<String, Object>> initial = gpsService.getPositions();
             for (Map<String, Object> pos : initial) {
-                pos.put("type", "update");
-                emitter.send(SseEmitter.event().data(pos));
+                Map<String, Object> event = new java.util.LinkedHashMap<>(pos);
+                event.put("type", "update");
+                emitter.send(SseEmitter.event().data(event));
             }
             emitter.send(SseEmitter.event().data(Map.of("type", "connected", "activeBikes", initial.size())));
         } catch (IOException e) {
