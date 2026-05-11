@@ -1,4 +1,4 @@
-### 3.3.2 Processo 2 – Reserva de Bicicleta
+### 3.3.2 Processo 3 – Reserva de Bicicleta
 
 O processo pode ser aprimorado com a implementação de filtros mais avançados na busca de bicicletas, como localização, tipo e preço.
 
