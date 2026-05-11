@@ -1,8 +1,8 @@
-### 3.3.2 Processo 2 – Reserva de Bicicleta
+### 3.3.2 Processo 3 – Reserva de Bicicleta
 
 O processo pode ser aprimorado com a implementação de filtros mais avançados na busca de bicicletas, como localização, tipo e preço.
 
-![Exemplo de um Modelo BPMN do PROCESSO 2](images/Processo-2-Reserva-Bike.png "Modelo BPMN do Processo 2.")
+![Exemplo de um Modelo BPMN do PROCESSO 3](images/Processo-3-Reserva-Bike.png "Modelo BPMN do Processo 3.")
 
 ![processo reserva](Wireframes/reserva.png)
 

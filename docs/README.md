@@ -145,13 +145,14 @@ _Como melhoria, o sistema reduz processos manuais, aumenta o controle operaciona
 
 [PROCESSO 1 - Gestão de Clientes](processo-1-gestao_cliente.md "Processo referente a gestão do cliente")
 
-[PROCESSO 2 - ReservaBike](processo-2-ReservaBike.md "Processo referente as reservas de bicicletas")
+[PROCESSO 2 - Cadastro Bicicleta](processo-2-cadastro-bicicleta.md "Cadastro de bicicletas para o catálogo")
 
-[PROCESSO 3 - Pagamento e Ativação GPS](processo-3-pagamento-gps.md "Processo que refere a etapa de pagamento da reserva/aluguel além do início do monitoramento.")
+[PROCESSO 3 - ReservaBike](processo-3-ReservaBike.md "Processo referente as reservas de bicicletas")
 
-[PROCESSO 4 - Monitoramento e Encerramento da locação](processo-4-monitoramento-encerramento.md "Processo destinado ao monitoramento e encerramento da locação.")
+[PROCESSO 4 - Pagamento e Ativação GPS](processo-4-pagamento-gps.md "Processo que refere a etapa de pagamento da reserva/aluguel além do início do monitoramento.")
 
-[PROCESSO 5 - Cadastro Bicicleta](processo-5-cadastro-bicicleta.md "Cadastro de bicicletas para o catálogo")
+[PROCESSO 5 - Monitoramento e Encerramento da locação](processo-5-monitoramento-encerramento.md "Processo destinado ao monitoramento e encerramento da locação.")
+
 
 
 ## 4. Projeto da solução
