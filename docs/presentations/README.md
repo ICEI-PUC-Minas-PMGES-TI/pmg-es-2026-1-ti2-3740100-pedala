@@ -1,4 +1,4 @@
 # PedaLá
 
-## 1. Apresentation 
+## 1. Apresentação
 _Destinado para arquivar todas as apresentações sobre o projeto._

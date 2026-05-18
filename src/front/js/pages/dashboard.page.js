@@ -15,6 +15,9 @@ const dashboardState = {
   activeCategory: '',
   selectedBike: null,
   selectedPlan: '',
+  selectedInsurance: 'Basico',
+  renewalRentalId: null,
+  selectedRenewPlan: 'mensal',
   pendingBikeId: Number(new URLSearchParams(window.location.search).get('bike')) || null
 };
 
@@ -27,7 +30,7 @@ function dashEscape(value) {
     .replace(/'/g, '&#39;');
 }
 
-function formatDashboardDate(value, fallback = 'Data indisponivel') {
+function formatDashboardDate(value, fallback = 'Data indisponível') {
   if (!value) return fallback;
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) return fallback;
@@ -37,6 +40,34 @@ function formatDashboardDate(value, fallback = 'Data indisponivel') {
 function getRentalPlanDays(type) {
   const daysByType = { semanal: 7, quinzenal: 15, mensal: 30 };
   return daysByType[type] || 30;
+}
+
+function getRentalPlanOptions() {
+  return [
+    { key: 'semanal', label: 'Semanal', description: '7 dias' },
+    { key: 'quinzenal', label: 'Quinzenal', description: '15 dias' },
+    { key: 'mensal', label: 'Mensal', description: '30 dias' }
+  ];
+}
+
+function getInsuranceOptions() {
+  return [
+    { key: 'Basico', label: 'Básico', price: 0, description: 'Defeitos de fabricação' },
+    { key: 'Intermediario', label: 'Intermediário', price: 15, description: 'Danos acidentais leves' },
+    { key: 'Premium', label: 'Premium', price: 30, description: 'Cobertura ampliada' }
+  ];
+}
+
+function formatInsuranceLabel(value) {
+  const normalized = String(value || '').trim().toLowerCase();
+  const labels = {
+    basico: 'Básico',
+    'básico': 'Básico',
+    intermediario: 'Intermediário',
+    'intermediário': 'Intermediário',
+    premium: 'Premium'
+  };
+  return labels[normalized] || value;
 }
 
 function getRentalDaysRemaining(rental) {
@@ -60,7 +91,7 @@ function getRentalProgress(rental) {
 function formatRentalDaysRemaining(rental) {
   const daysRemaining = getRentalDaysRemaining(rental);
   if (daysRemaining === null) {
-    return rental.status === 'finalizado' ? 'Finalizado' : 'Nao informado';
+    return rental.status === 'finalizado' ? 'Finalizado' : 'Não informado';
   }
   if (daysRemaining > 0) return `${daysRemaining} dias`;
   return rental.status === 'finalizado' ? 'Finalizado' : 'Vencida';
@@ -176,7 +207,7 @@ async function loadInicio() {
         </div>
         <div class="card-body">
           <div class="rental-bike-name">${dashEscape(highlight.bikeNome)}</div>
-          <div class="rental-meta">${dashEscape(highlight.planoLabel)} | Devolucao prevista em ${formatDashboardDate(highlight.dataDevolucaoPrevista)}</div>
+          <div class="rental-meta">${dashEscape(highlight.planoLabel)} | Devolução prevista em ${formatDashboardDate(highlight.dataDevolucaoPrevista)}</div>
           <div class="rental-progress-bar" style="margin:16px 0 10px;"><div class="rental-progress-fill" style="width:${progress}%"></div></div>
           <div class="rental-actions">
             ${paymentBadge(highlight.pagamento)}
@@ -217,8 +248,8 @@ function renderDashboardGrid() {
       return `
         <article class="bike-card">
           <div class="bike-photo">
-            <span class="bike-signal">${available ? 'Disponivel' : 'Sem estoque'}</span>
-            <img src="${dashEscape(normalizeImagePath(bike.imagem))}" alt="${dashEscape(bike.nome)}" loading="lazy" onerror="this.outerHTML='<span class=&quot;bike-photo-label&quot;>Imagem indisponivel</span>'">
+            <span class="bike-signal">${available ? 'Disponível' : 'Sem estoque'}</span>
+            <img src="${dashEscape(normalizeImagePath(bike.imagem))}" alt="${dashEscape(bike.nome)}" loading="lazy" onerror="this.outerHTML='<span class=&quot;bike-photo-label&quot;>Imagem indisponível</span>'">
           </div>
           <div class="bike-info">
             <div class="bike-head">
@@ -232,7 +263,7 @@ function renderDashboardGrid() {
             <div class="bike-footer">
               <div>
                 <div class="bike-price">${dashEscape(formatCurrency(bike.precos?.semanal))}<span class="bike-price-label">/ semana</span></div>
-                <div class="bike-qty" style="${available ? '' : 'color:var(--danger);'}">${available ? `${bike.quantidadeDisponivel} disponivel(is)` : 'Indisponivel'}</div>
+                <div class="bike-qty" style="${available ? '' : 'color:var(--danger);'}">${available ? `${bike.quantidadeDisponivel} disponível(is)` : 'Indisponível'}</div>
               </div>
               <button class="btn ${available ? 'btn-primary' : 'btn-secondary'} btn-sm" type="button" onclick="openModal(${bike.id})" ${available ? '' : 'disabled'}>${available ? 'Ver detalhes' : 'Sem estoque'}</button>
             </div>
@@ -258,13 +289,13 @@ async function loadLocar() {
     const rentals = await fetch(`${dashboardApi}/rentals/meus`, { headers: dashboardHeaders }).then(response => response.json());
     const activeRental = (rentals.alugueis || []).find(rental => rental.status !== 'finalizado');
     if (activeRental) {
-      lock.textContent = `Voce ja possui a locacao #${activeRental.id}. Finalize ou devolva a atual antes de contratar outra bike.`;
+      lock.textContent = `Você já possui a locação #${activeRental.id}. Finalize ou devolva a atual antes de contratar outra bike.`;
       lock.style.display = 'block';
       grid.innerHTML = '';
       return;
     }
   } catch (error) {
-    lock.textContent = 'Nao foi possivel validar locacoes existentes.';
+    lock.textContent = 'Não foi possível validar suas locações existentes. Tente novamente em instantes.';
     lock.style.display = 'block';
   }
 
@@ -285,7 +316,7 @@ async function loadLocar() {
     renderDashboardFilters();
     renderDashboardGrid();
   } catch (error) {
-    grid.innerHTML = `<div class="empty-state"><strong>Falha ao carregar o catalogo</strong><span>Confira se o backend esta ativo.</span></div>`;
+    grid.innerHTML = `<div class="empty-state"><strong>Falha ao carregar o catálogo</strong><span>Confira se o backend está ativo e tente novamente.</span></div>`;
   }
 }
 
@@ -304,23 +335,27 @@ async function loadLocacoes() {
       .map(rental => {
         const progress = getRentalProgress(rental);
         const pendingBill = (rental.faturas || []).find(bill => bill.status === 'pendente' || bill.status === 'rejeitado');
+        const insuranceInfo = rental.tipoSeguro
+          ? `${formatInsuranceLabel(rental.tipoSeguro)}${Number(rental.valorSeguro) > 0 ? ` (${formatCurrency(rental.valorSeguro)} por ciclo)` : ''}`
+          : '';
         return `
           <article class="rental-card">
             <div class="rental-header">
               <div>
                 <div class="rental-bike-name">${dashEscape(rental.bikeNome)}</div>
-                <div class="rental-meta">${dashEscape(rental.planoLabel)} | Inicio em ${formatDashboardDate(rental.dataInicio)}</div>
+                <div class="rental-meta">${dashEscape(rental.planoLabel)} | Início em ${formatDashboardDate(rental.dataInicio)}</div>
               </div>
               <div class="rental-actions">${statusBadge(rental.status)}${paymentBadge(rental.pagamento)}</div>
             </div>
-            <div class="info-row"><span class="info-label">Devolucao prevista</span><span class="info-value">${formatDashboardDate(rental.dataDevolucaoPrevista)}</span></div>
+            <div class="info-row"><span class="info-label">Devolução prevista</span><span class="info-value">${formatDashboardDate(rental.dataDevolucaoPrevista)}</span></div>
             <div class="info-row"><span class="info-label">Valor atual</span><span class="info-value">${dashEscape(formatCurrency(rental.preco))}</span></div>
+            ${insuranceInfo ? `<div class="info-row"><span class="info-label">Seguro</span><span class="info-value">${dashEscape(insuranceInfo)}</span></div>` : ''}
             <div class="info-row"><span class="info-label">Dias restantes</span><span class="info-value">${formatRentalDaysRemaining(rental)}</span></div>
             ${pendingBill ? `<div class="info-row"><span class="info-label">Proxima fatura</span><span class="info-value">${dashEscape(formatCurrency(pendingBill.valor))}</span></div>` : ''}
             ${['ativo', 'aguardando_locacao', 'agendada'].includes(rental.status) ? `<div class="rental-progress-bar" style="margin:16px 0 10px;"><div class="rental-progress-fill" style="width:${progress}%"></div></div>` : ''}
             <div class="rental-actions">
               ${pendingBill ? `<button class="btn btn-primary btn-sm" type="button" onclick="solicitarPagFatura(${rental.id},'${pendingBill.id}')">Solicitar pagamento</button>` : ''}
-              ${rental.status === 'ativo' ? `<button class="btn btn-secondary btn-sm" type="button" onclick="solicDevol(${rental.id})">Solicitar devolucao</button>` : ''}
+              ${rental.status === 'ativo' ? `<button class="btn btn-secondary btn-sm" type="button" onclick="solicDevol(${rental.id})">Solicitar devolução</button>` : ''}
               ${rental.status === 'ativo' && rental.diasRestantes <= 2 ? `<button class="btn btn-secondary btn-sm" type="button" onclick="renovar(${rental.id})">Renovar contrato</button>` : ''}
               <button class="btn btn-ghost btn-sm" type="button" onclick="baixarContrato(${rental.id})">Ver contrato</button>
             </div>
@@ -344,7 +379,7 @@ async function loadPerfil() {
       <div class="info-row"><span class="info-label">E-mail</span><span class="info-value">${dashEscape(user.email || '-')}</span></div>
       <div class="info-row"><span class="info-label">CPF</span><span class="info-value">${dashEscape(user.cpf || '-')}</span></div>
       <div class="info-row"><span class="info-label">Telefone</span><span class="info-value">${dashEscape(user.telefone || '-')}</span></div>
-      <div class="info-row"><span class="info-label">Endereco</span><span class="info-value">${dashEscape(address.logradouro ? `${address.logradouro}, ${address.numero} - ${address.bairro}, ${address.cidade}/${address.uf}` : 'Nao informado')}</span></div>
+      <div class="info-row"><span class="info-label">Endereço</span><span class="info-value">${dashEscape(address.logradouro ? `${address.logradouro}, ${address.numero} - ${address.bairro}, ${address.cidade}/${address.uf}` : 'Não informado')}</span></div>
     `;
   } catch (error) {
     document.getElementById('perfilContent').innerHTML = `<div class="empty-state"><strong>Falha ao carregar perfil</strong><span>Tente novamente em instantes.</span></div>`;
@@ -357,12 +392,13 @@ function openModal(id) {
 
   dashboardState.selectedBike = bike;
   dashboardState.selectedPlan = '';
+  dashboardState.selectedInsurance = 'Basico';
   document.getElementById('modalBikeImage').src = normalizeImagePath(bike.imagem);
   document.getElementById('modalBikeName').textContent = bike.nome;
   document.getElementById('modalBikeDesc').textContent = bike.descricao || 'Bike pronta para assinatura com entrega em casa.';
-  document.getElementById('modalBikeDescStep2').textContent = bike.descricao || 'Defina o plano e a data de inicio para concluir a solicitacao.';
+  document.getElementById('modalBikeDescStep2').textContent = bike.descricao || 'Defina o plano e a data de início para concluir a solicitação.';
   document.getElementById('modalBikeCatBadge').textContent = bike.categoria;
-  document.getElementById('modalBikeAvailability').textContent = `${bike.quantidadeDisponivel} unidade(s) disponivel(is)`;
+  document.getElementById('modalBikeAvailability').textContent = `${bike.quantidadeDisponivel} unidade(s) disponível(is)`;
   document.getElementById('modalBikePriceHint').textContent = formatCurrency(bike.precos?.semanal);
   document.getElementById('modalError').style.display = 'none';
 
@@ -373,16 +409,22 @@ function openModal(id) {
   dateInput.max = max;
   dateInput.value = today;
 
-  document.getElementById('planOptions').innerHTML = [
-    ['semanal', 'Semanal', '7 dias'],
-    ['quinzenal', 'Quinzenal', '15 dias'],
-    ['mensal', 'Mensal', '30 dias']
-  ]
-    .map(([key, label, text]) => `
-      <div class="plan-option" data-plan="${key}" onclick="selPlan('${key}',this)">
-        <div class="plan-option-name">${label}</div>
-        <div class="plan-option-price">${formatCurrency(bike.precos?.[key])}</div>
-        <div style="color:var(--text-secondary);font-size:0.9rem;margin-top:6px;">${text}</div>
+  document.getElementById('planOptions').innerHTML = getRentalPlanOptions()
+    .map(option => `
+      <div class="plan-option" data-plan="${option.key}" onclick="selPlan('${option.key}',this)">
+        <div class="plan-option-name">${option.label}</div>
+        <div class="plan-option-price">${formatCurrency(bike.precos?.[option.key])}</div>
+        <div style="color:var(--text-secondary);font-size:0.9rem;margin-top:6px;">${option.description}</div>
+      </div>
+    `)
+    .join('');
+
+  document.getElementById('seguroOptions').innerHTML = getInsuranceOptions()
+    .map(option => `
+      <div class="plan-option ${option.key === dashboardState.selectedInsurance ? 'selected' : ''}" data-insurance="${dashEscape(option.key)}" onclick="selSeguro(this.dataset.insurance,this)">
+        <div class="plan-option-name">${dashEscape(option.label)}</div>
+        <div class="plan-option-price">${option.price > 0 ? `+ ${formatCurrency(option.price)}` : 'Incluso'}</div>
+        <div style="color:var(--text-secondary);font-size:0.9rem;margin-top:6px;">${dashEscape(option.description)}</div>
       </div>
     `)
     .join('');
@@ -410,7 +452,62 @@ function backToBikeInfo() {
 
 function selPlan(plan, element) {
   dashboardState.selectedPlan = plan;
-  document.querySelectorAll('.plan-option').forEach(option => option.classList.remove('selected'));
+  document.querySelectorAll('.plan-option[data-plan]').forEach(option => option.classList.remove('selected'));
+  element.classList.add('selected');
+}
+
+function selSeguro(tipoSeguro, element) {
+  dashboardState.selectedInsurance = tipoSeguro;
+  document.querySelectorAll('.plan-option[data-insurance]').forEach(option => option.classList.remove('selected'));
+  element.classList.add('selected');
+}
+
+function ensureRenewModal() {
+  if (document.getElementById('renewModalOverlay')) return;
+
+  const overlay = document.createElement('div');
+  overlay.id = 'renewModalOverlay';
+  overlay.className = 'modal-overlay';
+  overlay.innerHTML = `
+    <div class="modal" style="max-width:560px;">
+      <h2 class="modal-title">Renovar contrato</h2>
+      <p style="color:var(--text-secondary);margin:8px 0 18px;">Escolha por quanto tempo deseja estender a locação atual.</p>
+      <div class="plan-options" id="renewPlanOptions"></div>
+      <div id="renewModalError" class="form-block" style="display:none;color:var(--danger);background:var(--danger-bg);border-color:var(--danger-border);margin-top:12px;"></div>
+      <div class="hero-actions" style="justify-content:flex-end;margin-top:18px;">
+        <button class="btn btn-secondary" type="button" onclick="closeRenewModal()">Cancelar</button>
+        <button class="btn btn-primary" type="button" id="renewConfirmBtn" onclick="confirmarRenovacao()">Confirmar renovação</button>
+      </div>
+    </div>
+  `;
+  overlay.addEventListener('click', event => {
+    if (event.target === event.currentTarget) closeRenewModal();
+  });
+  document.body.appendChild(overlay);
+}
+
+function renderRenewPlanOptions() {
+  const container = document.getElementById('renewPlanOptions');
+  if (!container) return;
+  container.innerHTML = getRentalPlanOptions()
+    .map(option => `
+      <div class="plan-option ${option.key === dashboardState.selectedRenewPlan ? 'selected' : ''}" data-renew-plan="${option.key}" onclick="selRenewPlan('${option.key}',this)">
+        <div class="plan-option-name">${option.label}</div>
+        <div class="plan-option-price">${option.description}</div>
+        <div style="color:var(--text-secondary);font-size:0.9rem;margin-top:6px;">Adicionar ao contrato</div>
+      </div>
+    `)
+    .join('');
+}
+
+function closeRenewModal() {
+  document.getElementById('renewModalOverlay')?.classList.remove('open');
+  dashboardState.renewalRentalId = null;
+}
+
+function selRenewPlan(plan, element) {
+  dashboardState.selectedRenewPlan = plan;
+  document.querySelectorAll('.plan-option[data-renew-plan]').forEach(option => option.classList.remove('selected'));
   element.classList.add('selected');
 }
 
@@ -435,34 +532,35 @@ async function confirmarLocacao() {
       body: JSON.stringify({
         bikeId: dashboardState.selectedBike.id,
         tipo: dashboardState.selectedPlan,
+        tipoSeguro: dashboardState.selectedInsurance,
         dataInicio: document.getElementById('dataInicio').value
       })
     });
 
     const data = await response.json();
     if (!response.ok) {
-      errorBox.textContent = data.error || 'Nao foi possivel criar a locacao.';
+      errorBox.textContent = data.error || 'Não foi possível criar a locação.';
       errorBox.style.display = 'block';
       return;
     }
 
     closeModal();
-    showToast(data.message || 'Locacao criada com sucesso.', 'success');
+    showToast(data.message || 'Locação criada com sucesso.', 'success');
     showSec('locacoes', document.getElementById('nav-locacoes'));
     loadInicio();
   } catch (error) {
-    errorBox.textContent = 'Erro de conexao com o servidor.';
+    errorBox.textContent = 'Erro de conexão com o servidor.';
     errorBox.style.display = 'block';
   } finally {
     button.disabled = false;
-    button.textContent = 'Confirmar locacao';
+    button.textContent = 'Confirmar locação';
   }
 }
 
 async function solicitarPagFatura(id, billId) {
   const response = await fetch(`${dashboardApi}/rentals/${id}/faturas/${billId}/pagar`, { method: 'POST', headers: dashboardHeaders });
   const data = await response.json();
-  showToast(data.message || data.error || 'Atualizacao realizada.', response.ok ? 'success' : 'error');
+  showToast(data.message || data.error || 'Atualização realizada.', response.ok ? 'success' : 'error');
   if (response.ok) loadLocacoes();
 }
 
@@ -476,28 +574,83 @@ async function solicDevol(id) {
   }
 }
 
-async function renovar(id) {
-  const tipo = window.prompt('Tipo de renovacao: semanal, quinzenal ou mensal');
-  if (!tipo) return;
-  const response = await fetch(`${dashboardApi}/rentals/${id}/renovar`, {
-    method: 'PUT',
-    headers: dashboardJsonHeaders,
-    body: JSON.stringify({ tipo })
-  });
-  const data = await response.json();
-  showToast(data.message || data.error || 'Atualizacao realizada.', response.ok ? 'success' : 'error');
-  if (response.ok) loadLocacoes();
+function renovar(id) {
+  dashboardState.renewalRentalId = Number(id);
+  dashboardState.selectedRenewPlan = 'mensal';
+  ensureRenewModal();
+  renderRenewPlanOptions();
+
+  const errorBox = document.getElementById('renewModalError');
+  const button = document.getElementById('renewConfirmBtn');
+  if (errorBox) errorBox.style.display = 'none';
+  if (button) {
+    button.disabled = false;
+    button.textContent = 'Confirmar renovação';
+  }
+  document.getElementById('renewModalOverlay')?.classList.add('open');
+}
+
+async function confirmarRenovacao() {
+  const errorBox = document.getElementById('renewModalError');
+  const button = document.getElementById('renewConfirmBtn');
+  const rentalId = dashboardState.renewalRentalId;
+
+  if (!rentalId || !dashboardState.selectedRenewPlan) {
+    if (errorBox) {
+      errorBox.textContent = 'Selecione um plano para renovar.';
+      errorBox.style.display = 'block';
+    }
+    return;
+  }
+
+  if (errorBox) errorBox.style.display = 'none';
+  if (button) {
+    button.disabled = true;
+    button.textContent = 'Renovando...';
+  }
+
+  try {
+    const response = await fetch(`${dashboardApi}/rentals/${rentalId}/renovar`, {
+      method: 'PUT',
+      headers: dashboardJsonHeaders,
+      body: JSON.stringify({ tipo: dashboardState.selectedRenewPlan })
+    });
+    const data = await response.json();
+    showToast(data.message || data.error || 'Atualização realizada.', response.ok ? 'success' : 'error');
+    if (response.ok) {
+      closeRenewModal();
+      loadLocacoes();
+      loadInicio();
+    } else if (errorBox) {
+      errorBox.textContent = data.error || 'Não foi possível renovar o contrato.';
+      errorBox.style.display = 'block';
+    }
+  } catch (error) {
+    if (errorBox) {
+      errorBox.textContent = 'Erro de conexão com o servidor.';
+      errorBox.style.display = 'block';
+    }
+  } finally {
+    if (button) {
+      button.disabled = false;
+      button.textContent = 'Confirmar renovação';
+    }
+  }
 }
 
 async function baixarContrato(id) {
   const response = await fetch(`${dashboardApi}/contratos/${id}`, { headers: dashboardHeaders });
   const data = await response.json();
   if (!response.ok) {
-    showToast(data.error || 'Contrato nao disponivel.', 'error');
+    showToast(data.error || 'Contrato não disponível.', 'error');
     return;
   }
   const popup = window.open('', '_blank');
-  popup.document.write(data.contrato || data.html || '<p>Contrato nao disponivel.</p>');
+  if (!popup) {
+    showToast('Permita pop-ups para visualizar o contrato.', 'warning');
+    return;
+  }
+  popup.document.write(data.contrato || data.html || '<p>Contrato não disponível.</p>');
   popup.document.close();
 }
 
@@ -520,7 +673,11 @@ window.closeModal = closeModal;
 window.goToLocacao = goToLocacao;
 window.backToBikeInfo = backToBikeInfo;
 window.selPlan = selPlan;
+window.selSeguro = selSeguro;
+window.selRenewPlan = selRenewPlan;
 window.confirmarLocacao = confirmarLocacao;
+window.closeRenewModal = closeRenewModal;
+window.confirmarRenovacao = confirmarRenovacao;
 window.solicitarPagFatura = solicitarPagFatura;
 window.solicDevol = solicDevol;
 window.renovar = renovar;
