@@ -28,7 +28,7 @@ function dashEscape(value) {
     .replace(/'/g, '&#39;');
 }
 
-function formatDashboardDate(value, fallback = 'Data indisponivel') {
+function formatDashboardDate(value, fallback = 'Data indisponível') {
   if (!value) return fallback;
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) return fallback;
@@ -81,7 +81,7 @@ function getRentalProgress(rental) {
 function formatRentalDaysRemaining(rental) {
   const daysRemaining = getRentalDaysRemaining(rental);
   if (daysRemaining === null) {
-    return rental.status === 'finalizado' ? 'Finalizado' : 'Nao informado';
+    return rental.status === 'finalizado' ? 'Finalizado' : 'Não informado';
   }
   if (daysRemaining > 0) return `${daysRemaining} dias`;
   return rental.status === 'finalizado' ? 'Finalizado' : 'Vencida';
@@ -197,7 +197,7 @@ async function loadInicio() {
         </div>
         <div class="card-body">
           <div class="rental-bike-name">${dashEscape(highlight.bikeNome)}</div>
-          <div class="rental-meta">${dashEscape(highlight.planoLabel)} | Devolucao prevista em ${formatDashboardDate(highlight.dataDevolucaoPrevista)}</div>
+          <div class="rental-meta">${dashEscape(highlight.planoLabel)} | Devolução prevista em ${formatDashboardDate(highlight.dataDevolucaoPrevista)}</div>
           <div class="rental-progress-bar" style="margin:16px 0 10px;"><div class="rental-progress-fill" style="width:${progress}%"></div></div>
           <div class="rental-actions">
             ${paymentBadge(highlight.pagamento)}
@@ -238,8 +238,8 @@ function renderDashboardGrid() {
       return `
         <article class="bike-card">
           <div class="bike-photo">
-            <span class="bike-signal">${available ? 'Disponivel' : 'Sem estoque'}</span>
-            <img src="${dashEscape(normalizeImagePath(bike.imagem))}" alt="${dashEscape(bike.nome)}" loading="lazy" onerror="this.outerHTML='<span class=&quot;bike-photo-label&quot;>Imagem indisponivel</span>'">
+            <span class="bike-signal">${available ? 'Disponível' : 'Sem estoque'}</span>
+            <img src="${dashEscape(normalizeImagePath(bike.imagem))}" alt="${dashEscape(bike.nome)}" loading="lazy" onerror="this.outerHTML='<span class=&quot;bike-photo-label&quot;>Imagem indisponível</span>'">
           </div>
           <div class="bike-info">
             <div class="bike-head">
@@ -253,7 +253,7 @@ function renderDashboardGrid() {
             <div class="bike-footer">
               <div>
                 <div class="bike-price">${dashEscape(formatCurrency(bike.precos?.semanal))}<span class="bike-price-label">/ semana</span></div>
-                <div class="bike-qty" style="${available ? '' : 'color:var(--danger);'}">${available ? `${bike.quantidadeDisponivel} disponivel(is)` : 'Indisponivel'}</div>
+                <div class="bike-qty" style="${available ? '' : 'color:var(--danger);'}">${available ? `${bike.quantidadeDisponivel} disponível(is)` : 'Indisponível'}</div>
               </div>
               <button class="btn ${available ? 'btn-primary' : 'btn-secondary'} btn-sm" type="button" onclick="openModal(${bike.id})" ${available ? '' : 'disabled'}>${available ? 'Ver detalhes' : 'Sem estoque'}</button>
             </div>
@@ -279,13 +279,13 @@ async function loadLocar() {
     const rentals = await fetch(`${dashboardApi}/rentals/meus`, { headers: dashboardHeaders }).then(response => response.json());
     const activeRental = (rentals.alugueis || []).find(rental => rental.status !== 'finalizado');
     if (activeRental) {
-      lock.textContent = `Voce ja possui a locacao #${activeRental.id}. Finalize ou devolva a atual antes de contratar outra bike.`;
+      lock.textContent = `Você já possui a locação #${activeRental.id}. Finalize ou devolva a atual antes de contratar outra bike.`;
       lock.style.display = 'block';
       grid.innerHTML = '';
       return;
     }
   } catch (error) {
-    lock.textContent = 'Nao foi possivel validar locacoes existentes.';
+    lock.textContent = 'Não foi possível validar suas locações existentes. Tente novamente em instantes.';
     lock.style.display = 'block';
   }
 
@@ -306,7 +306,7 @@ async function loadLocar() {
     renderDashboardFilters();
     renderDashboardGrid();
   } catch (error) {
-    grid.innerHTML = `<div class="empty-state"><strong>Falha ao carregar o catalogo</strong><span>Confira se o backend esta ativo.</span></div>`;
+    grid.innerHTML = `<div class="empty-state"><strong>Falha ao carregar o catálogo</strong><span>Confira se o backend está ativo e tente novamente.</span></div>`;
   }
 }
 
@@ -333,11 +333,11 @@ async function loadLocacoes() {
             <div class="rental-header">
               <div>
                 <div class="rental-bike-name">${dashEscape(rental.bikeNome)}</div>
-                <div class="rental-meta">${dashEscape(rental.planoLabel)} | Inicio em ${formatDashboardDate(rental.dataInicio)}</div>
+                <div class="rental-meta">${dashEscape(rental.planoLabel)} | Início em ${formatDashboardDate(rental.dataInicio)}</div>
               </div>
               <div class="rental-actions">${statusBadge(rental.status)}${paymentBadge(rental.pagamento)}</div>
             </div>
-            <div class="info-row"><span class="info-label">Devolucao prevista</span><span class="info-value">${formatDashboardDate(rental.dataDevolucaoPrevista)}</span></div>
+            <div class="info-row"><span class="info-label">Devolução prevista</span><span class="info-value">${formatDashboardDate(rental.dataDevolucaoPrevista)}</span></div>
             <div class="info-row"><span class="info-label">Valor atual</span><span class="info-value">${dashEscape(formatCurrency(rental.preco))}</span></div>
             ${insuranceInfo ? `<div class="info-row"><span class="info-label">Seguro</span><span class="info-value">${dashEscape(insuranceInfo)}</span></div>` : ''}
             <div class="info-row"><span class="info-label">Dias restantes</span><span class="info-value">${formatRentalDaysRemaining(rental)}</span></div>
@@ -345,7 +345,7 @@ async function loadLocacoes() {
             ${['ativo', 'aguardando_locacao', 'agendada'].includes(rental.status) ? `<div class="rental-progress-bar" style="margin:16px 0 10px;"><div class="rental-progress-fill" style="width:${progress}%"></div></div>` : ''}
             <div class="rental-actions">
               ${pendingBill ? `<button class="btn btn-primary btn-sm" type="button" onclick="solicitarPagFatura(${rental.id},'${pendingBill.id}')">Solicitar pagamento</button>` : ''}
-              ${rental.status === 'ativo' ? `<button class="btn btn-secondary btn-sm" type="button" onclick="solicDevol(${rental.id})">Solicitar devolucao</button>` : ''}
+              ${rental.status === 'ativo' ? `<button class="btn btn-secondary btn-sm" type="button" onclick="solicDevol(${rental.id})">Solicitar devolução</button>` : ''}
               ${rental.status === 'ativo' && rental.diasRestantes <= 2 ? `<button class="btn btn-secondary btn-sm" type="button" onclick="renovar(${rental.id})">Renovar contrato</button>` : ''}
               <button class="btn btn-ghost btn-sm" type="button" onclick="baixarContrato(${rental.id})">Ver contrato</button>
             </div>
@@ -369,7 +369,7 @@ async function loadPerfil() {
       <div class="info-row"><span class="info-label">E-mail</span><span class="info-value">${dashEscape(user.email || '-')}</span></div>
       <div class="info-row"><span class="info-label">CPF</span><span class="info-value">${dashEscape(user.cpf || '-')}</span></div>
       <div class="info-row"><span class="info-label">Telefone</span><span class="info-value">${dashEscape(user.telefone || '-')}</span></div>
-      <div class="info-row"><span class="info-label">Endereco</span><span class="info-value">${dashEscape(address.logradouro ? `${address.logradouro}, ${address.numero} - ${address.bairro}, ${address.cidade}/${address.uf}` : 'Nao informado')}</span></div>
+      <div class="info-row"><span class="info-label">Endereço</span><span class="info-value">${dashEscape(address.logradouro ? `${address.logradouro}, ${address.numero} - ${address.bairro}, ${address.cidade}/${address.uf}` : 'Não informado')}</span></div>
     `;
   } catch (error) {
     document.getElementById('perfilContent').innerHTML = `<div class="empty-state"><strong>Falha ao carregar perfil</strong><span>Tente novamente em instantes.</span></div>`;
@@ -386,9 +386,9 @@ function openModal(id) {
   document.getElementById('modalBikeImage').src = normalizeImagePath(bike.imagem);
   document.getElementById('modalBikeName').textContent = bike.nome;
   document.getElementById('modalBikeDesc').textContent = bike.descricao || 'Bike pronta para assinatura com entrega em casa.';
-  document.getElementById('modalBikeDescStep2').textContent = bike.descricao || 'Defina o plano e a data de inicio para concluir a solicitacao.';
+  document.getElementById('modalBikeDescStep2').textContent = bike.descricao || 'Defina o plano e a data de início para concluir a solicitação.';
   document.getElementById('modalBikeCatBadge').textContent = bike.categoria;
-  document.getElementById('modalBikeAvailability').textContent = `${bike.quantidadeDisponivel} unidade(s) disponivel(is)`;
+  document.getElementById('modalBikeAvailability').textContent = `${bike.quantidadeDisponivel} unidade(s) disponível(is)`;
   document.getElementById('modalBikePriceHint').textContent = formatCurrency(bike.precos?.semanal);
   document.getElementById('modalError').style.display = 'none';
 
@@ -484,28 +484,28 @@ async function confirmarLocacao() {
 
     const data = await response.json();
     if (!response.ok) {
-      errorBox.textContent = data.error || 'Nao foi possivel criar a locacao.';
+      errorBox.textContent = data.error || 'Não foi possível criar a locação.';
       errorBox.style.display = 'block';
       return;
     }
 
     closeModal();
-    showToast(data.message || 'Locacao criada com sucesso.', 'success');
+    showToast(data.message || 'Locação criada com sucesso.', 'success');
     showSec('locacoes', document.getElementById('nav-locacoes'));
     loadInicio();
   } catch (error) {
-    errorBox.textContent = 'Erro de conexao com o servidor.';
+    errorBox.textContent = 'Erro de conexão com o servidor.';
     errorBox.style.display = 'block';
   } finally {
     button.disabled = false;
-    button.textContent = 'Confirmar locacao';
+    button.textContent = 'Confirmar locação';
   }
 }
 
 async function solicitarPagFatura(id, billId) {
   const response = await fetch(`${dashboardApi}/rentals/${id}/faturas/${billId}/pagar`, { method: 'POST', headers: dashboardHeaders });
   const data = await response.json();
-  showToast(data.message || data.error || 'Atualizacao realizada.', response.ok ? 'success' : 'error');
+  showToast(data.message || data.error || 'Atualização realizada.', response.ok ? 'success' : 'error');
   if (response.ok) loadLocacoes();
 }
 
@@ -528,7 +528,7 @@ async function renovar(id) {
     body: JSON.stringify({ tipo })
   });
   const data = await response.json();
-  showToast(data.message || data.error || 'Atualizacao realizada.', response.ok ? 'success' : 'error');
+  showToast(data.message || data.error || 'Atualização realizada.', response.ok ? 'success' : 'error');
   if (response.ok) loadLocacoes();
 }
 
@@ -536,11 +536,15 @@ async function baixarContrato(id) {
   const response = await fetch(`${dashboardApi}/contratos/${id}`, { headers: dashboardHeaders });
   const data = await response.json();
   if (!response.ok) {
-    showToast(data.error || 'Contrato nao disponivel.', 'error');
+    showToast(data.error || 'Contrato não disponível.', 'error');
     return;
   }
   const popup = window.open('', '_blank');
-  popup.document.write(data.contrato || data.html || '<p>Contrato nao disponivel.</p>');
+  if (!popup) {
+    showToast('Permita pop-ups para visualizar o contrato.', 'warning');
+    return;
+  }
+  popup.document.write(data.contrato || data.html || '<p>Contrato não disponível.</p>');
   popup.document.close();
 }
 
