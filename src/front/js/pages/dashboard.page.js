@@ -1,5 +1,5 @@
 const dashboardToken = localStorage.getItem('pedala_token');
-const dashboardUser = JSON.parse(localStorage.getItem('pedala_user') || '{}');
+const dashboardUser = window.readStoredJson ? window.readStoredJson('pedala_user') : JSON.parse(localStorage.getItem('pedala_user') || '{}');
 const dashboardApi = window.PEDALA_API_BASE;
 const dashboardRole = window.normalizeUserRole ? window.normalizeUserRole(dashboardUser.role) : String(dashboardUser.role || '').trim().toLowerCase();
 

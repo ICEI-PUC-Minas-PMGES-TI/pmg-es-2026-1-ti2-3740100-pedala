@@ -7,6 +7,19 @@ const API_BASE = `${protocol}//${host}:8080/api`;
 
 window.PEDALA_API_BASE = API_BASE;
 
+function readStoredJson(key, fallback = {}) {
+  const rawValue = localStorage.getItem(key);
+  if (!rawValue) return fallback;
+
+  try {
+    const parsedValue = JSON.parse(rawValue);
+    return parsedValue && typeof parsedValue === 'object' ? parsedValue : fallback;
+  } catch (error) {
+    localStorage.removeItem(key);
+    return fallback;
+  }
+}
+
 function normalizeUserRole(role) {
   return String(role || '').trim().toLowerCase();
 }
@@ -130,7 +143,7 @@ function updateNavbarAuth() {
   if (!navActions) return;
 
   const token = localStorage.getItem(TOKEN_KEY);
-  const user = JSON.parse(localStorage.getItem(USER_KEY) || '{}');
+  const user = readStoredJson(USER_KEY);
   if (!token || !user.nome) return;
 
   const name = user.nome.split(' ')[0];
@@ -190,6 +203,7 @@ function solicitarLocacao(bikeId) {
 window.showToast = showToast;
 window.logoutNav = logoutNav;
 window.solicitarLocacao = solicitarLocacao;
+window.readStoredJson = readStoredJson;
 window.normalizeUserRole = normalizeUserRole;
 window.getUserPanelPath = getUserPanelPath;
 

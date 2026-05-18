@@ -1,6 +1,6 @@
 // ── Auth ──────────────────────────────────────────────
 const token = localStorage.getItem('pedala_token');
-const user = JSON.parse(localStorage.getItem('pedala_user') || '{}');
+const user = window.readStoredJson ? window.readStoredJson('pedala_user') : JSON.parse(localStorage.getItem('pedala_user') || '{}');
 const adminRole = window.normalizeUserRole ? window.normalizeUserRole(user.role) : String(user.role || '').trim().toLowerCase();
 if (!token || adminRole !== 'admin') { alert('Acesso negado.'); location.href = 'login.html'; }
 
