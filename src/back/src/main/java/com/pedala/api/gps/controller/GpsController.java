@@ -39,6 +39,14 @@ public class GpsController {
         return ResponseEntity.ok(pos);
     }
 
+    @Operation(summary = "Histórico de GPS de uma Locação (Rota)")
+    @GetMapping("/historico/{rentalId}")
+    @PreAuthorize("hasAnyRole('ADMIN','FUNCIONARIO','USER')")
+    public ResponseEntity<Map<String, Object>> getHistory(@PathVariable Long rentalId) {
+        List<Map<String, Object>> history = gpsService.getHistory(rentalId);
+        return ResponseEntity.ok(Map.of("rentalId", rentalId, "history", history, "totalPoints", history.size()));
+    }
+
     @Operation(summary = "Stream SSE em tempo real")
     @GetMapping(value = "/stream", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
     @PreAuthorize("hasAnyRole('ADMIN','FUNCIONARIO')")

@@ -1,24 +1,26 @@
+-- V1: Tabelas de usuários (T-SQL - Azure SQL Server)
 CREATE TABLE users (
-    id BIGINT AUTO_INCREMENT PRIMARY KEY,
-    nome VARCHAR(100) NOT NULL,
-    email VARCHAR(150) NOT NULL UNIQUE,
-    senha VARCHAR(255) NOT NULL,
-    cpf VARCHAR(14),
-    telefone VARCHAR(20),
-    role ENUM('USER', 'FUNCIONARIO', 'ADMIN') NOT NULL DEFAULT 'USER',
-    plano VARCHAR(50),
-    criado_em TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+    id          BIGINT IDENTITY(1,1) PRIMARY KEY,
+    nome        NVARCHAR(100)   NOT NULL,
+    email       NVARCHAR(150)   NOT NULL UNIQUE,
+    senha       NVARCHAR(255)   NOT NULL,
+    cpf         NVARCHAR(14),
+    telefone    NVARCHAR(20),
+    role        NVARCHAR(20)    NOT NULL DEFAULT 'USER'
+                    CONSTRAINT ck_user_role CHECK (role IN ('USER', 'FUNCIONARIO', 'ADMIN')),
+    plano       NVARCHAR(50),
+    criado_em   DATETIME2       NOT NULL DEFAULT SYSUTCDATETIME()
+);
 
 CREATE TABLE user_addresses (
-    id BIGINT AUTO_INCREMENT PRIMARY KEY,
-    user_id BIGINT NOT NULL UNIQUE,
-    cep VARCHAR(10),
-    logradouro VARCHAR(200),
-    numero VARCHAR(20),
-    bairro VARCHAR(100),
-    cidade VARCHAR(100),
-    uf VARCHAR(2),
-    complemento VARCHAR(100),
+    id          BIGINT IDENTITY(1,1) PRIMARY KEY,
+    user_id     BIGINT          NOT NULL UNIQUE,
+    cep         NVARCHAR(10),
+    logradouro  NVARCHAR(200),
+    numero      NVARCHAR(20),
+    bairro      NVARCHAR(100),
+    cidade      NVARCHAR(100),
+    uf          NVARCHAR(2),
+    complemento NVARCHAR(100),
     CONSTRAINT fk_address_user FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+);

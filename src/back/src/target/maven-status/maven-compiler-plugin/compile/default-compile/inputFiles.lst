@@ -1,7 +1,10 @@
 C:\Users\jotaa\OneDrive\Documentos\Prado\PedaLa\pmg-es-2026-1-ti2-3740100-pedala\src\back\src\main\java\com\pedala\api\admin\controller\AdminController.java
 C:\Users\jotaa\OneDrive\Documentos\Prado\PedaLa\pmg-es-2026-1-ti2-3740100-pedala\src\back\src\main\java\com\pedala\api\admin\service\AdminService.java
+C:\Users\jotaa\OneDrive\Documentos\Prado\PedaLa\pmg-es-2026-1-ti2-3740100-pedala\src\back\src\main\java\com\pedala\api\bike\controller\BikeCategoryController.java
 C:\Users\jotaa\OneDrive\Documentos\Prado\PedaLa\pmg-es-2026-1-ti2-3740100-pedala\src\back\src\main\java\com\pedala\api\bike\controller\BikeController.java
 C:\Users\jotaa\OneDrive\Documentos\Prado\PedaLa\pmg-es-2026-1-ti2-3740100-pedala\src\back\src\main\java\com\pedala\api\bike\domain\Bike.java
+C:\Users\jotaa\OneDrive\Documentos\Prado\PedaLa\pmg-es-2026-1-ti2-3740100-pedala\src\back\src\main\java\com\pedala\api\bike\domain\BikeCategory.java
+C:\Users\jotaa\OneDrive\Documentos\Prado\PedaLa\pmg-es-2026-1-ti2-3740100-pedala\src\back\src\main\java\com\pedala\api\bike\repository\BikeCategoryRepository.java
 C:\Users\jotaa\OneDrive\Documentos\Prado\PedaLa\pmg-es-2026-1-ti2-3740100-pedala\src\back\src\main\java\com\pedala\api\bike\repository\BikeRepository.java
 C:\Users\jotaa\OneDrive\Documentos\Prado\PedaLa\pmg-es-2026-1-ti2-3740100-pedala\src\back\src\main\java\com\pedala\api\bike\service\BikeService.java
 C:\Users\jotaa\OneDrive\Documentos\Prado\PedaLa\pmg-es-2026-1-ti2-3740100-pedala\src\back\src\main\java\com\pedala\api\config\CorsConfig.java
@@ -18,6 +21,8 @@ C:\Users\jotaa\OneDrive\Documentos\Prado\PedaLa\pmg-es-2026-1-ti2-3740100-pedala
 C:\Users\jotaa\OneDrive\Documentos\Prado\PedaLa\pmg-es-2026-1-ti2-3740100-pedala\src\back\src\main\java\com\pedala\api\exception\GlobalExceptionHandler.java
 C:\Users\jotaa\OneDrive\Documentos\Prado\PedaLa\pmg-es-2026-1-ti2-3740100-pedala\src\back\src\main\java\com\pedala\api\exception\ResourceNotFoundException.java
 C:\Users\jotaa\OneDrive\Documentos\Prado\PedaLa\pmg-es-2026-1-ti2-3740100-pedala\src\back\src\main\java\com\pedala\api\gps\controller\GpsController.java
+C:\Users\jotaa\OneDrive\Documentos\Prado\PedaLa\pmg-es-2026-1-ti2-3740100-pedala\src\back\src\main\java\com\pedala\api\gps\domain\BikeTelemetry.java
+C:\Users\jotaa\OneDrive\Documentos\Prado\PedaLa\pmg-es-2026-1-ti2-3740100-pedala\src\back\src\main\java\com\pedala\api\gps\repository\BikeTelemetryRepository.java
 C:\Users\jotaa\OneDrive\Documentos\Prado\PedaLa\pmg-es-2026-1-ti2-3740100-pedala\src\back\src\main\java\com\pedala\api\gps\service\GpsSimulatorService.java
 C:\Users\jotaa\OneDrive\Documentos\Prado\PedaLa\pmg-es-2026-1-ti2-3740100-pedala\src\back\src\main\java\com\pedala\api\inspection\controller\InspectionController.java
 C:\Users\jotaa\OneDrive\Documentos\Prado\PedaLa\pmg-es-2026-1-ti2-3740100-pedala\src\back\src\main\java\com\pedala\api\inspection\domain\Inspection.java

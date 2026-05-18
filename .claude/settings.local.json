@@ -1,0 +1,14 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(Get-ChildItem -Path \"C:\\\\Users\\\\jotaa\\\\OneDrive\\\\Documentos\\\\Prado\\\\PedaLa\\\\pmg-es-2026-1-ti2-3740100-pedala\\\\src\\\\front\" -Recurse -Force)",
+      "Bash(Select-Object FullName, PSIsContainer)",
+      "Bash(Sort-Object FullName)",
+      "Bash(Format-Table -AutoSize)",
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\" http://localhost:8080/api/bikes)",
+      "Bash(curl -s http://localhost:8080/api/bikes)",
+      "Bash(curl -s http://localhost:8080/api/bike-categories)",
+      "Bash(curl *)"
+    ]
+  }
+}

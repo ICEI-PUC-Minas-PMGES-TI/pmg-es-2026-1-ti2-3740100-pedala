@@ -34,7 +34,7 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> auth
                         // Public endpoints
                         .requestMatchers("/api/auth/login", "/api/auth/register", "/api/auth/seed-admin").permitAll()
-                        .requestMatchers(HttpMethod.GET, "/api/bikes", "/api/bikes/**").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/bikes", "/api/bikes/**", "/api/bike-categories").permitAll()
                         .requestMatchers("/api/health", "/api/chat").permitAll()
                         .requestMatchers("/actuator/health").permitAll()
                         // Swagger

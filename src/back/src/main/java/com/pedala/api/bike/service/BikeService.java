@@ -2,6 +2,7 @@ package com.pedala.api.bike.service;
 
 import com.pedala.api.bike.domain.Bike;
 import com.pedala.api.bike.repository.BikeRepository;
+import com.pedala.api.bike.repository.BikeCategoryRepository;
 import com.pedala.api.exception.BusinessException;
 import com.pedala.api.exception.ResourceNotFoundException;
 import com.pedala.api.gps.service.GpsSimulatorService;
@@ -26,9 +27,21 @@ import java.util.Map;
 public class BikeService {
 
     private final BikeRepository bikeRepository;
+    private final BikeCategoryRepository bikeCategoryRepository;
     private final RentalRepository rentalRepository;
     private final FileStorageService fileStorageService;
     private final GpsSimulatorService gpsSimulatorService;
+
+    /** Valida se a categoria existe na tabela bike_categories. Lança BusinessException se não existir. */
+    private String validarCategoria(String categoria, String fallback) {
+        if (categoria == null || categoria.isBlank()) return fallback;
+        boolean existe = bikeCategoryRepository.existsByNomeIgnoreCase(categoria.trim());
+        if (!existe) {
+            throw new BusinessException(
+                "Categoria \"" + categoria.trim() + "\" não encontrada. Cadastre-a primeiro em Configurações > Categorias.");
+        }
+        return categoria.trim();
+    }
 
     @Transactional(readOnly = true)
     public Map<String, Object> listBikes(String categoria, String disponivel) {
@@ -76,9 +89,11 @@ public class BikeService {
             imagemPath = fileStorageService.store(imagem, "bike_new");
         }
 
+        String catValidada = validarCategoria(categoria, "Urbana");
+
         Bike bike = Bike.builder()
                 .nome(nome)
-                .categoria(categoria != null ? categoria : "Urbana")
+                .categoria(catValidada)
                 .descricao(descricao != null ? descricao : "")
                 .precoSemanal(precoSemanal)
                 .precoQuinzenal(precoQuinzenal)
@@ -104,7 +119,7 @@ public class BikeService {
                 .orElseThrow(() -> new ResourceNotFoundException("Bike nao encontrada."));
 
         if (nome != null) bike.setNome(nome);
-        if (categoria != null) bike.setCategoria(categoria);
+        if (categoria != null) bike.setCategoria(validarCategoria(categoria, bike.getCategoria()));
         if (descricao != null) bike.setDescricao(descricao);
         if (precoSemanal != null) bike.setPrecoSemanal(precoSemanal);
         if (precoQuinzenal != null) bike.setPrecoQuinzenal(precoQuinzenal);

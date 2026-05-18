@@ -25,7 +25,8 @@ function showSec(s, el) {
     const loaders = {
         dashboard: loadDash, bikes: loadBikes,
         locacoes: loadLocacoes, pagamentos: loadPagamentos,
-        gps: initGpsMap, vistorias: loadVist, usuarios: loadUsers
+        gps: initGpsMap, vistorias: loadVist, usuarios: loadUsers,
+        configuracoes: loadCategories
     };
     if (loaders[s]) loaders[s]();
 }
@@ -286,6 +287,7 @@ async function loadBikes() {
         allBikes = d.bikes || [];
         const countEl = document.getElementById('bikeCount');
         if (countEl) countEl.textContent = `${allBikes.length} modelo(s)`;
+        await fillCategorySelects(); // preenche os selects de categoria
         filterBikeCards();
     } catch (e) { showToast('Erro ao carregar bikes.', 'error'); }
 }
@@ -488,17 +490,21 @@ function editSelectedBike() {
 }
 
 // ── Edit Modal ────────────────────────────────────────
-function openEditModal(bikeId) {
+async function openEditModal(bikeId) {
     const bike = allBikes.find(b => b.id === bikeId);
     if (!bike) return;
 
     document.getElementById('editBikeId').value = bikeId;
     document.getElementById('editNome').value = bike.nome || '';
-    document.getElementById('editCat').value = bike.categoria || '';
     document.getElementById('editDesc').value = bike.descricao || '';
     document.getElementById('editPS').value = bike.precos?.semanal || '';
     document.getElementById('editPQ').value = bike.precos?.quinzenal || '';
     document.getElementById('editPM').value = bike.precos?.mensal || '';
+
+    // Preenche o select de categoria e seleciona o valor atual da bike
+    await fillCategorySelects();
+    const editCat = document.getElementById('editCat');
+    if (editCat && bike.categoria) editCat.value = bike.categoria;
 
     // Reset upload state
     removePreview('editPreview','editUploadZone','editImagem');
@@ -857,6 +863,75 @@ async function loadUsers() {
     ).join('') || '<tr><td colspan="5" style="text-align:center;color:var(--text-muted);padding:24px;">Nenhum usuário.</td></tr>';
 }
 
+// ── Categorias ────────────────────────────────────────
+let _allCategories = [];
+
+async function loadCategories() {
+    try {
+        const d = await fetch(`${API_BASE}/bike-categories`).then(r => r.json());
+        _allCategories = d.categorias || [];
+        renderCategoryList();
+        fillCategorySelects();
+    } catch (e) { showToast('Erro ao carregar categorias.', 'error'); }
+}
+
+function renderCategoryList() {
+    const el = document.getElementById('categoryList');
+    if (!el) return;
+    if (!_allCategories.length) {
+        el.innerHTML = '<p style="color:var(--text-muted);">Nenhuma categoria cadastrada.</p>';
+        return;
+    }
+    el.innerHTML = '<div style="display:flex;flex-wrap:wrap;gap:10px;">' +
+        _allCategories.map(c => `
+            <div style="display:flex;align-items:center;gap:8px;background:var(--surface-2,#1e293b);border-radius:8px;padding:8px 14px;">
+                <span style="font-weight:600;">${escHtml(c.nome)}</span>
+                <button class="btn btn-danger btn-sm" style="padding:2px 8px;font-size:11px;" onclick="deleteCategory(${c.id},'${escHtml(c.nome)}')">&times;</button>
+            </div>`
+        ).join('') + '</div>';
+}
+
+async function fillCategorySelects() {
+    if (!_allCategories.length) {
+        try {
+            const d = await fetch(`${API_BASE}/bike-categories`).then(r => r.json());
+            _allCategories = d.categorias || [];
+        } catch { return; }
+    }
+    ['bCat', 'editCat'].forEach(id => {
+        const sel = document.getElementById(id);
+        if (!sel || sel.tagName !== 'SELECT') return;
+        const current = sel.value;
+        sel.innerHTML = _allCategories.map(c =>
+            `<option value="${escHtml(c.nome)}" ${c.nome === current ? 'selected' : ''}>${escHtml(c.nome)}</option>`
+        ).join('');
+    });
+}
+
+async function addCategory() {
+    const input = document.getElementById('newCategoryName');
+    const nome = input ? input.value.trim() : '';
+    if (!nome) { showToast('Digite um nome para a categoria.', 'warning'); return; }
+    try {
+        const r = await fetch(`${API_BASE}/bike-categories`, {
+            method: 'POST', headers: authHJ, body: JSON.stringify({ nome })
+        });
+        const d = await r.json();
+        showToast(d.message || d.error || '', r.ok ? 'success' : 'error');
+        if (r.ok) { input.value = ''; await loadCategories(); }
+    } catch (e) { showToast('Erro ao criar categoria.', 'error'); }
+}
+
+async function deleteCategory(id, nome) {
+    if (!confirm(`Remover a categoria "${nome}"? Bikes com essa categoria NÃO serão afetadas.`)) return;
+    try {
+        const r = await fetch(`${API_BASE}/bike-categories/${id}`, { method: 'DELETE', headers: authH });
+        const d = await r.json();
+        showToast(d.message || d.error || '', r.ok ? 'success' : 'error');
+        if (r.ok) await loadCategories();
+    } catch (e) { showToast('Erro ao remover categoria.', 'error'); }
+}
+
 // ── Close edit modal on Escape ────────────────────────
 document.addEventListener('keydown', e => {
     if (e.key === 'Escape') {
@@ -875,6 +950,8 @@ document.addEventListener('DOMContentLoaded', () => {
             if (e.key === 'Enter') submitEstoque();
         });
     }
+    // Pré-carrega categorias para que o select já esteja pronto ao abrir a seção Bikes
+    loadCategories();
 });
 
 window.bloquearBikeGPS = bloquearBikeGPS;

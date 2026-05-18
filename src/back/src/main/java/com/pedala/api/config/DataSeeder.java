@@ -1,7 +1,9 @@
 package com.pedala.api.config;
 
 import com.pedala.api.bike.domain.Bike;
+import com.pedala.api.bike.domain.BikeCategory;
 import com.pedala.api.bike.repository.BikeRepository;
+import com.pedala.api.bike.repository.BikeCategoryRepository;
 import com.pedala.api.gps.service.GpsSimulatorService;
 import com.pedala.api.rental.domain.Rental;
 import com.pedala.api.rental.domain.RentalInvoice;
@@ -30,6 +32,7 @@ public class DataSeeder implements CommandLineRunner {
 
     private final UserRepository userRepository;
     private final BikeRepository bikeRepository;
+    private final BikeCategoryRepository bikeCategoryRepository;
     private final RentalRepository rentalRepository;
     private final GpsSimulatorService gpsSimulatorService;
     private final PasswordEncoder passwordEncoder;
@@ -65,6 +68,15 @@ public class DataSeeder implements CommandLineRunner {
                 defaultUser = user;
             }
         }
+
+        // Seed Categorias de Bikes
+        List<String> categoriasPadrao = List.of("Urbana", "Mountain", "Speed", "Dobravel", "Eletrica", "Infantil");
+        categoriasPadrao.forEach(nome -> {
+            if (!bikeCategoryRepository.existsByNomeIgnoreCase(nome)) {
+                bikeCategoryRepository.save(BikeCategory.builder().nome(nome).build());
+                log.info("  [seed] Categoria criada: {}", nome);
+            }
+        });
 
         // Seed Bikes
         if (bikeRepository.count() == 0) {

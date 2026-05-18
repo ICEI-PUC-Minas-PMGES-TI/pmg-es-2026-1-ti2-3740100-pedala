@@ -1,34 +1,14 @@
 services:
-  mysql:
-    image: mysql:8.0
-    container_name: pedala-mysql
-    environment:
-      MYSQL_ROOT_PASSWORD: root
-      MYSQL_DATABASE: pedala
-    ports:
-      - "3306:3306"
-    volumes:
-      - pedala-mysql-data:/var/lib/mysql
-    command: --default-authentication-plugin=mysql_native_password
-    healthcheck:
-      test: ["CMD-SHELL", "mysqladmin ping -h localhost -uroot -proot"]
-      interval: 5s
-      timeout: 5s
-      retries: 12
-
   api:
     build:
       context: ./back
       dockerfile: src/Dockerfile
     container_name: pedala-api
-    depends_on:
-      mysql:
-        condition: service_healthy
     restart: on-failure:5
     environment:
-      DB_URL: jdbc:mysql://mysql:3306/pedala?createDatabaseIfNotExist=true&useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
-      DB_USER: root
-      DB_PASSWORD: root
+      DB_URL: jdbc:sqlserver://pedaladb.database.windows.net:1433;database=pedaladatabase;encrypt=true;trustServerCertificate=false;hostNameInCertificate=*.database.windows.net;loginTimeout=30
+      DB_USER: pedalaadmin
+      DB_PASSWORD: Admin123
       JWT_SECRET: pedala_secret_key_2024_production_very_long_secure_key_256bits
       PORT: 8080
       GEMINI_API_KEY: ${GEMINI_API_KEY}
@@ -38,5 +18,4 @@ services:
       - pedala-uploads:/app/uploads
 
 volumes:
-  pedala-mysql-data:
   pedala-uploads:

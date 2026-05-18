@@ -1,5 +1,7 @@
 package com.pedala.api.gps.service;
 
+import com.pedala.api.gps.domain.BikeTelemetry;
+import com.pedala.api.gps.repository.BikeTelemetryRepository;
 import com.pedala.api.rental.repository.RentalRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -19,6 +21,7 @@ import java.util.concurrent.CopyOnWriteArrayList;
 public class GpsSimulatorService {
 
     private final RentalRepository rentalRepository;
+    private final BikeTelemetryRepository bikeTelemetryRepository;
 
     private static final double[][] WAYPOINTS = {
         {-23.5505, -46.6333}, {-23.5519, -46.6355}, {-23.5538, -46.6381},
@@ -76,6 +79,19 @@ public class GpsSimulatorService {
         return t != null ? buildPayload(t) : null;
     }
 
+    public List<Map<String, Object>> getHistory(Long rentalId) {
+        return bikeTelemetryRepository.findByRentalIdOrderByRegistradoEmAsc(rentalId).stream()
+                .map(t -> {
+                    Map<String, Object> m = new LinkedHashMap<>();
+                    m.put("lat", t.getLatitude());
+                    m.put("lng", t.getLongitude());
+                    m.put("speed", t.getVelocidade());
+                    m.put("endereco", t.getEndereco());
+                    m.put("registradoEm", t.getRegistradoEm().toString());
+                    return m;
+                }).toList();
+    }
+
     public SseEmitter createEmitter() {
         SseEmitter emitter = new SseEmitter(Long.MAX_VALUE);
         emitters.add(emitter);
@@ -129,6 +145,18 @@ public class GpsSimulatorService {
             } else {
                 track.speed = 0.0;
             }
+
+            // --- Persistência na Tabela Fato (Telemetria) ---
+            // Salva a posição no banco a cada tick (simulando a recepção do sinal real)
+            BikeTelemetry telemetry = BikeTelemetry.builder()
+                    .bikeId(track.bikeId)
+                    .rentalId(track.rentalId)
+                    .latitude(track.lat)
+                    .longitude(track.lng)
+                    .velocidade(track.speed)
+                    .endereco(track.endereco)
+                    .build();
+            bikeTelemetryRepository.save(telemetry);
 
             broadcastUpdate(buildPayload(track));
         }

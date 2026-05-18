@@ -33,6 +33,7 @@
         <li><a href="#" onclick="showSec('gps',this)">GPS / Rotas</a></li>
         <li><a href="#" onclick="showSec('vistorias',this)">Vistorias</a></li>
         <li><a href="#" onclick="showSec('usuarios',this)">Usuários</a></li>
+          <li><a href="#" onclick="showSec('configuracoes',this)">Configurações</a></li>
       </ul>
     </aside>
 
@@ -107,7 +108,9 @@
                   <div class="fields-row">
                     <div class="form-group mb-0">
                       <label class="form-label">Categoria</label>
-                      <input class="form-input" id="bCat" placeholder="Urbana">
+                      <select class="form-input" id="bCat">
+                        <option value="">Carregando...</option>
+                      </select>
                     </div>
                     <div class="form-group mb-0">
                       <label class="form-label">Quantidade *</label>
@@ -282,6 +285,28 @@
         </div>
       </div>
 
+      <!-- CONFIGURAÇÕES -->
+      <div id="sec-configuracoes" class="sec">
+        <div class="page-header-row">
+          <div class="page-header">
+            <h1>Configurações</h1>
+            <p>Gerencie as categorias disponíveis para cadastro de bicicletas.</p>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-header">
+            <span class="card-title">Categorias de Bicicletas</span>
+          </div>
+          <div class="card-body" style="padding:20px;">
+            <div style="display:flex;gap:10px;margin-bottom:20px;">
+              <input class="form-input" id="newCategoryName" placeholder="Nova categoria (ex: BMX)" style="max-width:320px;">
+              <button class="btn btn-primary btn-sm" onclick="addCategory()">Adicionar</button>
+            </div>
+            <div id="categoryList"><p style="color:var(--text-muted);">Carregando...</p></div>
+          </div>
+        </div>
+      </div>
+
     </main>
   </div>
 
@@ -386,7 +411,9 @@
             <div class="fields-row">
               <div class="form-group mb-0">
                 <label class="form-label">Categoria</label>
-                <input class="form-input" id="editCat" placeholder="Urbana">
+                <select class="form-input" id="editCat">
+                  <option value="">Carregando...</option>
+                </select>
               </div>
               <div class="form-group mb-0"></div>
             </div>
