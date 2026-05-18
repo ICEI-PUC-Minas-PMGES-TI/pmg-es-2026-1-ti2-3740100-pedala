@@ -16,6 +16,8 @@ const dashboardState = {
   selectedBike: null,
   selectedPlan: '',
   selectedInsurance: 'Basico',
+  renewalRentalId: null,
+  selectedRenewPlan: 'mensal',
   pendingBikeId: Number(new URLSearchParams(window.location.search).get('bike')) || null
 };
 
@@ -38,6 +40,14 @@ function formatDashboardDate(value, fallback = 'Data indisponível') {
 function getRentalPlanDays(type) {
   const daysByType = { semanal: 7, quinzenal: 15, mensal: 30 };
   return daysByType[type] || 30;
+}
+
+function getRentalPlanOptions() {
+  return [
+    { key: 'semanal', label: 'Semanal', description: '7 dias' },
+    { key: 'quinzenal', label: 'Quinzenal', description: '15 dias' },
+    { key: 'mensal', label: 'Mensal', description: '30 dias' }
+  ];
 }
 
 function getInsuranceOptions() {
@@ -399,16 +409,12 @@ function openModal(id) {
   dateInput.max = max;
   dateInput.value = today;
 
-  document.getElementById('planOptions').innerHTML = [
-    ['semanal', 'Semanal', '7 dias'],
-    ['quinzenal', 'Quinzenal', '15 dias'],
-    ['mensal', 'Mensal', '30 dias']
-  ]
-    .map(([key, label, text]) => `
-      <div class="plan-option" data-plan="${key}" onclick="selPlan('${key}',this)">
-        <div class="plan-option-name">${label}</div>
-        <div class="plan-option-price">${formatCurrency(bike.precos?.[key])}</div>
-        <div style="color:var(--text-secondary);font-size:0.9rem;margin-top:6px;">${text}</div>
+  document.getElementById('planOptions').innerHTML = getRentalPlanOptions()
+    .map(option => `
+      <div class="plan-option" data-plan="${option.key}" onclick="selPlan('${option.key}',this)">
+        <div class="plan-option-name">${option.label}</div>
+        <div class="plan-option-price">${formatCurrency(bike.precos?.[option.key])}</div>
+        <div style="color:var(--text-secondary);font-size:0.9rem;margin-top:6px;">${option.description}</div>
       </div>
     `)
     .join('');
@@ -453,6 +459,55 @@ function selPlan(plan, element) {
 function selSeguro(tipoSeguro, element) {
   dashboardState.selectedInsurance = tipoSeguro;
   document.querySelectorAll('.plan-option[data-insurance]').forEach(option => option.classList.remove('selected'));
+  element.classList.add('selected');
+}
+
+function ensureRenewModal() {
+  if (document.getElementById('renewModalOverlay')) return;
+
+  const overlay = document.createElement('div');
+  overlay.id = 'renewModalOverlay';
+  overlay.className = 'modal-overlay';
+  overlay.innerHTML = `
+    <div class="modal" style="max-width:560px;">
+      <h2 class="modal-title">Renovar contrato</h2>
+      <p style="color:var(--text-secondary);margin:8px 0 18px;">Escolha por quanto tempo deseja estender a locação atual.</p>
+      <div class="plan-options" id="renewPlanOptions"></div>
+      <div id="renewModalError" class="form-block" style="display:none;color:var(--danger);background:var(--danger-bg);border-color:var(--danger-border);margin-top:12px;"></div>
+      <div class="hero-actions" style="justify-content:flex-end;margin-top:18px;">
+        <button class="btn btn-secondary" type="button" onclick="closeRenewModal()">Cancelar</button>
+        <button class="btn btn-primary" type="button" id="renewConfirmBtn" onclick="confirmarRenovacao()">Confirmar renovação</button>
+      </div>
+    </div>
+  `;
+  overlay.addEventListener('click', event => {
+    if (event.target === event.currentTarget) closeRenewModal();
+  });
+  document.body.appendChild(overlay);
+}
+
+function renderRenewPlanOptions() {
+  const container = document.getElementById('renewPlanOptions');
+  if (!container) return;
+  container.innerHTML = getRentalPlanOptions()
+    .map(option => `
+      <div class="plan-option ${option.key === dashboardState.selectedRenewPlan ? 'selected' : ''}" data-renew-plan="${option.key}" onclick="selRenewPlan('${option.key}',this)">
+        <div class="plan-option-name">${option.label}</div>
+        <div class="plan-option-price">${option.description}</div>
+        <div style="color:var(--text-secondary);font-size:0.9rem;margin-top:6px;">Adicionar ao contrato</div>
+      </div>
+    `)
+    .join('');
+}
+
+function closeRenewModal() {
+  document.getElementById('renewModalOverlay')?.classList.remove('open');
+  dashboardState.renewalRentalId = null;
+}
+
+function selRenewPlan(plan, element) {
+  dashboardState.selectedRenewPlan = plan;
+  document.querySelectorAll('.plan-option[data-renew-plan]').forEach(option => option.classList.remove('selected'));
   element.classList.add('selected');
 }
 
@@ -519,17 +574,68 @@ async function solicDevol(id) {
   }
 }
 
-async function renovar(id) {
-  const tipo = window.prompt('Tipo de renovacao: semanal, quinzenal ou mensal');
-  if (!tipo) return;
-  const response = await fetch(`${dashboardApi}/rentals/${id}/renovar`, {
-    method: 'PUT',
-    headers: dashboardJsonHeaders,
-    body: JSON.stringify({ tipo })
-  });
-  const data = await response.json();
-  showToast(data.message || data.error || 'Atualização realizada.', response.ok ? 'success' : 'error');
-  if (response.ok) loadLocacoes();
+function renovar(id) {
+  dashboardState.renewalRentalId = Number(id);
+  dashboardState.selectedRenewPlan = 'mensal';
+  ensureRenewModal();
+  renderRenewPlanOptions();
+
+  const errorBox = document.getElementById('renewModalError');
+  const button = document.getElementById('renewConfirmBtn');
+  if (errorBox) errorBox.style.display = 'none';
+  if (button) {
+    button.disabled = false;
+    button.textContent = 'Confirmar renovação';
+  }
+  document.getElementById('renewModalOverlay')?.classList.add('open');
+}
+
+async function confirmarRenovacao() {
+  const errorBox = document.getElementById('renewModalError');
+  const button = document.getElementById('renewConfirmBtn');
+  const rentalId = dashboardState.renewalRentalId;
+
+  if (!rentalId || !dashboardState.selectedRenewPlan) {
+    if (errorBox) {
+      errorBox.textContent = 'Selecione um plano para renovar.';
+      errorBox.style.display = 'block';
+    }
+    return;
+  }
+
+  if (errorBox) errorBox.style.display = 'none';
+  if (button) {
+    button.disabled = true;
+    button.textContent = 'Renovando...';
+  }
+
+  try {
+    const response = await fetch(`${dashboardApi}/rentals/${rentalId}/renovar`, {
+      method: 'PUT',
+      headers: dashboardJsonHeaders,
+      body: JSON.stringify({ tipo: dashboardState.selectedRenewPlan })
+    });
+    const data = await response.json();
+    showToast(data.message || data.error || 'Atualização realizada.', response.ok ? 'success' : 'error');
+    if (response.ok) {
+      closeRenewModal();
+      loadLocacoes();
+      loadInicio();
+    } else if (errorBox) {
+      errorBox.textContent = data.error || 'Não foi possível renovar o contrato.';
+      errorBox.style.display = 'block';
+    }
+  } catch (error) {
+    if (errorBox) {
+      errorBox.textContent = 'Erro de conexão com o servidor.';
+      errorBox.style.display = 'block';
+    }
+  } finally {
+    if (button) {
+      button.disabled = false;
+      button.textContent = 'Confirmar renovação';
+    }
+  }
 }
 
 async function baixarContrato(id) {
@@ -568,7 +674,10 @@ window.goToLocacao = goToLocacao;
 window.backToBikeInfo = backToBikeInfo;
 window.selPlan = selPlan;
 window.selSeguro = selSeguro;
+window.selRenewPlan = selRenewPlan;
 window.confirmarLocacao = confirmarLocacao;
+window.closeRenewModal = closeRenewModal;
+window.confirmarRenovacao = confirmarRenovacao;
 window.solicitarPagFatura = solicitarPagFatura;
 window.solicDevol = solicDevol;
 window.renovar = renovar;
