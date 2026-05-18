@@ -59,6 +59,13 @@ public class AuthController {
         return ResponseEntity.status(HttpStatus.CREATED).body(userService.createFuncionario(request));
     }
 
+    @Operation(summary = "Excluir propria conta")
+    @DeleteMapping("/me")
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<Map<String, Object>> deleteMe(@AuthenticationPrincipal UserPrincipal principal) {
+        return ResponseEntity.ok(userService.deleteOwnAccount(principal.getId()));
+    }
+
     @Operation(summary = "Seed admin inicial")
     @PostMapping("/seed-admin")
     public ResponseEntity<Map<String, Object>> seedAdmin() {

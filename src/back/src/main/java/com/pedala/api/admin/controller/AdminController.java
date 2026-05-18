@@ -54,6 +54,15 @@ public class AdminController {
         return ResponseEntity.ok(Map.of("usuarios", lista, "total", lista.size()));
     }
 
+    @Operation(summary = "Excluir usuario")
+    @DeleteMapping("/usuarios/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<Map<String, Object>> deleteUsuario(
+            @PathVariable Long id,
+            @AuthenticationPrincipal UserPrincipal principal) {
+        return ResponseEntity.ok(userService.deleteUser(id, principal.getId()));
+    }
+
     @Operation(summary = "Listar pagamentos")
     @GetMapping("/pagamentos")
     @PreAuthorize("hasRole('ADMIN')")

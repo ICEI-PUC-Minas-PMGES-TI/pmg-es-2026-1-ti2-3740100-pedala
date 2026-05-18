@@ -3,6 +3,8 @@ package com.pedala.api.user.service;
 import com.pedala.api.exception.BusinessException;
 import com.pedala.api.exception.DuplicateResourceException;
 import com.pedala.api.exception.ResourceNotFoundException;
+import com.pedala.api.rental.domain.RentalStatus;
+import com.pedala.api.rental.repository.RentalRepository;
 import com.pedala.api.security.JwtTokenProvider;
 import com.pedala.api.user.domain.User;
 import com.pedala.api.user.domain.UserAddress;
@@ -25,6 +27,7 @@ import java.util.Map;
 public class UserService {
 
     private final UserRepository userRepository;
+    private final RentalRepository rentalRepository;
     private final PasswordEncoder passwordEncoder;
     private final JwtTokenProvider jwtTokenProvider;
 
@@ -168,6 +171,54 @@ public class UserService {
 
         Map<String, Object> result = new LinkedHashMap<>();
         result.put("message", "Admin criado! Email: admin@pedala.com | Senha: admin123");
+        return result;
+    }
+
+    @Transactional
+    public Map<String, Object> deleteUser(Long targetUserId, Long requesterId) {
+        if (targetUserId.equals(requesterId)) {
+            throw new BusinessException("Administrador nao pode excluir a propria conta por aqui. Use 'Excluir minha conta' no seu perfil.");
+        }
+
+        User target = userRepository.findById(targetUserId)
+                .orElseThrow(() -> new ResourceNotFoundException("Usuario nao encontrado."));
+
+        if (target.getRole() == UserRole.ADMIN && userRepository.countByRole(UserRole.ADMIN) <= 1) {
+            throw new BusinessException("Nao e possivel excluir o unico administrador do sistema.");
+        }
+
+        boolean hasActiveRentals = rentalRepository.findByUsuarioId(targetUserId).stream()
+                .anyMatch(r -> r.getStatus() != RentalStatus.finalizado);
+        if (hasActiveRentals) {
+            throw new BusinessException("Usuario possui locacoes ativas e nao pode ser excluido.");
+        }
+
+        userRepository.delete(target);
+
+        Map<String, Object> result = new LinkedHashMap<>();
+        result.put("message", "Usuario " + target.getNome() + " excluido com sucesso.");
+        return result;
+    }
+
+    @Transactional
+    public Map<String, Object> deleteOwnAccount(Long userId) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new ResourceNotFoundException("Usuario nao encontrado."));
+
+        if (user.getRole() == UserRole.ADMIN && userRepository.countByRole(UserRole.ADMIN) <= 1) {
+            throw new BusinessException("Nao e possivel excluir o unico administrador do sistema.");
+        }
+
+        boolean hasActiveRentals = rentalRepository.findByUsuarioId(userId).stream()
+                .anyMatch(r -> r.getStatus() != RentalStatus.finalizado);
+        if (hasActiveRentals) {
+            throw new BusinessException("Voce possui locacoes ativas. Finalize ou devolva a bike antes de excluir a conta.");
+        }
+
+        userRepository.delete(user);
+
+        Map<String, Object> result = new LinkedHashMap<>();
+        result.put("message", "Conta excluida com sucesso.");
         return result;
     }
 
