@@ -15,6 +15,7 @@ const dashboardState = {
   activeCategory: '',
   selectedBike: null,
   selectedPlan: '',
+  selectedInsurance: 'Basico',
   pendingBikeId: Number(new URLSearchParams(window.location.search).get('bike')) || null
 };
 
@@ -37,6 +38,26 @@ function formatDashboardDate(value, fallback = 'Data indisponivel') {
 function getRentalPlanDays(type) {
   const daysByType = { semanal: 7, quinzenal: 15, mensal: 30 };
   return daysByType[type] || 30;
+}
+
+function getInsuranceOptions() {
+  return [
+    { key: 'Basico', label: 'Básico', price: 0, description: 'Defeitos de fabricação' },
+    { key: 'Intermediario', label: 'Intermediário', price: 15, description: 'Danos acidentais leves' },
+    { key: 'Premium', label: 'Premium', price: 30, description: 'Cobertura ampliada' }
+  ];
+}
+
+function formatInsuranceLabel(value) {
+  const normalized = String(value || '').trim().toLowerCase();
+  const labels = {
+    basico: 'Básico',
+    'básico': 'Básico',
+    intermediario: 'Intermediário',
+    'intermediário': 'Intermediário',
+    premium: 'Premium'
+  };
+  return labels[normalized] || value;
 }
 
 function getRentalDaysRemaining(rental) {
@@ -304,6 +325,9 @@ async function loadLocacoes() {
       .map(rental => {
         const progress = getRentalProgress(rental);
         const pendingBill = (rental.faturas || []).find(bill => bill.status === 'pendente' || bill.status === 'rejeitado');
+        const insuranceInfo = rental.tipoSeguro
+          ? `${formatInsuranceLabel(rental.tipoSeguro)}${Number(rental.valorSeguro) > 0 ? ` (${formatCurrency(rental.valorSeguro)} por ciclo)` : ''}`
+          : '';
         return `
           <article class="rental-card">
             <div class="rental-header">
@@ -315,6 +339,7 @@ async function loadLocacoes() {
             </div>
             <div class="info-row"><span class="info-label">Devolucao prevista</span><span class="info-value">${formatDashboardDate(rental.dataDevolucaoPrevista)}</span></div>
             <div class="info-row"><span class="info-label">Valor atual</span><span class="info-value">${dashEscape(formatCurrency(rental.preco))}</span></div>
+            ${insuranceInfo ? `<div class="info-row"><span class="info-label">Seguro</span><span class="info-value">${dashEscape(insuranceInfo)}</span></div>` : ''}
             <div class="info-row"><span class="info-label">Dias restantes</span><span class="info-value">${formatRentalDaysRemaining(rental)}</span></div>
             ${pendingBill ? `<div class="info-row"><span class="info-label">Proxima fatura</span><span class="info-value">${dashEscape(formatCurrency(pendingBill.valor))}</span></div>` : ''}
             ${['ativo', 'aguardando_locacao', 'agendada'].includes(rental.status) ? `<div class="rental-progress-bar" style="margin:16px 0 10px;"><div class="rental-progress-fill" style="width:${progress}%"></div></div>` : ''}
@@ -357,6 +382,7 @@ function openModal(id) {
 
   dashboardState.selectedBike = bike;
   dashboardState.selectedPlan = '';
+  dashboardState.selectedInsurance = 'Basico';
   document.getElementById('modalBikeImage').src = normalizeImagePath(bike.imagem);
   document.getElementById('modalBikeName').textContent = bike.nome;
   document.getElementById('modalBikeDesc').textContent = bike.descricao || 'Bike pronta para assinatura com entrega em casa.';
@@ -387,6 +413,16 @@ function openModal(id) {
     `)
     .join('');
 
+  document.getElementById('seguroOptions').innerHTML = getInsuranceOptions()
+    .map(option => `
+      <div class="plan-option ${option.key === dashboardState.selectedInsurance ? 'selected' : ''}" data-insurance="${dashEscape(option.key)}" onclick="selSeguro(this.dataset.insurance,this)">
+        <div class="plan-option-name">${dashEscape(option.label)}</div>
+        <div class="plan-option-price">${option.price > 0 ? `+ ${formatCurrency(option.price)}` : 'Incluso'}</div>
+        <div style="color:var(--text-secondary);font-size:0.9rem;margin-top:6px;">${dashEscape(option.description)}</div>
+      </div>
+    `)
+    .join('');
+
   document.getElementById('modalStep1').style.display = '';
   document.getElementById('modalStep2').style.display = 'none';
   document.getElementById('modalOverlay').classList.add('open');
@@ -410,7 +446,13 @@ function backToBikeInfo() {
 
 function selPlan(plan, element) {
   dashboardState.selectedPlan = plan;
-  document.querySelectorAll('.plan-option').forEach(option => option.classList.remove('selected'));
+  document.querySelectorAll('.plan-option[data-plan]').forEach(option => option.classList.remove('selected'));
+  element.classList.add('selected');
+}
+
+function selSeguro(tipoSeguro, element) {
+  dashboardState.selectedInsurance = tipoSeguro;
+  document.querySelectorAll('.plan-option[data-insurance]').forEach(option => option.classList.remove('selected'));
   element.classList.add('selected');
 }
 
@@ -435,6 +477,7 @@ async function confirmarLocacao() {
       body: JSON.stringify({
         bikeId: dashboardState.selectedBike.id,
         tipo: dashboardState.selectedPlan,
+        tipoSeguro: dashboardState.selectedInsurance,
         dataInicio: document.getElementById('dataInicio').value
       })
     });
@@ -520,6 +563,7 @@ window.closeModal = closeModal;
 window.goToLocacao = goToLocacao;
 window.backToBikeInfo = backToBikeInfo;
 window.selPlan = selPlan;
+window.selSeguro = selSeguro;
 window.confirmarLocacao = confirmarLocacao;
 window.solicitarPagFatura = solicitarPagFatura;
 window.solicDevol = solicDevol;

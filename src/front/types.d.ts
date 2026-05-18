@@ -43,6 +43,8 @@ interface Rental {
     tipo: 'semanal' | 'quinzenal' | 'mensal';
     planoLabel: string;
     preco: number;
+    tipoSeguro?: string;
+    valorSeguro?: number;
     status: RentalStatus;
     pagamento: Payment;
     faturas: Invoice[];
