@@ -45,9 +45,10 @@ async function handleLogin(e) {
 
         localStorage.setItem('pedala_token', data.token);
         localStorage.setItem('pedala_user', JSON.stringify(data.usuario));
-        const dest = data.usuario.role === 'admin'
+        const role = window.normalizeUserRole ? window.normalizeUserRole(data.usuario?.role) : String(data.usuario?.role || '').trim().toLowerCase();
+        const dest = role === 'admin'
             ? 'admin.html'
-            : data.usuario.role === 'funcionario'
+            : role === 'funcionario'
                 ? 'employee.html'
                 : 'dashboard.html';
         window.location.href = dest;

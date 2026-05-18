@@ -1,7 +1,8 @@
 // ── Auth ──────────────────────────────────────────────
 const token = localStorage.getItem('pedala_token');
 const user = JSON.parse(localStorage.getItem('pedala_user') || '{}');
-if (!token || user.role !== 'admin') { alert('Acesso negado.'); location.href = 'login.html'; }
+const adminRole = window.normalizeUserRole ? window.normalizeUserRole(user.role) : String(user.role || '').trim().toLowerCase();
+if (!token || adminRole !== 'admin') { alert('Acesso negado.'); location.href = 'login.html'; }
 
 document.getElementById('navAv').textContent = user.nome ? user.nome[0].toUpperCase() : 'A';
 document.getElementById('navNm').textContent = user.nome ? user.nome.split(' ')[0] : 'Admin';

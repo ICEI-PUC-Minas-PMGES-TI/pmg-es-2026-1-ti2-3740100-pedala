@@ -7,6 +7,17 @@ const API_BASE = `${protocol}//${host}:8080/api`;
 
 window.PEDALA_API_BASE = API_BASE;
 
+function normalizeUserRole(role) {
+  return String(role || '').trim().toLowerCase();
+}
+
+function getUserPanelPath(role) {
+  const normalizedRole = normalizeUserRole(role);
+  if (normalizedRole === 'admin') return 'admin';
+  if (normalizedRole === 'funcionario') return 'employee';
+  return 'dashboard';
+}
+
 function isNestedPage() {
   return window.location.pathname.includes('/pages/');
 }
@@ -123,7 +134,7 @@ function updateNavbarAuth() {
   if (!token || !user.nome) return;
 
   const name = user.nome.split(' ')[0];
-  const page = user.role === 'admin' ? 'admin' : user.role === 'funcionario' ? 'employee' : 'dashboard';
+  const page = getUserPanelPath(user.role);
   navActions.innerHTML = `
     <button class="theme-toggle" title="Mudar tema"></button>
     <div class="nav-user-info">
@@ -179,6 +190,8 @@ function solicitarLocacao(bikeId) {
 window.showToast = showToast;
 window.logoutNav = logoutNav;
 window.solicitarLocacao = solicitarLocacao;
+window.normalizeUserRole = normalizeUserRole;
+window.getUserPanelPath = getUserPanelPath;
 
 document.addEventListener('DOMContentLoaded', () => {
   bindThemeButtons();

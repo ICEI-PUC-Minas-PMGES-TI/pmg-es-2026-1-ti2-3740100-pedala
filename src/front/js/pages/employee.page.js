@@ -2,7 +2,8 @@
 
 const empToken = localStorage.getItem('pedala_token');
 const empUser = JSON.parse(localStorage.getItem('pedala_user') || '{}');
-if (!empToken || !['funcionario', 'admin'].includes(empUser.role)) { alert('Acesso negado.'); location.href = 'login.html'; }
+const empRole = window.normalizeUserRole ? window.normalizeUserRole(empUser.role) : String(empUser.role || '').trim().toLowerCase();
+if (!empToken || !['funcionario', 'admin'].includes(empRole)) { alert('Acesso negado.'); location.href = 'login.html'; }
 document.getElementById('navAv').textContent = empUser.nome ? empUser.nome[0].toUpperCase() : 'F';
 document.getElementById('navNm').textContent = empUser.nome ? empUser.nome.split(' ')[0] : 'Funcionário';
 const h = { Authorization: 'Bearer ' + empToken }, hj = { ...h, 'Content-Type': 'application/json' };

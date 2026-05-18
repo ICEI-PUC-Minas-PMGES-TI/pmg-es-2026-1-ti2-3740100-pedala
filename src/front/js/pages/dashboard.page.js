@@ -1,8 +1,9 @@
 const dashboardToken = localStorage.getItem('pedala_token');
 const dashboardUser = JSON.parse(localStorage.getItem('pedala_user') || '{}');
 const dashboardApi = window.PEDALA_API_BASE;
+const dashboardRole = window.normalizeUserRole ? window.normalizeUserRole(dashboardUser.role) : String(dashboardUser.role || '').trim().toLowerCase();
 
-if (!dashboardToken || dashboardUser.role !== 'user') {
+if (!dashboardToken || !['user', 'cliente'].includes(dashboardRole)) {
   alert('Acesso restrito.');
   window.location.href = 'login.html';
 }
