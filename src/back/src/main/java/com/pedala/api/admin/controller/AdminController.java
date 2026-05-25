@@ -3,10 +3,13 @@ package com.pedala.api.admin.controller;
 import com.pedala.api.admin.service.AdminService;
 import com.pedala.api.security.UserPrincipal;
 import com.pedala.api.shared.TimeSimulator;
+import com.pedala.api.user.dto.CreateUserRequest;
 import com.pedala.api.user.service.UserService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -52,6 +55,13 @@ public class AdminController {
     public ResponseEntity<Map<String, Object>> usuarios() {
         List<Map<String, Object>> lista = userService.listAllUsers();
         return ResponseEntity.ok(Map.of("usuarios", lista, "total", lista.size()));
+    }
+
+    @Operation(summary = "Criar usuario ou funcionario")
+    @PostMapping("/usuarios")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<Map<String, Object>> createUsuario(@Valid @RequestBody CreateUserRequest request) {
+        return ResponseEntity.status(HttpStatus.CREATED).body(userService.createUser(request));
     }
 
     @Operation(summary = "Excluir usuario")

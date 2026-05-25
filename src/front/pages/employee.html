@@ -107,6 +107,19 @@
     </main>
   </div>
 
+  <!-- GPS History Modal -->
+  <div id="gpsHistoryModal" class="modal-overlay" onclick="if(event.target===this)closeGpsHistory()">
+    <div class="modal" style="max-width:800px;width:95%;">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
+        <h2 class="modal-title" id="gpsHistoryTitle">Histórico de Rota</h2>
+        <button class="btn btn-ghost btn-sm" onclick="closeGpsHistory()">✕ Fechar</button>
+      </div>
+      <div id="gpsHistoryStats"></div>
+      <div id="gpsHistoryLoading" style="text-align:center;padding:32px;color:var(--text-muted);">Carregando histórico...</div>
+      <div id="gpsHistoryMapContainer" style="height:440px;border-radius:var(--r-md);overflow:hidden;display:none;"></div>
+    </div>
+  </div>
+
   <div id="toast" class="toast" role="status" aria-live="polite"></div>
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
   <script src="../js/core/app.js"></script>

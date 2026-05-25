@@ -132,6 +132,36 @@ public class UserService {
     }
 
     @Transactional
+    public Map<String, Object> createUser(CreateUserRequest request) {
+        if (userRepository.existsByEmail(request.email())) {
+            throw new DuplicateResourceException("Email ja cadastrado.");
+        }
+
+        UserRole role = switch (request.role().toLowerCase().trim()) {
+            case "funcionario" -> UserRole.FUNCIONARIO;
+            case "user", "usuario" -> UserRole.USER;
+            default -> throw new BusinessException("Role invalido. Use: user ou funcionario");
+        };
+
+        User user = User.builder()
+                .nome(request.nome())
+                .email(request.email())
+                .senha(passwordEncoder.encode(request.senha()))
+                .role(role)
+                .build();
+
+        user = userRepository.save(user);
+
+        Map<String, Object> result = new LinkedHashMap<>();
+        result.put("message", (role == UserRole.FUNCIONARIO ? "Funcionario" : "Usuario") + " criado com sucesso!");
+        result.put("id", user.getId());
+        result.put("nome", user.getNome());
+        result.put("email", user.getEmail());
+        result.put("role", user.getRole().name().toLowerCase());
+        return result;
+    }
+
+    @Transactional
     public Map<String, Object> createFuncionario(CreateFuncionarioRequest request) {
         if (userRepository.existsByEmail(request.email())) {
             throw new DuplicateResourceException("Email ja cadastrado.");

@@ -75,32 +75,60 @@ async function reprovVist(id) {
 }
 
 // ── Ativar Locações ───────────────────────────────────
+function _pagBadge(pagStatus) {
+    const map = {
+        aprovado:              '<span class="badge badge-success">Pago ✓</span>',
+        aguardando_aprovacao:  '<span class="badge badge-warning">Pag. pendente</span>',
+        rejeitado:             '<span class="badge badge-danger">Pag. rejeitado</span>',
+        nao_pago:              '<span class="badge badge-muted">Não pago</span>',
+    };
+    return map[pagStatus] || '<span class="badge badge-muted">—</span>';
+}
+
 async function loadLoc() {
     const el = document.getElementById('locList');
     try {
-        const d = await fetch(`${API_BASE}/admin/alugueis`, { headers: h }).then(r => r.json());
+        // /api/rentals aceita FUNCIONARIO e ADMIN (diferente de /api/admin/alugueis que é só ADMIN)
+        const d = await fetch(`${API_BASE}/rentals`, { headers: h }).then(r => r.json());
         const pending = (d.alugueis || []).filter(a => ['aguardando_locacao', 'agendada'].includes(a.status));
         if (!pending.length) {
             el.innerHTML = `<div class="card"><div class="card-body" style="text-align:center;padding:40px;">
         <p style="font-size:15px;font-weight:700;color:var(--text-primary);">Nenhuma locação aguardando ativação</p>
+        <p style="font-size:13px;color:var(--text-secondary);">Quando um cliente criar uma locação ela aparecerá aqui.</p>
       </div></div>`; return;
         }
         el.innerHTML = pending.map(a => {
             const end = a.enderecoEntrega || {};
             const endStr = end.logradouro ? `${end.logradouro}, ${end.numero} — ${end.bairro}, ${end.cidade}/${end.uf}` : 'Endereço não informado';
+            const pagStatus = a.pagamento?.status || 'nao_pago';
+            const pagAprovado = pagStatus === 'aprovado';
+            const aviso = !pagAprovado
+                ? `<div style="background:var(--warning-bg,#fffbeb);border:1px solid var(--warning-border,#fcd34d);border-radius:6px;padding:8px 12px;font-size:11px;color:#92400e;margin-bottom:10px;">
+                     ⚠️ Pagamento ainda não aprovado. Confirme apenas após o admin aprovar o pagamento.
+                   </div>`
+                : '';
             return `<div class="card" style="margin-bottom:12px;">
         <div class="card-header">
           <span class="card-title">#${a.id} — ${escHtml(a.bikeNome || '-')}</span>
-          <span class="badge badge-purple">${a.status === 'agendada' ? 'Agendada' : 'Ag. Ativação'}</span>
+          <div style="display:flex;gap:6px;align-items:center;">
+            ${_pagBadge(pagStatus)}
+            <span class="badge badge-purple">${a.status === 'agendada' ? 'Agendada' : 'Ag. Entrega'}</span>
+          </div>
         </div>
         <div class="card-body">
-          <div style="font-size:12px;color:var(--text-secondary);margin-bottom:10px;">${escHtml(a.usuarioNome || '-')} | ${a.planoLabel || a.tipo} | R$${(a.preco || 0).toFixed(2)} | Início: ${new Date(a.dataInicio).toLocaleDateString('pt-BR')}</div>
-          <div style="background:var(--bg-muted);border:1px solid var(--bg-border);border-radius:var(--r-md);padding:10px 14px;font-size:12px;color:var(--text-secondary);margin-bottom:12px;">${escHtml(endStr)}</div>
-          <button class="btn btn-primary" onclick="ativarLoc(${a.id})" title="Confirmar entrega">Confirmar entrega</button>
+          <div style="font-size:12px;color:var(--text-secondary);margin-bottom:10px;">
+            ${escHtml(a.usuarioNome || '-')} | ${escHtml(a.planoLabel || a.tipo)} | R$${(a.preco || 0).toFixed(2)} | Início: ${new Date(a.dataInicio).toLocaleDateString('pt-BR')}
+          </div>
+          <div style="background:var(--bg-muted);border:1px solid var(--bg-border);border-radius:var(--r-md);padding:10px 14px;font-size:12px;color:var(--text-secondary);margin-bottom:10px;">${escHtml(endStr)}</div>
+          ${aviso}
+          <button class="btn btn-primary" onclick="ativarLoc(${a.id})" title="Confirmar entrega e iniciar rastreamento GPS"
+            ${!pagAprovado ? 'style="opacity:0.6;"' : ''}>
+            Confirmar entrega
+          </button>
         </div>
       </div>`;
         }).join('');
-    } catch (e) { showToast('Erro.', 'error'); }
+    } catch (e) { showToast('Erro ao carregar locações.', 'error'); }
 }
 
 async function ativarLoc(id) {
@@ -150,10 +178,13 @@ function _gpsUpdateSidebar() {
         const statusHtml = d.bloqueada
             ? `<span style="color:#ef4444;font-size:0.7rem;font-weight:700;">&#128274; Bloqueada</span>`
             : (d.isSuspeito ? `<span style="color:#f59e0b;font-size:0.7rem;font-weight:700;">&#9888; Fora da zona</span>` : '');
-        return `<div class="gps-bike-item" onclick="_gpsFlyTo(${d.bikeId})">
-            <div class="gps-bike-name">${escHtml(d.bikeNome || 'Bike #' + d.bikeId)} ${statusHtml}</div>
-            <div class="gps-bike-addr">${escHtml(d.endereco || '—')}</div>
-            <div class="gps-bike-speed">${d.speed ? d.speed + ' km/h' : 'Parada'}</div>
+        return `<div class="gps-bike-item">
+            <div onclick="_gpsFlyTo(${d.bikeId})" style="cursor:pointer;">
+              <div class="gps-bike-name">${escHtml(d.bikeNome || 'Bike #' + d.bikeId)} ${statusHtml}</div>
+              <div class="gps-bike-addr">${escHtml(d.endereco || '—')}</div>
+              <div class="gps-bike-speed">${d.speed ? d.speed + ' km/h' : 'Parada'}</div>
+            </div>
+            <button class="btn btn-ghost btn-sm" style="margin-top:6px;width:100%;font-size:0.72rem;padding:3px;" onclick="verRotaGPS(${d.rentalId})">&#128506; Ver rota</button>
         </div>`;
     }).join('');
 }
@@ -177,6 +208,7 @@ function _gpsPopupHtml(d) {
         <div class="gps-popup-row">Endereço: ${escHtml(d.endereco)}</div>
         <div class="gps-popup-row">Velocidade: ${d.speed ? d.speed + ' km/h' : 'Parada'}</div>
         <div class="gps-popup-row" style="color:var(--text-muted);font-size:0.72rem;">Locação #${d.rentalId}</div>
+        <button class="btn btn-ghost btn-sm" style="width:100%;margin-top:4px;padding:4px;font-size:0.72rem;" onclick="verRotaGPS(${d.rentalId})">&#128506; Ver rota histórica</button>
         ${btnHtml}`;
 }
 
@@ -254,15 +286,15 @@ function initGpsMap() {
                 maxZoom: 19
             }).addTo(_gpsMap);
             
-            // Desenhar Zona de Segurança (MASP, raio 2.5km)
+            // Desenhar Zona de Segurança (MASP, raio 5km)
             L.circle([-23.5615, -46.6560], {
                 color: '#ef4444',
                 fillColor: '#ef4444',
-                fillOpacity: 0.1,
-                radius: 2500,
+                fillOpacity: 0.07,
+                radius: 5000,
                 weight: 2,
-                dashArray: '5, 5'
-            }).addTo(_gpsMap).bindPopup('<b>Zona de Monitoramento</b><br>Limite de 2.5km do centro.');
+                dashArray: '6, 6'
+            }).addTo(_gpsMap).bindPopup('<b>Zona de Monitoramento</b><br>Limite de 5km — São Paulo');
 
             _gpsStartSSE();
         }, 80);
@@ -284,6 +316,82 @@ function _gpsStartSSE() {
     });
 }
 
+// ── GPS Route History ─────────────────────────────────
+let _historyMap = null;
+let _historyPolyline = null;
+
+async function verRotaGPS(rentalId) {
+    const modal   = document.getElementById('gpsHistoryModal');
+    const title   = document.getElementById('gpsHistoryTitle');
+    const stats   = document.getElementById('gpsHistoryStats');
+    const loading = document.getElementById('gpsHistoryLoading');
+    const mapEl   = document.getElementById('gpsHistoryMapContainer');
+
+    title.textContent = `Rota — Locação #${rentalId}`;
+    stats.innerHTML = '';
+    loading.style.display = 'block';
+    mapEl.style.display = 'none';
+    modal.classList.add('open');
+
+    try {
+        const r = await fetch(`${API_BASE}/gps/historico/${rentalId}`, { headers: h });
+        const d = await r.json();
+        const points = d.history || [];
+
+        loading.style.display = 'none';
+
+        if (!points.length) {
+            stats.innerHTML = `<p style="color:var(--text-muted);text-align:center;padding:24px;">Nenhum ponto GPS registrado para esta locação.<br><span style="font-size:0.78rem;">O rastreamento inicia quando a locação é ativada.</span></p>`;
+            return;
+        }
+
+        stats.innerHTML = `<div style="display:flex;gap:16px;flex-wrap:wrap;font-size:12px;color:var(--text-secondary);margin-bottom:12px;padding:0 2px;">
+            <span><strong>${points.length}</strong> pontos registrados</span>
+            <span>Início: ${escHtml(points[0].endereco || '—')}</span>
+            <span>Última posição: ${escHtml(points[points.length - 1].endereco || '—')}</span>
+        </div>`;
+
+        mapEl.style.display = '';
+
+        if (!_historyMap) {
+            _historyMap = L.map('gpsHistoryMapContainer', { zoomControl: true });
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                attribution: '© <a href="https://openstreetmap.org">OpenStreetMap</a> contributors',
+                maxZoom: 19
+            }).addTo(_historyMap);
+        }
+
+        if (_historyPolyline) { _historyMap.removeLayer(_historyPolyline); _historyPolyline = null; }
+        _historyMap.eachLayer(layer => {
+            if (layer instanceof L.CircleMarker) _historyMap.removeLayer(layer);
+        });
+
+        const latlngs = points.map(p => [p.lat, p.lng]);
+        _historyPolyline = L.polyline(latlngs, { color: '#6366f1', weight: 4, opacity: 0.85 }).addTo(_historyMap);
+
+        L.circleMarker(latlngs[0], { radius: 8, fillColor: '#22c55e', color: '#fff', weight: 2, fillOpacity: 1 })
+            .addTo(_historyMap)
+            .bindPopup(`<b>Início</b><br>${escHtml(points[0].endereco || '')}`);
+
+        if (latlngs.length > 1) {
+            L.circleMarker(latlngs[latlngs.length - 1], { radius: 8, fillColor: '#ef4444', color: '#fff', weight: 2, fillOpacity: 1 })
+                .addTo(_historyMap)
+                .bindPopup(`<b>Última posição</b><br>${escHtml(points[points.length - 1].endereco || '')}`);
+        }
+
+        _historyMap.fitBounds(_historyPolyline.getBounds(), { padding: [30, 30] });
+        setTimeout(() => _historyMap.invalidateSize(), 120);
+
+    } catch (e) {
+        loading.style.display = 'none';
+        stats.innerHTML = `<p style="color:var(--danger);text-align:center;padding:24px;">Erro ao carregar o histórico GPS.</p>`;
+    }
+}
+
+function closeGpsHistory() {
+    document.getElementById('gpsHistoryModal').classList.remove('open');
+}
+
 function reconnectGPS() {
     Object.values(_gpsMarkers).forEach(m => { if (_gpsMap) _gpsMap.removeLayer(m); });
     _gpsMarkers = {};
@@ -293,6 +401,9 @@ function reconnectGPS() {
 
 window.bloquearBikeGPS = bloquearBikeGPS;
 window.desbloquearBikeGPS = desbloquearBikeGPS;
+window.verRotaGPS = verRotaGPS;
+window.closeGpsHistory = closeGpsHistory;
+window._gpsFlyTo = _gpsFlyTo;
 
 // ── Init ──────────────────────────────────────────────
 loadVist();

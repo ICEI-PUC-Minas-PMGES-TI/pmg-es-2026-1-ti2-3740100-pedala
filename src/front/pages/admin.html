@@ -269,16 +269,19 @@
       <div id="sec-usuarios" class="sec">
         <div class="page-header-row">
           <h1>Usuários</h1>
-          <button class="btn btn-secondary btn-sm" onclick="loadUsers()">Sincronizar</button>
+          <div class="flex-center gap-sm">
+            <button class="btn btn-primary btn-sm" onclick="abrirModalCriarUsuario()">+ Criar usuário</button>
+            <button class="btn btn-secondary btn-sm" onclick="loadUsers()">Sincronizar</button>
+          </div>
         </div>
         <div class="card">
           <div class="table-wrap">
             <table>
               <thead>
-                <tr><th>ID</th><th>Nome</th><th>Email</th><th>Perfil</th><th>Adesão</th></tr>
+                <tr><th>ID</th><th>Nome</th><th>Email</th><th>Perfil</th><th>Adesão</th><th>Ações</th></tr>
               </thead>
               <tbody id="userTbody">
-                <tr><td colspan="5" style="text-align:center;padding:24px;color:var(--text-muted);">Carregando...</td></tr>
+                <tr><td colspan="6" style="text-align:center;padding:24px;color:var(--text-muted);">Carregando...</td></tr>
               </tbody>
             </table>
           </div>
@@ -441,6 +444,40 @@
           </div>
           <button class="btn btn-primary" onclick="saveEditBike()" id="btnSaveEdit">Salvar alterações</button>
         </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL CRIAR USUÁRIO -->
+  <div class="modal-overlay" id="criarUsuarioModal" onclick="if(event.target===this)fecharModalCriarUsuario()">
+    <div class="modal" style="max-width:480px;">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;">
+        <h2 class="modal-title">Criar usuário</h2>
+        <button class="btn btn-ghost btn-sm" onclick="fecharModalCriarUsuario()">✕</button>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Nome *</label>
+        <input class="form-input" id="cuNome" placeholder="Nome completo">
+      </div>
+      <div class="form-group">
+        <label class="form-label">E-mail *</label>
+        <input class="form-input" type="email" id="cuEmail" placeholder="email@exemplo.com">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Senha *</label>
+        <input class="form-input" type="password" id="cuSenha" placeholder="Mínimo 3 caracteres">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Perfil *</label>
+        <select class="form-input" id="cuRole">
+          <option value="user">Usuário comum</option>
+          <option value="funcionario">Funcionário</option>
+        </select>
+      </div>
+      <div id="cuErro" style="display:none;color:var(--danger);background:var(--danger-bg,#fef2f2);border:1px solid var(--danger-border,#fca5a5);border-radius:6px;padding:8px 12px;margin-bottom:10px;font-size:0.85rem;"></div>
+      <div style="display:flex;gap:10px;justify-content:flex-end;margin-top:6px;">
+        <button class="btn btn-secondary" onclick="fecharModalCriarUsuario()">Cancelar</button>
+        <button class="btn btn-primary" id="cuBtn" onclick="confirmarCriarUsuario()">Criar</button>
       </div>
     </div>
   </div>

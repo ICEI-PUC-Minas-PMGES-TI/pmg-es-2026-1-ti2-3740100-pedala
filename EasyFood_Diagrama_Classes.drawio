@@ -1,0 +1,60 @@
+<mxfile version="21.6.8" type="device">
+  <diagram id="classes" name="Diagrama de Classes">
+    <mxGraphModel dx="1200" dy="800" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1169" pageHeight="827" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        
+        <mxCell id="cliente" value="Cliente&#10;--&#10;id: int&#10;nome: String&#10;telefone: String&#10;endereco: String" style="shape=umlClass;verticalAlign=top;align=left;html=1;" vertex="1" parent="1">
+          <mxGeometry x="80" y="80" width="160" height="100" as="geometry" />
+        </mxCell>
+
+        <mxCell id="restaurante" value="Restaurante&#10;--&#10;id: int&#10;nome: String&#10;cnpj: String" style="shape=umlClass;verticalAlign=top;align=left;html=1;" vertex="1" parent="1">
+          <mxGeometry x="640" y="80" width="160" height="90" as="geometry" />
+        </mxCell>
+
+        <mxCell id="produto" value="Produto&#10;--&#10;id: int&#10;nome: String&#10;descricao: String&#10;preco: double" style="shape=umlClass;verticalAlign=top;align=left;html=1;" vertex="1" parent="1">
+          <mxGeometry x="640" y="280" width="160" height="100" as="geometry" />
+        </mxCell>
+
+        <mxCell id="pedido" value="Pedido&#10;--&#10;id: int&#10;dataHora: DateTime&#10;status: String&#10;enderecoEntrega: String&#10;formaPagamento: String&#10;total: double" style="shape=umlClass;verticalAlign=top;align=left;html=1;" vertex="1" parent="1">
+          <mxGeometry x="360" y="280" width="160" height="130" as="geometry" />
+        </mxCell>
+
+        <mxCell id="item_pedido" value="ItemPedido&#10;--&#10;quantidade: int&#10;precoUnitario: double" style="shape=umlClass;verticalAlign=top;align=left;html=1;" vertex="1" parent="1">
+          <mxGeometry x="360" y="520" width="160" height="80" as="geometry" />
+        </mxCell>
+
+        <mxCell id="entregador" value="Entregador&#10;--&#10;id: int&#10;nome: String&#10;veiculo: String" style="shape=umlClass;verticalAlign=top;align=left;html=1;" vertex="1" parent="1">
+          <mxGeometry x="80" y="280" width="160" height="90" as="geometry" />
+        </mxCell>
+
+        <!-- Relacionamentos -->
+        <mxCell id="rel_cliente_pedido" value="1" style="endArrow=none;html=1;endLabel=*;startLabel=1;" edge="1" parent="1" source="cliente" target="pedido">
+          <mxGeometry width="50" height="50" relative="1" as="geometry" />
+        </mxCell>
+
+        <mxCell id="rel_restaurante_produto" value="1..*" style="endArrow=none;html=1;startLabel=1;" edge="1" parent="1" source="restaurante" target="produto">
+          <mxGeometry width="50" height="50" relative="1" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="rel_pedido_item" value="1..*" style="endArrow=diamondThin;endFill=1;html=1;startLabel=1;" edge="1" parent="1" source="pedido" target="item_pedido">
+          <mxGeometry width="50" height="50" relative="1" as="geometry" />
+        </mxCell>
+
+        <mxCell id="rel_item_produto" value="1" style="endArrow=none;html=1;startLabel=*;" edge="1" parent="1" source="item_pedido" target="produto">
+          <mxGeometry width="50" height="50" relative="1" as="geometry" />
+        </mxCell>
+
+        <mxCell id="rel_entregador_pedido" value="*" style="endArrow=none;html=1;startLabel=1;" edge="1" parent="1" source="entregador" target="pedido">
+          <mxGeometry width="50" height="50" relative="1" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="rel_restaurante_pedido" value="*" style="endArrow=none;html=1;startLabel=1;" edge="1" parent="1" source="restaurante" target="pedido">
+          <mxGeometry width="50" height="50" relative="1" as="geometry" />
+        </mxCell>
+
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

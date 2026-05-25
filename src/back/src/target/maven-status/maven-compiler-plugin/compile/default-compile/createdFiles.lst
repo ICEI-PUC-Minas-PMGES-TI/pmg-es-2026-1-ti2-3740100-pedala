@@ -6,6 +6,7 @@ com\pedala\api\user\dto\AddressDto.class
 com\pedala\api\contract\service\ContractService.class
 com\pedala\api\bike\domain\Bike.class
 com\pedala\api\user\domain\User.class
+com\pedala\api\user\dto\CreateUserRequest.class
 com\pedala\api\bike\service\BikeService.class
 com\pedala\api\config\DataSeeder$SeedUser.class
 com\pedala\api\rental\domain\RentalType.class

@@ -804,15 +804,15 @@ function initGpsMap() {
                 maxZoom: 19
             }).addTo(_gpsMap);
             
-            // Desenhar Zona de Segurança (MASP, raio 2.5km)
+            // Desenhar Zona de Segurança (MASP, raio 5km)
             L.circle([-23.5615, -46.6560], {
                 color: '#ef4444',
                 fillColor: '#ef4444',
-                fillOpacity: 0.1,
-                radius: 2500,
+                fillOpacity: 0.07,
+                radius: 5000,
                 weight: 2,
-                dashArray: '5, 5'
-            }).addTo(_gpsMap).bindPopup('<b>Zona de Monitoramento</b><br>Limite de 2.5km do centro.');
+                dashArray: '6, 6'
+            }).addTo(_gpsMap).bindPopup('<b>Zona de Monitoramento</b><br>Limite de 5km — São Paulo');
 
             // Iniciar SSE após mapa criado
             _gpsStartSSE();
@@ -858,9 +858,84 @@ async function loadVist() {
 async function loadUsers() {
     const d = await fetch(`${API_BASE}/admin/usuarios`, { headers: authH }).then(r => r.json());
     const m = { user: 'badge-success', funcionario: 'badge-warning', admin: 'badge-purple' };
+    const label = { user: 'Usuário', funcionario: 'Funcionário', admin: 'Admin' };
     document.getElementById('userTbody').innerHTML = (d.usuarios || []).map(u =>
-        `<tr><td>#${u.id}</td><td><strong>${u.nome}</strong></td><td>${u.email}</td><td><span class="badge ${m[u.role] || 'badge-muted'}">${u.role}</span></td><td>${u.criadoEm ? new Date(u.criadoEm).toLocaleDateString('pt-BR') : '—'}</td></tr>`
-    ).join('') || '<tr><td colspan="5" style="text-align:center;color:var(--text-muted);padding:24px;">Nenhum usuário.</td></tr>';
+        `<tr>
+          <td>#${u.id}</td>
+          <td><strong>${escHtml(u.nome)}</strong></td>
+          <td>${escHtml(u.email)}</td>
+          <td><span class="badge ${m[u.role] || 'badge-muted'}">${label[u.role] || u.role}</span></td>
+          <td>${u.criadoEm ? new Date(u.criadoEm).toLocaleDateString('pt-BR') : '—'}</td>
+          <td>${u.role !== 'admin' ? `<button class="btn btn-danger btn-sm" style="padding:3px 10px;" onclick="excluirUsuario(${u.id},'${escHtml(u.nome)}')">Excluir</button>` : '—'}</td>
+        </tr>`
+    ).join('') || '<tr><td colspan="6" style="text-align:center;color:var(--text-muted);padding:24px;">Nenhum usuário.</td></tr>';
+}
+
+// ── Criar Usuário ─────────────────────────────────────
+function abrirModalCriarUsuario() {
+    document.getElementById('cuNome').value = '';
+    document.getElementById('cuEmail').value = '';
+    document.getElementById('cuSenha').value = '';
+    document.getElementById('cuRole').value = 'user';
+    document.getElementById('cuErro').style.display = 'none';
+    const btn = document.getElementById('cuBtn');
+    btn.disabled = false;
+    btn.textContent = 'Criar';
+    document.getElementById('criarUsuarioModal').classList.add('open');
+}
+
+function fecharModalCriarUsuario() {
+    document.getElementById('criarUsuarioModal').classList.remove('open');
+}
+
+async function confirmarCriarUsuario() {
+    const nome  = document.getElementById('cuNome').value.trim();
+    const email = document.getElementById('cuEmail').value.trim();
+    const senha = document.getElementById('cuSenha').value;
+    const role  = document.getElementById('cuRole').value;
+    const erro  = document.getElementById('cuErro');
+    const btn   = document.getElementById('cuBtn');
+
+    erro.style.display = 'none';
+    if (!nome || !email || !senha) {
+        erro.textContent = 'Preencha todos os campos obrigatórios.';
+        erro.style.display = 'block';
+        return;
+    }
+
+    btn.disabled = true;
+    btn.textContent = 'Criando...';
+
+    try {
+        const r = await fetch(`${API_BASE}/admin/usuarios`, {
+            method: 'POST',
+            headers: authHJ,
+            body: JSON.stringify({ nome, email, senha, role })
+        });
+        const d = await r.json();
+        if (!r.ok) {
+            erro.textContent = d.error || d.message || 'Erro ao criar usuário.';
+            erro.style.display = 'block';
+            return;
+        }
+        fecharModalCriarUsuario();
+        showToast(d.message || 'Usuário criado com sucesso!', 'success');
+        loadUsers();
+    } catch (e) {
+        erro.textContent = 'Erro de conexão com o servidor.';
+        erro.style.display = 'block';
+    } finally {
+        btn.disabled = false;
+        btn.textContent = 'Criar';
+    }
+}
+
+async function excluirUsuario(id, nome) {
+    if (!confirm(`Excluir o usuário "${nome}"? Esta ação não pode ser desfeita.`)) return;
+    const r = await fetch(`${API_BASE}/admin/usuarios/${id}`, { method: 'DELETE', headers: authH });
+    const d = await r.json();
+    showToast(d.message || d.error || 'Ação concluída.', r.ok ? 'success' : 'error');
+    if (r.ok) loadUsers();
 }
 
 // ── Categorias ────────────────────────────────────────
@@ -956,6 +1031,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
 window.bloquearBikeGPS = bloquearBikeGPS;
 window.desbloquearBikeGPS = desbloquearBikeGPS;
+window.abrirModalCriarUsuario = abrirModalCriarUsuario;
+window.fecharModalCriarUsuario = fecharModalCriarUsuario;
+window.confirmarCriarUsuario = confirmarCriarUsuario;
+window.excluirUsuario = excluirUsuario;
 
 // ── Init ──────────────────────────────────────────────
 loadDash();
