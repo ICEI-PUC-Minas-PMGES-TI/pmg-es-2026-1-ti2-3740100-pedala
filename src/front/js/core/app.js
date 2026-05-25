@@ -1,3 +1,4 @@
+// chaves utilizadas no localstorage
 const THEME_KEY = 'pedala_theme';
 const TOKEN_KEY = 'pedala_token';
 const USER_KEY = 'pedala_user';
@@ -7,6 +8,8 @@ const API_BASE = `${protocol}//${host}:8080/api`;
 
 window.PEDALA_API_BASE = API_BASE;
 
+// Lê um JSON salvo no localStorage 
+// Caso o valor esteja inválido, remove e retorna fallback
 function readStoredJson(key, fallback = {}) {
   const rawValue = localStorage.getItem(key);
   if (!rawValue) return fallback;
@@ -160,7 +163,7 @@ function showToast(message, type = 'success', options = {}) {
   toast.appendChild(closeBtn);
   container.appendChild(toast);
 
-  // trigger show with small delay for CSS transitions
+  //  atraso para ativar a animação do CSS
   requestAnimationFrame(() => toast.classList.add('show'));
 
   const timeout = options.timeout || 4000;
@@ -169,8 +172,7 @@ function showToast(message, type = 'success', options = {}) {
     setTimeout(() => toast.remove(), 250);
   }, timeout);
 
-  // preserve reference so it can be cleared externally if needed
-  toast._timer = timer;
+// guarda a referência do timer se precisar limpar depois  toast._timer = timer;
   return toast;
 }
 
