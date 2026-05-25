@@ -8,7 +8,10 @@ O processo tem como objetivo permitir que o administrador cadastre novas bicicle
 
 #### Detalhamento das atividades
 
-_Descreva aqui cada uma das propriedades das atividades do processo. Devem estar relacionadas com o modelo de processo apresentado anteriormente._
+O processo 2 contempla o acesso do administrador ao painel de gestão, o cadastro
+de novos modelos de bicicletas, a definição de preços por período, controle de
+estoque e inclusão opcional de imagem. As atividades abaixo descrevem os campos,
+regras e comandos utilizados pelo painel administrativo.
 
 
 **Acessar painel administrativo**
@@ -16,7 +19,7 @@ _Descreva aqui cada uma das propriedades das atividades do processo. Devem estar
 | **Campo** | **Tipo** | **Restrições** | **Valor default** |
 | --- | --- | --- | --- |
 | Email | Caixa de texto | Obrigatório, formato válido de e-mail | |
-| Senha | Caixa de texto | Obrigatório, mínimo de 8 caracteres | |
+| Senha | Caixa de texto | Obrigatório | |
 
 | **Comandos** | **Destino** | **Tipo** |
 | --- | --- | --- |
@@ -37,12 +40,14 @@ _Descreva aqui cada uma das propriedades das atividades do processo. Devem estar
 
 | **Campo** | **Tipo** | **Restrições** | **Valor default** |
 | --- | --- | --- | --- |
-| Modelo | Caixa de texto | Obrigatório | |
-| Categoria | Seleção única | Obrigatório (Urbana / Esportiva / Elétrica) | |
-| Valor da diária | Número | Obrigatório, maior que zero (> 0) | |
+| Nome/modelo | Caixa de texto | Obrigatório | |
+| Categoria | Seleção única | Deve existir no cadastro de categorias | Urbana |
+| Quantidade | Número inteiro | Obrigatório, maior ou igual a 1 | 1 |
+| Preço semanal | Número decimal | Obrigatório, maior que zero (> 0) | |
+| Preço quinzenal | Número decimal | Obrigatório, maior que zero (> 0) | |
+| Preço mensal | Número decimal | Obrigatório, maior que zero (> 0) | |
 | Descrição | Área de texto | Opcional | |
-| Localização | Caixa de texto | Obrigatório | |
-| Imagem | Imagem | Opcional | |
+| Imagem | Upload de arquivo | Opcional; JPG, PNG ou WebP na interface | |
 
 | **Comandos** | **Destino** | **Tipo** |
 | --- | --- | --- |
@@ -55,7 +60,9 @@ _Descreva aqui cada uma das propriedades das atividades do processo. Devem estar
 | **Regras (Sistema)** |
 | --- |
 | Verificar se todos os campos obrigatórios foram preenchidos. |
-| Validar se o "Valor da diária" é um número positivo válido. |
+| Validar se os preços semanal, quinzenal e mensal são números positivos válidos. |
+| Validar se a quantidade informada é maior ou igual a 1. |
+| Validar se a categoria existe na lista de categorias cadastradas. |
 | Verificar integridade do formato da imagem enviada (se houver). |
 
 | **Comandos (Retorno do Sistema)** | **Destino** | **Tipo** |
@@ -71,7 +78,8 @@ _Descreva aqui cada uma das propriedades das atividades do processo. Devem estar
 | Gerar ID único para a nova bicicleta. |
 | Registrar data e hora do cadastro automaticamente. |
 | Salvar todos os dados da bicicleta no banco de dados do sistema. |
-| Definir o atributo "status" da bicicleta obrigatoriamente como "Disponível". |
+| Definir a quantidade total e a quantidade disponível conforme o estoque informado. |
+| Considerar a bicicleta disponível quando houver estoque e ela não estiver bloqueada. |
 
 | **Comandos (Retorno do Sistema)** | **Destino** | **Tipo** |
 | --- | --- | --- |

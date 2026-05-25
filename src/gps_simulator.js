@@ -202,7 +202,7 @@ async function iniciar() {
         const health = await request(`${API_BASE}/health`);
         console.log('[GPS] Backend conectado:', health.message);
     } catch (e) {
-        console.error('[GPS] ERRO: Backend nao encontrado! Inicie o backend primeiro: cd backend && node server.js');
+        console.error('[GPS] ERRO: Backend nao encontrado! Inicie o backend primeiro: acesse src/back e execute "./mvnw spring-boot:run" (no Windows: "mvnw.cmd spring-boot:run").');
         process.exit(1);
     }
 

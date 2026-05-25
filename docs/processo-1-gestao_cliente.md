@@ -6,8 +6,10 @@ Uma melhoria importante seria a implementação de validação automática em te
 
 #### Detalhamento das atividades
 
-_Descreva aqui cada uma das propriedades das atividades do processo 1. 
-Devem estar relacionadas com o modelo de processo apresentado anteriormente._
+O processo 1 contempla o acesso inicial do cliente, autenticação, criação de conta,
+consulta de perfil e atualização dos dados cadastrais. As atividades abaixo
+descrevem os campos, regras e comandos necessários para que o usuário consiga
+entrar no sistema e manter suas informações atualizadas.
 
 ![Wireframe cadastro](Wireframes/CadastrarUser.jpeg)
 
@@ -44,8 +46,9 @@ Devem estar relacionadas com o modelo de processo apresentado anteriormente._
 | CPF | Caixa de texto | Obrigatório, formato CPF válido | |
 | Email | Caixa de texto | Obrigatório, formato de e-mail | |
 | Telefone | Caixa de texto | Obrigatório, números válidos | |
-| Senha | Caixa de texto | Obrigatório, mínimo de 8 caracteres | |
+| Senha | Caixa de texto | Obrigatório, mínimo de 6 caracteres na interface | |
 | Repetir senha | Caixa de texto | Obrigatório, ser igual à senha | |
+| Endereço de entrega | Conjunto de campos | Obrigatório para entrega da bicicleta | |
 
 | **Comandos** | **Destino** | **Tipo** |
 | --- | --- | --- |
@@ -56,9 +59,10 @@ Devem estar relacionadas com o modelo de processo apresentado anteriormente._
 
 | **Regras (Sistema)** |
 | --- |
-| Verificar se o CPF já está cadastrado na base de dados. |
 | Verificar se o e-mail já existe no sistema. |
-| Verificar integridade dos dados obrigatórios. |
+| Verificar integridade dos dados obrigatórios informados na interface. |
+| Confirmar se a senha e a repetição de senha são iguais. |
+| Gerar token de autenticação após cadastro válido. |
 
 | **Comandos** | **Destino** | **Tipo** |
 | --- | --- | --- |
@@ -81,8 +85,8 @@ Devem estar relacionadas com o modelo de processo apresentado anteriormente._
 | **Campo** | **Tipo** | **Restrições** | **Valor default** |
 | --- | --- | --- | --- |
 | Telefone | Caixa de texto | Formato numérico válido | Trazido do BD |
-| Endereço | Caixa de texto | | Trazido do BD |
-| Email | Caixa de texto | Formato de e-mail | Trazido do BD |
+| Endereço | Conjunto de campos | CEP, logradouro, número, bairro, cidade e UF | Trazido do BD |
+| Nome | Caixa de texto | Mínimo de 2 caracteres | Trazido do BD |
 
 | **Comandos** | **Destino** | **Tipo** |
 | --- | --- | --- |
@@ -94,7 +98,8 @@ Devem estar relacionadas com o modelo de processo apresentado anteriormente._
 | **Regras (Sistema)** |
 | --- |
 | Atualizar os registros do cliente no banco de dados com as novas entradas. |
-| Registrar log de atualização de dados (data/hora). |
+| Preservar dados não alterados pelo usuário. |
+| Retornar os dados atualizados para a interface. |
 
 | **Comandos** | **Destino** | **Tipo** |
 | --- | --- | --- |
