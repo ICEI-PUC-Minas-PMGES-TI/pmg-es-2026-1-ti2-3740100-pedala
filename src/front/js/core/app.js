@@ -119,9 +119,18 @@ function toggleTheme() {
   syncThemeButtons();
 }
 
-function showToast(message, type = 'success') {
-  const toast = document.getElementById('toast');
-  if (!toast) return;
+function showToast(message, type = 'success', options = {}) {
+  const containerId = 'toast-container';
+  let container = document.getElementById(containerId);
+  if (!container) {
+    container = document.createElement('div');
+    container.id = containerId;
+    container.setAttribute('aria-live', 'polite');
+    container.setAttribute('role', 'status');
+    container.className = 'toast-container';
+    document.body.appendChild(container);
+  }
+
   const toastType = {
     success: 'toast-success',
     error: 'toast-error',
@@ -129,13 +138,40 @@ function showToast(message, type = 'success') {
     info: 'toast-info'
   };
 
+  const toast = document.createElement('div');
   toast.className = `toast ${toastType[type] || 'toast-info'}`;
-  toast.setAttribute('role', 'status');
-  toast.setAttribute('aria-live', 'polite');
-  toast.textContent = message;
-  toast.classList.add('show');
-  clearTimeout(toast._timer);
-  toast._timer = setTimeout(() => toast.classList.remove('show'), 4000);
+  toast.setAttribute('role', 'alert');
+
+  const content = document.createElement('div');
+  content.className = 'toast-content';
+  if (options.html) content.innerHTML = message;
+  else content.textContent = message;
+
+  const closeBtn = document.createElement('button');
+  closeBtn.className = 'toast-close';
+  closeBtn.type = 'button';
+  closeBtn.innerText = '×';
+  closeBtn.addEventListener('click', () => {
+    toast.classList.remove('show');
+    setTimeout(() => toast.remove(), 250);
+  });
+
+  toast.appendChild(content);
+  toast.appendChild(closeBtn);
+  container.appendChild(toast);
+
+  // trigger show with small delay for CSS transitions
+  requestAnimationFrame(() => toast.classList.add('show'));
+
+  const timeout = options.timeout || 4000;
+  const timer = setTimeout(() => {
+    toast.classList.remove('show');
+    setTimeout(() => toast.remove(), 250);
+  }, timeout);
+
+  // preserve reference so it can be cleared externally if needed
+  toast._timer = timer;
+  return toast;
 }
 
 function updateNavbarAuth() {
