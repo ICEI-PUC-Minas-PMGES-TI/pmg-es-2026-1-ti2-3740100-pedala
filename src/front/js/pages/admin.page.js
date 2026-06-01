@@ -738,20 +738,58 @@ async function rejPag(id) {
 }
 
 // ── GPS Map — Leaflet + SSE ───────────────────────────
-let _gpsMap = null;          // instância Leaflet
-let _gpsMarkers = {};        // bikeId → L.marker
-let _gpsSSE = null;          // EventSource
-let _gpsInitialized = false; // evitar dupla init
+let _gpsMap = null;
+let _gpsMarkers = {};
+let _gpsSSE = null;
+let _gpsInitialized = false;
+let _rentalCache = {};
+let _homeMarkers = {};
 
-// Ícone personalizado de bike
 function _bikeIcon(color) {
+    const c = color || '#6366f1';
+    const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="white" width="19" height="19"><path d="M5 20.5A3.5 3.5 0 0 1 1.5 17 3.5 3.5 0 0 1 5 13.5 3.5 3.5 0 0 1 8.5 17 3.5 3.5 0 0 1 5 20.5M5 12A5 5 0 0 0 0 17a5 5 0 0 0 5 5 5 5 0 0 0 5-5 5 5 0 0 0-5-5m9.8-2H19V8.2h-3.2l-1.94-3.07C13.57 4.43 13 4.1 12.4 4.1c-.47 0-.9.19-1.2.5L7.5 8.29C7.19 8.6 7 9 7 9.5c0 .63.33 1.16.85 1.47L11.2 13V18h2v-6.5l-2.25-1.65 2.32-2.35M19 20.5A3.5 3.5 0 0 1 15.5 17 3.5 3.5 0 0 1 19 13.5a3.5 3.5 0 0 1 3.5 3.5 3.5 3.5 0 0 1-3.5 3.5M19 12a5 5 0 0 0-5 5 5 5 0 0 0 5 5 5 5 0 0 0 5-5 5 5 0 0 0-5-5z"/></svg>`;
     return L.divIcon({
         className: '',
-        iconSize: [36, 36],
-        iconAnchor: [18, 18],
-        popupAnchor: [0, -20],
-        html: `<div style="width:36px;height:36px;background:${color || '#F5C000'};border-radius:50%;display:flex;align-items:center;justify-content:center;box-shadow:0 2px 8px rgba(0,0,0,0.3);border:2px solid #fff;font-size:9px;font-weight:700;color:#3D2E00;letter-spacing:.04em;">BIKE</div>`
+        iconSize: [38, 38],
+        iconAnchor: [19, 19],
+        popupAnchor: [0, -22],
+        html: `<div style="width:38px;height:38px;background:${c};border-radius:50%;display:flex;align-items:center;justify-content:center;box-shadow:0 2px 10px rgba(0,0,0,0.4);border:2.5px solid #fff;">${svg}</div>`
     });
+}
+
+async function _loadRentalCache() {
+    try {
+        const r = await fetch(`${API_BASE}/rentals`, { headers: authH });
+        if (!r.ok) return;
+        const data = await r.json();
+        const list = Array.isArray(data) ? data : (data.alugueis || data.rentals || data.content || []);
+        list.forEach(rental => { _rentalCache[rental.id] = rental; });
+    } catch (_) {}
+}
+
+async function _toggleHomeMarker(bikeId, rentalId) {
+    if (_homeMarkers[bikeId]) {
+        _gpsMap.removeLayer(_homeMarkers[bikeId]);
+        delete _homeMarkers[bikeId];
+        return;
+    }
+    const rental = _rentalCache[rentalId];
+    if (!rental?.enderecoEntrega) { showToast('Endereço do cliente não disponível.', 'error'); return; }
+    const addr = rental.enderecoEntrega;
+    const q = [addr.logradouro, addr.numero, addr.bairro, addr.cidade || 'São Paulo'].filter(Boolean).join(', ');
+    try {
+        const r = await fetch(`https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(q)}&format=json&limit=1&countrycodes=br`);
+        const results = await r.json();
+        if (!results?.length) { showToast('Endereço não encontrado no mapa.', 'error'); return; }
+        const { lat, lon } = results[0];
+        const homeIcon = L.divIcon({ className: '', iconSize: [34, 34], iconAnchor: [17, 34], popupAnchor: [0, -36], html: `<div style="font-size:28px;line-height:1;filter:drop-shadow(0 2px 5px rgba(0,0,0,0.5));">🏠</div>` });
+        const marker = L.marker([parseFloat(lat), parseFloat(lon)], { icon: homeIcon })
+            .addTo(_gpsMap)
+            .bindPopup(`<b>Casa do Cliente</b><br>${escHtml(rental.usuarioNome || '—')}<br><small style="color:#666;">${escHtml(q)}</small>`)
+            .openPopup();
+        _homeMarkers[bikeId] = marker;
+        _gpsMap.flyTo([parseFloat(lat), parseFloat(lon)], 16, { duration: 1 });
+    } catch (e) { showToast('Erro ao localizar endereço.', 'error'); }
 }
 
 function _gpsSetStatus(connected, text) {
@@ -778,10 +816,13 @@ function _gpsUpdateSidebar() {
         const statusHtml = d.bloqueada
             ? `<span style="color:#ef4444;font-size:0.7rem;font-weight:700;">&#128274; Bloqueada</span>`
             : (d.isSuspeito ? `<span style="color:#f59e0b;font-size:0.7rem;font-weight:700;">&#9888; Fora da zona</span>` : '');
-        return `<div class="gps-bike-item" onclick="_gpsFlyTo(${d.bikeId})">
-            <div class="gps-bike-name">${escHtml(d.bikeNome || 'Bike #' + d.bikeId)} ${statusHtml}</div>
-            <div class="gps-bike-addr">${escHtml(d.endereco || '—')}</div>
-            <div class="gps-bike-speed">${d.speed ? d.speed + ' km/h' : 'Parada'}</div>
+        return `<div class="gps-bike-item">
+            <div onclick="_gpsFlyTo(${d.bikeId})" style="cursor:pointer;">
+                <div class="gps-bike-name">${escHtml(d.bikeNome || 'Bike #' + d.bikeId)} ${statusHtml}</div>
+                <div class="gps-bike-addr">${escHtml(d.endereco || '—')}</div>
+                <div class="gps-bike-speed">${d.speed ? d.speed + ' km/h' : 'Parada'}</div>
+            </div>
+            <button class="btn btn-ghost btn-sm" style="margin-top:6px;width:100%;font-size:0.72rem;padding:3px;" onclick="verRotaGPS(${d.rentalId})">&#128506; Ver rota</button>
         </div>`;
     }).join('');
 }
@@ -814,9 +855,7 @@ function _gpsHandleEvent(evt) {
     if (data.type === 'update') {
         const latlng = [data.lat, data.lng];
         const prev = _gpsMarkers[data.bikeId]?._gpsData;
-        if (data.isSuspeito && (!prev || !prev.isSuspeito)) {
-            showToast(`Alerta: ${data.bikeNome} saiu da zona segura!`, 'error');
-        }
+        // alerta de zona apenas no histórico — não no live
         const iconColor = data.bloqueada ? '#ef4444' : (data.isSuspeito ? '#f59e0b' : '#F5C000');
         if (_gpsMarkers[data.bikeId]) {
             _gpsMarkers[data.bikeId].setLatLng(latlng);
@@ -835,16 +874,27 @@ function _gpsHandleEvent(evt) {
 }
 
 function _gpsPopupHtml(d) {
+    const rental = _rentalCache[d.rentalId];
     const alertHtml = d.isSuspeito
-        ? `<div style="background:#fef3c7;border:1px solid #f59e0b;border-radius:4px;padding:4px 6px;margin-bottom:6px;font-size:0.72rem;color:#92400e;">&#9888; Fora da zona segura!</div>`
+        ? `<div style="background:#fef3c7;border:1px solid #f59e0b;border-radius:4px;padding:4px 6px;margin-bottom:6px;font-size:0.72rem;color:#92400e;">⚠ Fora da zona segura!</div>`
+        : '';
+    const clientHtml = rental?.usuarioNome
+        ? `<div class="gps-popup-row" style="font-size:0.75rem;">👤 <b>${escHtml(rental.usuarioNome)}</b></div>`
+        : '';
+    const addrBtn = rental?.enderecoEntrega?.logradouro
+        ? `<button class="btn btn-ghost btn-sm" style="width:100%;margin-top:3px;padding:3px;font-size:0.7rem;" onclick="_toggleHomeMarker(${d.bikeId},${d.rentalId})">🏠 ${_homeMarkers[d.bikeId] ? 'Ocultar casa' : 'Ver casa do cliente'}</button>`
         : '';
     const btnHtml = d.bloqueada
-        ? `<button class="btn btn-success btn-sm" style="width:100%;margin-top:8px;padding:4px;" onclick="desbloquearBikeGPS(${d.bikeId})">&#128275; Desbloquear Bike</button>`
-        : `<button class="btn btn-danger btn-sm" style="width:100%;margin-top:8px;padding:4px;" onclick="bloquearBikeGPS(${d.bikeId})">&#128274; Bloquear Bike</button>`;
-    return `${alertHtml}<div class="gps-popup-name">Bike: ${escHtml(d.bikeNome)}</div>
-        <div class="gps-popup-row">Endereço: ${escHtml(d.endereco)}</div>
-        <div class="gps-popup-row">Velocidade: ${d.speed ? d.speed + ' km/h' : 'Parada'}</div>
-        <div class="gps-popup-row" style="color:var(--text-muted);font-size:0.72rem;">Locação #${d.rentalId}</div>
+        ? `<button class="btn btn-success btn-sm" style="width:100%;margin-top:6px;padding:4px;" onclick="desbloquearBikeGPS(${d.bikeId})">🔓 Desbloquear</button>`
+        : `<button class="btn btn-danger btn-sm" style="width:100%;margin-top:6px;padding:4px;" onclick="bloquearBikeGPS(${d.bikeId})">🔒 Bloquear</button>`;
+    return `${alertHtml}
+        <div class="gps-popup-name" style="display:flex;align-items:center;gap:5px;">🚲 ${escHtml(d.bikeNome)}</div>
+        ${clientHtml}
+        <div class="gps-popup-row" style="color:var(--text-muted);font-size:0.71rem;">📋 Contrato #${d.rentalId}</div>
+        <div class="gps-popup-row">📍 ${escHtml(d.endereco)}</div>
+        <div class="gps-popup-row">⚡ ${d.speed ? d.speed + ' km/h' : 'Parada'}</div>
+        <button class="btn btn-ghost btn-sm" style="width:100%;margin-top:5px;padding:3px;font-size:0.71rem;" onclick="verRotaGPS(${d.rentalId})">🗺 Ver rota histórica</button>
+        ${addrBtn}
         ${btnHtml}`;
 }
 
@@ -871,37 +921,31 @@ async function desbloquearBikeGPS(id) {
 }
 
 function initGpsMap() {
-    // Inicializar mapa Leaflet na primeira abertura
     if (!_gpsInitialized) {
         _gpsInitialized = true;
-        // Aguardar o container ficar visível (seção '.show' aplicada)
         setTimeout(() => {
-            _gpsMap = L.map('gpsMapContainer', {
-                center: [-23.5505, -46.6333],
-                zoom: 13,
-                zoomControl: true,
-                attributionControl: true
-            });
+            if (!document.getElementById('gps-styles')) {
+                const s = document.createElement('style');
+                s.id = 'gps-styles';
+                s.textContent = `@keyframes gps-pulse{0%{transform:scale(1);opacity:.7}70%{transform:scale(3.5);opacity:0}100%{transform:scale(3.5);opacity:0}}@keyframes spin{to{transform:rotate(360deg)}}`;
+                document.head.appendChild(s);
+            }
+            _gpsMap = L.map('gpsMapContainer', { center: [-23.5505, -46.6333], zoom: 13, zoomControl: true });
             L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-                attribution: '© <a href="https://openstreetmap.org">OpenStreetMap</a> contributors',
-                maxZoom: 19
+                attribution: '© <a href="https://openstreetmap.org">OpenStreetMap</a> contributors', maxZoom: 19
             }).addTo(_gpsMap);
-            
-            // Desenhar Zona de Segurança (MASP, raio 5km)
-            L.circle([-23.5615, -46.6560], {
-                color: '#ef4444',
-                fillColor: '#ef4444',
-                fillOpacity: 0.07,
-                radius: 5000,
-                weight: 2,
-                dashArray: '6, 6'
-            }).addTo(_gpsMap).bindPopup('<b>Zona de Monitoramento</b><br>Limite de 5km — São Paulo');
 
-            // Iniciar SSE após mapa criado
+            const ZONE = [-23.5615, -46.6560];
+            L.circle(ZONE, { color: '#f97316', fillColor: '#f97316', fillOpacity: 0.04, radius: 5000, weight: 1.5, dashArray: '8 5' })
+                .addTo(_gpsMap).bindPopup('<b>Zona de Monitoramento</b><br>Raio de 5km a partir do MASP');
+            L.circle(ZONE, { color: '#f97316', fillColor: 'transparent', radius: 2500, weight: 1, dashArray: '3 9', opacity: 0.35 }).addTo(_gpsMap);
+            L.marker(ZONE, { icon: L.divIcon({ className: '', iconSize: [40,40], iconAnchor: [20,20], html: `<div style="position:relative;width:40px;height:40px;display:flex;align-items:center;justify-content:center;"><div style="position:absolute;width:12px;height:12px;background:#f97316;border-radius:50%;animation:gps-pulse 2.5s ease-out infinite;"></div><div style="position:absolute;width:10px;height:10px;background:#f97316;border-radius:50%;border:2.5px solid #fff;z-index:2;box-shadow:0 1px 5px rgba(0,0,0,.5);"></div></div>` }), interactive: false }).addTo(_gpsMap);
+            L.marker([-23.516, -46.656], { icon: L.divIcon({ className: '', iconSize: [150,18], iconAnchor: [75,9], html: `<div style="font-size:10px;font-weight:600;color:#f97316;background:rgba(0,0,0,.6);padding:2px 8px;border-radius:4px;white-space:nowrap;text-align:center;">● Zona Segura — 5 km</div>` }), interactive: false }).addTo(_gpsMap);
+
             _gpsStartSSE();
+            _loadRentalCache();
         }, 80);
     } else {
-        // Seção reaberta: invalidar tamanho do mapa (Leaflet precisa disso)
         if (_gpsMap) setTimeout(() => _gpsMap.invalidateSize(), 80);
     }
 }
@@ -921,12 +965,159 @@ function _gpsStartSSE() {
 }
 
 function reconnectGPS() {
-    // Limpar marcadores existentes
     Object.values(_gpsMarkers).forEach(m => { if (_gpsMap) _gpsMap.removeLayer(m); });
     _gpsMarkers = {};
     _gpsUpdateSidebar();
     _gpsStartSSE();
 }
+
+// ── GPS Route History (mesma implementação do employee) ──
+let _historyMap = null;
+let _historyLayers = [];
+
+async function _osrmMatch(points) {
+    const MIN_MOVE = 0.00012, MAX_JUMP = 0.004;
+    const clean = [points[0]];
+    for (let i = 1; i < points.length; i++) {
+        const p = clean[clean.length-1], dlat = points[i].lat-p.lat, dlng = points[i].lng-p.lng;
+        const d = Math.sqrt(dlat*dlat+dlng*dlng);
+        if (d < MIN_MOVE || d > MAX_JUMP) continue;
+        clean.push(points[i]);
+    }
+    if (clean.length < 6) return [];
+    const step = clean.length > 75 ? Math.ceil(clean.length/75) : 1;
+    const sub = clean.filter((_,i) => i%step===0);
+    if (sub[sub.length-1] !== clean[clean.length-1]) sub.push(clean[clean.length-1]);
+    const chunks = [];
+    for (let i = 0; i < sub.length; i += 24) chunks.push(sub.slice(i, Math.min(i+25, sub.length)));
+    const results = [];
+    for (const chunk of chunks) {
+        const coords = chunk.map(p=>`${p.lng},${p.lat}`).join(';');
+        const radii  = chunk.map(()=>'100').join(';');
+        const url    = `https://router.project-osrm.org/match/v1/driving/${coords}?overview=full&geometries=geojson&radiuses=${radii}`;
+        const ctrl = new AbortController(); const t = setTimeout(()=>ctrl.abort(),9000);
+        try { const r=await fetch(url,{signal:ctrl.signal}); clearTimeout(t); if(!r.ok) continue; const data=await r.json(); if(data.matchings?.length) results.push(...data.matchings.flatMap(m=>m.geometry.coordinates.map(([lng,lat])=>[lat,lng]))); } catch(_){clearTimeout(t);}
+        await new Promise(res=>setTimeout(res,300));
+    }
+    return results;
+}
+
+function _bearing(lat1,lng1,lat2,lng2){const r=Math.PI/180,dL=(lng2-lng1)*r,y=Math.sin(dL)*Math.cos(lat2*r),x=Math.cos(lat1*r)*Math.sin(lat2*r)-Math.sin(lat1*r)*Math.cos(lat2*r)*Math.cos(dL);return(Math.atan2(y,x)*180/Math.PI+360)%360;}
+
+function _addArrows(map,latlngs,color,layers){
+    if(latlngs.length<4)return;
+    const step=Math.max(Math.floor(latlngs.length/9),3);
+    for(let i=step;i<latlngs.length-1;i+=step){
+        const b=_bearing(latlngs[i-1][0],latlngs[i-1][1],latlngs[i][0],latlngs[i][1]);
+        layers.push(L.marker(latlngs[i],{icon:L.divIcon({className:'',iconSize:[20,20],iconAnchor:[10,10],html:`<div style="width:20px;height:20px;display:flex;align-items:center;justify-content:center;transform:rotate(${b}deg);color:${color||'#a78bfa'};font-size:12px;filter:drop-shadow(0 0 3px rgba(0,0,0,.7));pointer-events:none;">▶</div>`}),interactive:false,zIndexOffset:300}).addTo(map));
+    }
+}
+
+function _glowPolyline(map,latlngs,color){
+    const layers=[L.polyline(latlngs,{color,weight:14,opacity:.10,lineCap:'round',lineJoin:'round'}),L.polyline(latlngs,{color,weight:6,opacity:.35,lineCap:'round',lineJoin:'round'}),L.polyline(latlngs,{color:'#e0d7ff',weight:2.5,opacity:1,lineCap:'round',lineJoin:'round'})];
+    layers.forEach(l=>l.addTo(map));_addArrows(map,latlngs,'#c4b5fd',layers);return layers;
+}
+
+function _rawPolyline(map,points){
+    const layers=[],latlngs=points.map(p=>[p.lat,p.lng]);
+    layers.push(L.polyline(latlngs,{color:'#6366f1',weight:12,opacity:.09,lineCap:'round',lineJoin:'round'}).addTo(map));
+    for(let i=0;i<latlngs.length-1;i++){const s=points[i].speed||0,c=s>=20?'#22c55e':s>=12?'#eab308':s>=5?'#f97316':'#ef4444';layers.push(L.polyline([latlngs[i],latlngs[i+1]],{color:c,weight:3.5,opacity:.9,lineCap:'round'}).addTo(map));}
+    _addArrows(map,latlngs,'#fff',layers);return layers;
+}
+
+const _FILTERS=[['30min',.5],['1h',1],['2h',2],['4h',4],['1 dia',24],['3 dias',72]];
+
+async function verRotaGPS(rentalId, horas=1) {
+    const modal=document.getElementById('gpsHistoryModal'),title=document.getElementById('gpsHistoryTitle'),
+          stats=document.getElementById('gpsHistoryStats'),loading=document.getElementById('gpsHistoryLoading'),
+          mapEl=document.getElementById('gpsHistoryMapContainer');
+    title.textContent=`Rota — Locação #${rentalId}`;
+    stats.innerHTML=''; loading.style.display='block'; loading.textContent='Carregando histórico...'; mapEl.style.display='none';
+    modal.classList.add('open');
+
+    const filterHtml=`<div style="display:flex;gap:5px;margin-bottom:12px;flex-wrap:wrap;align-items:center;"><span style="font-size:11px;color:var(--text-muted);">Período:</span>${_FILTERS.map(([label,val])=>{const active=val==horas;return`<button onclick="verRotaGPS(${rentalId},${val})" style="padding:3px 11px;font-size:11px;border-radius:99px;border:1px solid ${active?'transparent':'var(--border)'};background:${active?'var(--primary)':'var(--bg-secondary)'};color:${active?'#000':'var(--text-secondary)'};cursor:pointer;font-weight:${active?'600':'400'};">${label}</button>`;}).join('')}</div>`;
+
+    try {
+        const horasApi=horas<1?1:Math.round(horas),t0=Date.now();
+        const r=await fetch(`${API_BASE}/gps/historico/${rentalId}?horas=${horasApi}`,{headers:authH});
+        const d=await r.json(); const responseMs=Date.now()-t0;
+        let points=d.history||[];
+        if(horas===.5&&points.length){const cutoff=Date.now()-30*60*1000;points=points.filter(p=>new Date(p.registradoEm).getTime()>=cutoff);}
+        loading.style.display='none';
+        if(!points.length){stats.innerHTML=filterHtml+`<p style="color:var(--text-muted);text-align:center;padding:24px;">Nenhum ponto GPS neste período.<br><small>Tente ampliar o intervalo acima.</small></p>`;return;}
+
+        const speeds=points.map(p=>p.speed||0).filter(s=>s>0);
+        const avgSpeed=speeds.length?(speeds.reduce((a,b)=>a+b,0)/speeds.length).toFixed(1):'—';
+        const maxSpeed=speeds.length?Math.max(...speeds).toFixed(1):'—';
+        const firstTs=new Date(points[0].registradoEm),lastTs=new Date(points[points.length-1].registradoEm);
+        const durMin=Math.round((lastTs-firstTs)/60000);
+        const durStr=durMin>=60?`${Math.floor(durMin/60)}h${durMin%60?` ${durMin%60}min`:''}`:`${durMin}min`;
+        const fmtTime=ts=>ts.toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});
+        const fmtDate=ts=>ts.toLocaleDateString('pt-BR',{day:'2-digit',month:'2-digit'});
+        const sameDay=firstTs.toDateString()===lastTs.toDateString();
+        const card=(label,value)=>`<div style="background:var(--bg-secondary);border-radius:8px;padding:5px 12px;font-size:11px;border:1px solid var(--border);min-width:60px;"><div style="color:var(--text-muted);margin-bottom:2px;">${label}</div><div style="font-weight:700;font-size:14px;">${value}</div></div>`;
+
+        const _hav=(la1,lo1,la2,lo2)=>{const R=6371,r=Math.PI/180,a=Math.sin((la2-la1)*r/2)**2+Math.cos(la1*r)*Math.cos(la2*r)*Math.sin((lo2-lo1)*r/2)**2;return R*2*Math.atan2(Math.sqrt(a),Math.sqrt(1-a));};
+        const ZONE_LAT=-23.5615,ZONE_LNG=-46.6560,ZONE_KM=5;
+        const zoneExits=[];let exitTs=null;
+        for(const p of points){const out=_hav(p.lat,p.lng,ZONE_LAT,ZONE_LNG)>ZONE_KM;if(out&&!exitTs)exitTs=new Date(p.registradoEm);else if(!out&&exitTs){zoneExits.push({exitTs,returnTs:new Date(p.registradoEm),dMin:Math.round((new Date(p.registradoEm)-exitTs)/60000)});exitTs=null;}}
+        if(exitTs)zoneExits.push({exitTs,returnTs:null,dMin:Math.round((lastTs-exitTs)/60000)});
+        const zoneHtml=zoneExits.length?`<div style="margin-bottom:10px;display:flex;flex-wrap:wrap;gap:5px;align-items:center;"><span style="font-size:11px;color:var(--warning);font-weight:600;">⚠ Fora da zona:</span>${zoneExits.map(e=>`<span style="background:var(--warning-bg);color:var(--warning);border:1px solid var(--warning-border);padding:2px 9px;border-radius:99px;font-size:11px;font-weight:600;">${fmtTime(e.exitTs)} — ${e.dMin<1?'<1':e.dMin}min fora${e.returnTs?` · voltou ${fmtTime(e.returnTs)}`:'  (ainda fora)'}</span>`).join('')}</div>`:'';
+
+        stats.innerHTML=filterHtml+
+            `<div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px;">${card('Duração',durStr)}${card('Vel. Média',avgSpeed+' km/h')}${card('Vel. Máx',maxSpeed+' km/h')}${card('Pontos GPS',points.length)}</div>
+            <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;font-size:11px;flex-wrap:wrap;">
+                <span style="display:inline-flex;align-items:center;gap:4px;background:var(--success-bg);color:var(--success);border:1px solid var(--success-border);padding:3px 8px;border-radius:99px;font-weight:600;"><span style="width:7px;height:7px;background:var(--success);border-radius:50%;display:inline-block;"></span>Partida ${sameDay?'':fmtDate(firstTs)+' '}${fmtTime(firstTs)} — ${escHtml(points[0].endereco||'?')}</span>
+                <span style="color:var(--text-muted);">→</span>
+                <span style="display:inline-flex;align-items:center;gap:4px;background:var(--danger-bg);color:var(--danger);border:1px solid var(--danger-border);padding:3px 8px;border-radius:99px;font-weight:600;"><span style="width:7px;height:7px;background:var(--danger);border-radius:50%;display:inline-block;"></span>Chegada ${sameDay?'':fmtDate(lastTs)+' '}${fmtTime(lastTs)} — ${escHtml(points[points.length-1].endereco||'?')}</span>
+            </div>
+            ${zoneHtml}
+            <div style="font-size:10px;color:var(--text-muted);margin-bottom:4px;display:flex;align-items:center;"><span id="osrmStatus" style="opacity:.6;">▶ setas indicam direção de percurso</span><span style="margin-left:auto;opacity:.3;">${responseMs}ms</span></div>`;
+
+        mapEl.style.display='';
+        if(!_historyMap){_historyMap=L.map('gpsHistoryMapContainer',{zoomControl:true});L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{attribution:'© <a href="https://openstreetmap.org">OpenStreetMap</a>',maxZoom:19}).addTo(_historyMap);}
+        _historyLayers.forEach(l=>_historyMap.removeLayer(l)); _historyLayers=[];
+        const rawLatLngs=points.map(p=>[p.lat,p.lng]);
+        _historyLayers.push(..._rawPolyline(_historyMap,points));
+        _historyMap.fitBounds(L.latLngBounds(rawLatLngs),{padding:[30,30]});
+        setTimeout(()=>_historyMap.invalidateSize(),100);
+
+        const startIcon=L.divIcon({className:'',iconSize:[22,22],iconAnchor:[11,11],popupAnchor:[0,-14],html:`<div style="width:22px;height:22px;background:#22c55e;border-radius:50%;border:3px solid #fff;box-shadow:0 2px 8px rgba(0,0,0,.5);display:flex;align-items:center;justify-content:center;"><div style="width:6px;height:6px;background:#fff;border-radius:50%;"></div></div>`});
+        const startM=L.marker(rawLatLngs[0],{icon:startIcon,zIndexOffset:1000}).addTo(_historyMap).bindPopup(`<b style="color:#22c55e;">▶ Partida</b><br>${escHtml(points[0].endereco||'—')}<br><small style="color:#666;">${firstTs.toLocaleString('pt-BR',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'})}</small>`);
+        _historyLayers.push(startM);
+        let endM=null;
+        if(rawLatLngs.length>1){const endIcon=L.divIcon({className:'',iconSize:[22,22],iconAnchor:[11,11],popupAnchor:[0,-14],html:`<div style="width:22px;height:22px;background:#ef4444;border-radius:50%;border:3px solid #fff;box-shadow:0 2px 8px rgba(0,0,0,.5);display:flex;align-items:center;justify-content:center;"><div style="width:6px;height:6px;background:#fff;border-radius:50%;"></div></div>`});endM=L.marker(rawLatLngs[rawLatLngs.length-1],{icon:endIcon,zIndexOffset:1000}).addTo(_historyMap).bindPopup(`<b style="color:#ef4444;">⬛ Última posição</b><br>${escHtml(points[points.length-1].endereco||'—')}<br><small style="color:#666;">${lastTs.toLocaleString('pt-BR',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'})}</small>`);_historyLayers.push(endM);}
+
+        // Marcador 🏠 casa do cliente no mapa histórico
+        const rental=_rentalCache[rentalId];
+        if(rental?.enderecoEntrega?.logradouro){
+            const addr=rental.enderecoEntrega;
+            const q=[addr.logradouro,addr.numero,addr.bairro,addr.cidade||'São Paulo'].filter(Boolean).join(', ');
+            fetch(`https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(q)}&format=json&limit=1&countrycodes=br`)
+                .then(r=>r.json()).then(results=>{
+                    if(!results?.length)return;
+                    const {lat,lon}=results[0];
+                    const homeIcon=L.divIcon({className:'',iconSize:[34,34],iconAnchor:[17,34],popupAnchor:[0,-36],html:`<div style="font-size:28px;line-height:1;filter:drop-shadow(0 2px 5px rgba(0,0,0,0.5));">🏠</div>`});
+                    const hm=L.marker([parseFloat(lat),parseFloat(lon)],{icon:homeIcon}).addTo(_historyMap).bindPopup(`<b>Casa — ${escHtml(rental.usuarioNome||'—')}</b><br><small style="color:#666;">${escHtml(q)}</small>`);
+                    _historyLayers.push(hm);
+                }).catch(()=>{});
+        }
+
+        try{
+            const matched=await _osrmMatch(points);
+            if(matched.length>5){
+                _historyLayers.forEach(l=>{if(l!==startM&&l!==endM)_historyMap.removeLayer(l);});
+                _historyLayers=_historyLayers.filter(l=>l===startM||l===endM);
+                _historyLayers.push(..._glowPolyline(_historyMap,matched,'#818cf8'));
+                if(startM)startM.bringToFront();if(endM)endM.bringToFront();
+                _historyMap.fitBounds(L.latLngBounds(matched),{padding:[30,30]});
+                const s=document.getElementById('osrmStatus');if(s)s.innerHTML='▶ setas indicam direção de percurso · rota ajustada às ruas';
+            }
+        }catch(_){}
+    }catch(e){loading.style.display='none';stats.innerHTML=filterHtml+`<p style="color:var(--danger);text-align:center;padding:24px;">Erro ao carregar o histórico GPS.</p>`;}
+}
+
+function closeGpsHistory(){document.getElementById('gpsHistoryModal')?.classList.remove('open');}
 
 // ── Vistorias ─────────────────────────────────────────
 async function loadVist() {
@@ -1114,6 +1305,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
 window.bloquearBikeGPS = bloquearBikeGPS;
 window.desbloquearBikeGPS = desbloquearBikeGPS;
+window.verRotaGPS = verRotaGPS;
+window.closeGpsHistory = closeGpsHistory;
+window._gpsFlyTo = _gpsFlyTo;
+window._toggleHomeMarker = _toggleHomeMarker;
 window.abrirModalCriarUsuario = abrirModalCriarUsuario;
 window.fecharModalCriarUsuario = fecharModalCriarUsuario;
 window.confirmarCriarUsuario = confirmarCriarUsuario;

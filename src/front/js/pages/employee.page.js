@@ -309,9 +309,7 @@ function _gpsHandleEvent(evt) {
     if (data.type === 'update') {
         const latlng = [data.lat, data.lng];
         const prev = _gpsMarkers[data.bikeId]?._gpsData;
-        if (data.isSuspeito && (!prev || !prev.isSuspeito)) {
-            showToast(`Alerta: ${data.bikeNome} saiu da zona segura!`, 'error');
-        }
+        // alerta de zona apenas no histórico — não no live
         const iconColor = data.bloqueada ? '#ef4444' : (data.isSuspeito ? '#f59e0b' : '#6366f1');
         if (_gpsMarkers[data.bikeId]) {
             _gpsMarkers[data.bikeId].setLatLng(latlng);
@@ -579,6 +577,22 @@ async function verRotaGPS(rentalId, horas = 1) {
         const fmtDate = ts => ts.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' });
         const sameDay = firstTs.toDateString() === lastTs.toDateString();
 
+        // Calcular intervalos fora da zona segura (MASP 5km)
+        const _hav = (la1,lo1,la2,lo2)=>{const R=6371,r=Math.PI/180,a=Math.sin((la2-la1)*r/2)**2+Math.cos(la1*r)*Math.cos(la2*r)*Math.sin((lo2-lo1)*r/2)**2;return R*2*Math.atan2(Math.sqrt(a),Math.sqrt(1-a));};
+        const ZONE_LAT=-23.5615,ZONE_LNG=-46.6560,ZONE_KM=5;
+        const zoneExits=[];let exitTs=null;
+        for(const p of points){
+            const out=_hav(p.lat,p.lng,ZONE_LAT,ZONE_LNG)>ZONE_KM;
+            if(out&&!exitTs)exitTs=new Date(p.registradoEm);
+            else if(!out&&exitTs){zoneExits.push({exitTs,returnTs:new Date(p.registradoEm),dMin:Math.round((new Date(p.registradoEm)-exitTs)/60000)});exitTs=null;}
+        }
+        if(exitTs)zoneExits.push({exitTs,returnTs:null,dMin:Math.round((lastTs-exitTs)/60000)});
+        const zoneHtml = zoneExits.length
+            ? `<div style="margin-bottom:10px;display:flex;flex-wrap:wrap;gap:5px;align-items:center;">
+                <span style="font-size:11px;color:var(--warning);font-weight:600;">⚠ Fora da zona:</span>
+                ${zoneExits.map(e=>`<span style="background:var(--warning-bg);color:var(--warning);border:1px solid var(--warning-border);padding:2px 9px;border-radius:99px;font-size:11px;font-weight:600;">${fmtTime(e.exitTs)} — ${e.dMin<1?'<1':e.dMin}min fora${e.returnTs?` · voltou ${fmtTime(e.returnTs)}`:'  (ainda fora)'}</span>`).join('')}
+            </div>` : '';
+
         stats.innerHTML = filterHtml +
             `<div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px;">
                 ${card('Duração', durStr)}
@@ -586,17 +600,18 @@ async function verRotaGPS(rentalId, horas = 1) {
                 ${card('Vel. Máx', maxSpeed + ' km/h')}
                 ${card('Pontos GPS', points.length)}
             </div>
-            <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;font-size:11px;">
-                <span style="display:inline-flex;align-items:center;gap:4px;background:#166534;color:#bbf7d0;padding:3px 8px;border-radius:99px;font-weight:600;">
-                    <span style="width:7px;height:7px;background:#4ade80;border-radius:50%;display:inline-block;"></span>
+            <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;font-size:11px;flex-wrap:wrap;">
+                <span style="display:inline-flex;align-items:center;gap:4px;background:var(--success-bg);color:var(--success);border:1px solid var(--success-border);padding:3px 8px;border-radius:99px;font-weight:600;">
+                    <span style="width:7px;height:7px;background:var(--success);border-radius:50%;display:inline-block;"></span>
                     Partida ${sameDay ? '' : fmtDate(firstTs) + ' '}${fmtTime(firstTs)} — ${escHtml(points[0].endereco || '?')}
                 </span>
                 <span style="color:var(--text-muted);">→</span>
-                <span style="display:inline-flex;align-items:center;gap:4px;background:#7f1d1d;color:#fecaca;padding:3px 8px;border-radius:99px;font-weight:600;">
-                    <span style="width:7px;height:7px;background:#f87171;border-radius:50%;display:inline-block;"></span>
+                <span style="display:inline-flex;align-items:center;gap:4px;background:var(--danger-bg);color:var(--danger);border:1px solid var(--danger-border);padding:3px 8px;border-radius:99px;font-weight:600;">
+                    <span style="width:7px;height:7px;background:var(--danger);border-radius:50%;display:inline-block;"></span>
                     Chegada ${sameDay ? '' : fmtDate(lastTs) + ' '}${fmtTime(lastTs)} — ${escHtml(points[points.length-1].endereco || '?')}
                 </span>
             </div>
+            ${zoneHtml}
             <div style="font-size:10px;color:var(--text-muted);margin-bottom:4px;display:flex;align-items:center;">
                 <span id="osrmStatus" style="opacity:.6;">▶ setas indicam direção de percurso</span>
                 <span style="margin-left:auto;opacity:.3;">${responseMs}ms</span>
@@ -649,6 +664,23 @@ async function verRotaGPS(rentalId, horas = 1) {
                 .addTo(_historyMap)
                 .bindPopup(`<b style="color:#ef4444;">⬛ Última posição</b><br>${escHtml(points[points.length - 1].endereco || '—')}<br><small style="color:#666;">${lastTs.toLocaleString('pt-BR', {day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'})}</small>`);
             _historyLayers.push(endM);
+        }
+
+        // Marcador 🏠 casa do cliente no mapa histórico
+        const rental = _rentalCache[rentalId];
+        if (rental?.enderecoEntrega?.logradouro) {
+            const addr = rental.enderecoEntrega;
+            const q = [addr.logradouro, addr.numero, addr.bairro, addr.cidade || 'São Paulo'].filter(Boolean).join(', ');
+            fetch(`https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(q)}&format=json&limit=1&countrycodes=br`)
+                .then(r => r.json()).then(results => {
+                    if (!results?.length) return;
+                    const { lat, lon } = results[0];
+                    const homeIcon = L.divIcon({ className: '', iconSize: [34, 34], iconAnchor: [17, 34], popupAnchor: [0, -36], html: `<div style="font-size:28px;line-height:1;filter:drop-shadow(0 2px 5px rgba(0,0,0,0.5));">🏠</div>` });
+                    const hm = L.marker([parseFloat(lat), parseFloat(lon)], { icon: homeIcon })
+                        .addTo(_historyMap)
+                        .bindPopup(`<b>Casa — ${escHtml(rental.usuarioNome || '—')}</b><br><small style="color:#666;">${escHtml(q)}</small>`);
+                    _historyLayers.push(hm);
+                }).catch(() => {});
         }
 
         // OSRM map matching em background
