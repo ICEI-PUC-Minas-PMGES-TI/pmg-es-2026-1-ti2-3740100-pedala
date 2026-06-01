@@ -17,6 +17,11 @@ const API_BASE = 'http://localhost:8080/api';
 const GPS_API_KEY = process.env.GPS_API_KEY || 'pedala-gps-2025';
 const INTERVAL_MS = 5000; // 5 segundos
 
+// Logging helper: habilite com GPS_SIM_DEBUG=1 ou em NODE_ENV=development
+const DEBUG = process.env.GPS_SIM_DEBUG === '1' || process.env.NODE_ENV === 'development';
+function debug(...args) { if (DEBUG) console.log(...args); }
+function debugError(...args) { if (DEBUG) console.error(...args); }
+
 // Rotas simuladas por regiao (lat, lng)
 const ROTAS = {
     centro_sp: {
@@ -82,7 +87,7 @@ function lerRotaParaBike(bikeId) {
             parada: false,
             paradaContar: 0
         };
-        console.log(`[GPS] Bike ${bikeId} → Rota: ${ROTAS[rotaKey].nome}`);
+        debug(`[GPS] Bike ${bikeId} → Rota: ${ROTAS[rotaKey].nome}`);
     }
     return bikeRouteMap[bikeId];
 }
@@ -99,10 +104,10 @@ function calcularPosicao(bikeId) {
     const waypoints = estado.rota.waypoints;
 
     // Simular parada ocasional (20% de chance a cada 10 steps)
-    if (!estado.parada && estado.step % 10 === 0 && Math.random() < 0.2) {
+        if (!estado.parada && estado.step % 10 === 0 && Math.random() < 0.2) {
         estado.parada = true;
         estado.paradaContar = Math.floor(Math.random() * 4) + 2; // 2-5 ciclos parado
-        console.log(`[GPS] Bike ${bikeId} → Parada em ${estado.nomeRota}`);
+        debug(`[GPS] Bike ${bikeId} → Parada em ${estado.nomeRota}`);
     }
 
     if (estado.parada) {
@@ -119,10 +124,10 @@ function calcularPosicao(bikeId) {
     const pos = interpolar(waypoints[wIdx], waypoints[nextIdx], t);
 
     estado.step++;
-    if (estado.step % 5 === 0) {
+        if (estado.step % 5 === 0) {
         estado.waypointIndex = nextIdx;
         if (estado.waypointIndex === 0) {
-            console.log(`[GPS] Bike ${bikeId} → Completou volta em ${estado.nomeRota}`);
+            debug(`[GPS] Bike ${bikeId} → Completou volta em ${estado.nomeRota}`);
         }
     }
 
@@ -169,7 +174,7 @@ async function simularCiclo() {
     const bikes = await getBikesAlugadas();
 
     if (bikes.length === 0) {
-        if (ciclo % 12 === 0) console.log('[GPS] Nenhuma bike em locacao no momento. Aguardando...');
+        if (ciclo % 12 === 0) debug('[GPS] Nenhuma bike em locacao no momento. Aguardando...');
         return;
     }
 
@@ -182,33 +187,33 @@ async function simularCiclo() {
                 speed: pos.speed,
                 apiKey: GPS_API_KEY
             });
-            console.log(`[GPS] Bike ${bike.id} (${bike.nome}) → lat:${pos.lat.toFixed(4)} lng:${pos.lng.toFixed(4)} | ${pos.speed}km/h`);
+            debug(`[GPS] Bike ${bike.id} (${bike.nome}) → lat:${pos.lat.toFixed(4)} lng:${pos.lng.toFixed(4)} | ${pos.speed}km/h`);
         } catch (e) {
-            console.error(`[GPS] Erro na bike ${bike.id}:`, e.message);
+            debugError(`[GPS] Erro na bike ${bike.id}:`, e.message);
         }
     }
 }
 
 // Verificar se o backend esta rodando antes de iniciar
 async function iniciar() {
-    console.log('\n=================================================');
-    console.log('   PEDALA GPS SIMULATOR v1.0');
-    console.log('=================================================');
-    console.log(`  API: ${API_BASE}`);
-    console.log(`  Intervalo: ${INTERVAL_MS / 1000}s`);
-    console.log('  Ctrl+C para parar\n');
+    debug('\n=================================================');
+    debug('   PEDALA GPS SIMULATOR v1.0');
+    debug('=================================================');
+    debug(`  API: ${API_BASE}`);
+    debug(`  Intervalo: ${INTERVAL_MS / 1000}s`);
+    debug('  Ctrl+C para parar\n');
 
     try {
         const health = await request(`${API_BASE}/health`);
-        console.log('[GPS] Backend conectado:', health.message);
+        debug('[GPS] Backend conectado:', health.message);
     } catch (e) {
-        console.error('[GPS] ERRO: Backend nao encontrado! Inicie o backend primeiro: acesse src/back e execute "./mvnw spring-boot:run" (no Windows: "mvnw.cmd spring-boot:run").');
+        debugError('[GPS] ERRO: Backend nao encontrado! Inicie o backend primeiro: acesse src/back e execute "./mvnw spring-boot:run" (no Windows: "mvnw.cmd spring-boot:run").');
         process.exit(1);
     }
 
-    console.log('[GPS] Iniciando simulacao...\n');
+    debug('[GPS] Iniciando simulacao...\n');
     simularCiclo();
     setInterval(simularCiclo, INTERVAL_MS);
 }
 
-iniciar().catch(console.error);
+iniciar().catch(debugError);
