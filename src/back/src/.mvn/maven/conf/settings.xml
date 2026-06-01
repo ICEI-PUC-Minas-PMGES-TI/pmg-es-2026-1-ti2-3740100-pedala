@@ -82,7 +82,9 @@ under the License.
     -->
   </pluginGroups>
 
-  <!-- TODO Since when can proxies be selected as depicted? -->
+    <!-- Note: The <proxies> section lists proxy configurations. Maven will
+      use the first proxy entry marked <active>true</active> unless overridden
+      by system properties or command-line options. See Maven docs for details. -->
   <!-- proxies
    | This is a list of proxies which can be used on this machine to connect to the network.
    | Unless otherwise specified (by system property or command-line switch), the first proxy

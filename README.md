@@ -199,7 +199,7 @@ _O documento a seguir apresenta os indicadores de desempenho dos processos._
 
 ## 6. Interface do sistema
 
-_A sessão a seguir apresenta a descrição do produto de software desenvolvido._
+_A seção a seguir apresenta a descrição do produto de software desenvolvido._
 
 [Documentação da interface do sistema](interface.md)
 
