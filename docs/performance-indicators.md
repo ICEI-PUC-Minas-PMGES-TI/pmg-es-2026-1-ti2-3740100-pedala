@@ -6,8 +6,8 @@ _Usar o seguinte modelo:_
 
 | **Indicador** | **Objetivos** | **Descrição** | **Fonte de dados** | **Fórmula de cálculo** |
 | ---           | ---           | ---           | ---             | ---             |
-| Percentual de reclamações | Avaliar quantitativamente as reclamações | Percentual de reclamações em relação ao total de atendimentos | Tabela Reclamações | número total de reclamações / número total de atendimentos |
-| Taxa de requisições atendidas | Melhorar a prestação de serviços medindo a porcentagem de requisições atendidas| Mede a % de requisições atendidas na semana | Tabela Solicitações | (número de requisições atendidas / número total de requisições) * 100 |
-| Taxa de entrega de material | Manter controle sobre os materiais que estão sendo entregues | Mede % de material entregue dentro do mês | Tabela Pedidos | (número de pedidos entregues / número total de pedidos) * 100 |
+| Taxa de ocupação de bicicletas | Avaliar o quanto do estoque está sendo aproveitado em aluguéis ativos |Percentual de bicicletas disponíveis que estão atualmente alugadas | Tabela Bikes e Rentals | (COUNT de RENTALS com status = 'ativo' / quantidade_total de BIKES) × 100 |
+| Taxa de renovação de aluguéis | Medir a fidelização do cliente e satisfação com o serviço| Percentual de aluguéis que geraram ao menos uma renovação em relação ao total de aluguéis encerrados | Tabela Rentals e Rental_Renewals | (COUNT de RENTALS com ao menos 1 registro em RENTAL_RENEWALS / COUNT total de RENTALS encerrados) × 100 |
+| |  |  |  |  |
 
 _Obs.: todas as informações para gerar os indicadores devem estar no modelo relacional._
