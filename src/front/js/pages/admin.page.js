@@ -109,39 +109,122 @@ async function loadDash() {
         document.getElementById('stVist').textContent = d.vistorias.pendentes;
         document.getElementById('stRec').textContent = 'R$' + Number(d.receitaTotal || 0).toFixed(2);
 
-        const textColor = getComputedStyle(document.documentElement).getPropertyValue('--text-primary').trim() || '#f8fafc';
+        const isDark = document.documentElement.getAttribute('data-theme') !== 'light';
+        const textColor  = isDark ? '#e2e8f0' : '#1e293b';
+        const mutedColor = isDark ? '#64748b' : '#94a3b8';
+        const gridColor  = isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.06)';
 
+        // ── Gráfico 1: Locações — barra horizontal ──
         if (chartLocacoesInst) chartLocacoesInst.destroy();
         const ctxLocacoes = document.getElementById('chartLocacoes');
         if (ctxLocacoes && window.Chart) {
+            const locData = [d.alugueis.ativos, d.alugueis.aguardandoEntrega, d.alugueis.agendadas, d.alugueis.finalizados];
             chartLocacoesInst = new Chart(ctxLocacoes, {
-                type: 'pie',
+                type: 'bar',
                 data: {
-                    labels: ['Ativas', 'Aguard. Entrega', 'Agendadas', 'Finalizadas'],
+                    labels: ['Ativas', 'Ag. Entrega', 'Agendadas', 'Finalizadas'],
                     datasets: [{
-                        data: [d.alugueis.ativos, d.alugueis.aguardandoEntrega, d.alugueis.agendadas, d.alugueis.finalizados],
-                        backgroundColor: ['#10b981', '#f59e0b', '#8b5cf6', '#64748b'],
-                        borderColor: 'transparent'
+                        data: locData,
+                        backgroundColor: ['rgba(52,211,153,0.85)', 'rgba(251,191,36,0.85)', 'rgba(167,139,250,0.85)', 'rgba(100,116,139,0.55)'],
+                        borderRadius: 6,
+                        borderSkipped: false,
+                        barThickness: 22,
                     }]
                 },
-                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'right', labels: { color: textColor } } } }
+                options: {
+                    indexAxis: 'y',
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: {
+                            backgroundColor: isDark ? '#1e293b' : '#fff',
+                            titleColor: textColor,
+                            bodyColor: mutedColor,
+                            borderColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)',
+                            borderWidth: 1,
+                            padding: 10,
+                            callbacks: { label: ctx => ` ${ctx.raw} locaç${ctx.raw === 1 ? 'ão' : 'ões'}` }
+                        }
+                    },
+                    scales: {
+                        x: {
+                            grid: { color: gridColor },
+                            ticks: { color: mutedColor, font: { size: 11 } },
+                            beginAtZero: true
+                        },
+                        y: {
+                            grid: { display: false },
+                            ticks: { color: textColor, font: { size: 12 } }
+                        }
+                    }
+                }
             });
         }
 
+        // ── Gráfico 2: Frota — doughnut com total no centro ──
         if (chartFrotaInst) chartFrotaInst.destroy();
         const ctxFrota = document.getElementById('chartFrota');
         if (ctxFrota && window.Chart) {
+            const total = (d.bikes.disponiveis || 0) + (d.bikes.alugadas || 0);
+            const centerTextPlugin = {
+                id: 'centerText',
+                afterDraw(chart) {
+                    if (chart.config.type !== 'doughnut') return;
+                    const { ctx, chartArea: { width, height, left, top } } = chart;
+                    const cx = left + width / 2, cy = top + height / 2;
+                    ctx.save();
+                    ctx.textAlign = 'center';
+                    ctx.textBaseline = 'middle';
+                    ctx.fillStyle = textColor;
+                    ctx.font = `bold ${Math.min(width, height) * 0.22}px sans-serif`;
+                    ctx.fillText(total, cx, cy - 8);
+                    ctx.fillStyle = mutedColor;
+                    ctx.font = `${Math.min(width, height) * 0.1}px sans-serif`;
+                    ctx.fillText('bikes', cx, cy + 14);
+                    ctx.restore();
+                }
+            };
             chartFrotaInst = new Chart(ctxFrota, {
                 type: 'doughnut',
+                plugins: [centerTextPlugin],
                 data: {
                     labels: ['Disponíveis', 'Alugadas'],
                     datasets: [{
                         data: [d.bikes.disponiveis, d.bikes.alugadas],
-                        backgroundColor: ['#3b82f6', '#ef4444'],
-                        borderWidth: 0
+                        backgroundColor: ['rgba(52,211,153,0.85)', 'rgba(248,113,113,0.85)'],
+                        hoverBackgroundColor: ['#34d399', '#f87171'],
+                        borderWidth: 0,
+                        spacing: 3,
+                        borderRadius: 4,
                     }]
                 },
-                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'right', labels: { color: textColor } } } }
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    cutout: '68%',
+                    plugins: {
+                        legend: {
+                            position: 'bottom',
+                            labels: {
+                                color: textColor,
+                                padding: 16,
+                                usePointStyle: true,
+                                pointStyle: 'circle',
+                                font: { size: 12 }
+                            }
+                        },
+                        tooltip: {
+                            backgroundColor: isDark ? '#1e293b' : '#fff',
+                            titleColor: textColor,
+                            bodyColor: mutedColor,
+                            borderColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)',
+                            borderWidth: 1,
+                            padding: 10,
+                            callbacks: { label: ctx => ` ${ctx.raw} bikes (${total ? Math.round(ctx.raw/total*100) : 0}%)` }
+                        }
+                    }
+                }
             });
         }
     } catch (e) { showToast('Erro ao carregar dashboard.', 'error'); }

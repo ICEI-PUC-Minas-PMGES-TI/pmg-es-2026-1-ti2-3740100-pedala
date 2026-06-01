@@ -167,17 +167,36 @@ public class GpsSimulatorService {
         return t != null ? buildPayload(t) : null;
     }
 
-    public List<Map<String, Object>> getHistory(Long rentalId) {
-        return bikeTelemetryRepository.findByRentalIdOrderByRegistradoEmAsc(rentalId).stream()
-                .map(t -> {
-                    Map<String, Object> m = new LinkedHashMap<>();
-                    m.put("lat",          t.getLatitude());
-                    m.put("lng",          t.getLongitude());
-                    m.put("speed",        t.getVelocidade());
-                    m.put("endereco",     t.getEndereco());
-                    m.put("registradoEm", t.getRegistradoEm().toString());
-                    return m;
-                }).toList();
+    public List<Map<String, Object>> getHistory(Long rentalId, int horas) {
+        List<com.pedala.api.gps.domain.BikeTelemetry> raw = horas > 0
+                ? bikeTelemetryRepository.findByRentalIdAndRegistradoEmAfterOrderByRegistradoEmAsc(
+                        rentalId, java.time.Instant.now().minusSeconds((long) horas * 3600))
+                : bikeTelemetryRepository.findByRentalIdOrderByRegistradoEmAsc(rentalId);
+
+        // Subsample: max 1000 pontos para não travar o browser
+        int step = raw.size() > 1000 ? raw.size() / 1000 : 1;
+        List<Map<String, Object>> result = new java.util.ArrayList<>();
+        for (int i = 0; i < raw.size(); i += step) {
+            com.pedala.api.gps.domain.BikeTelemetry t = raw.get(i);
+            Map<String, Object> m = new LinkedHashMap<>();
+            m.put("lat",          t.getLatitude());
+            m.put("lng",          t.getLongitude());
+            m.put("speed",        t.getVelocidade());
+            m.put("endereco",     t.getEndereco());
+            m.put("registradoEm", t.getRegistradoEm().toString());
+            result.add(m);
+        }
+        if (step > 1 && !raw.isEmpty()) {
+            com.pedala.api.gps.domain.BikeTelemetry last = raw.get(raw.size() - 1);
+            Map<String, Object> m = new LinkedHashMap<>();
+            m.put("lat",          last.getLatitude());
+            m.put("lng",          last.getLongitude());
+            m.put("speed",        last.getVelocidade());
+            m.put("endereco",     last.getEndereco());
+            m.put("registradoEm", last.getRegistradoEm().toString());
+            result.add(m);
+        }
+        return result;
     }
 
     public SseEmitter createEmitter() {

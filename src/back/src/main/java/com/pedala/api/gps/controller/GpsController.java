@@ -42,9 +42,11 @@ public class GpsController {
     @Operation(summary = "Histórico de GPS de uma Locação (Rota)")
     @GetMapping("/historico/{rentalId}")
     @PreAuthorize("hasAnyRole('ADMIN','FUNCIONARIO','USER')")
-    public ResponseEntity<Map<String, Object>> getHistory(@PathVariable Long rentalId) {
-        List<Map<String, Object>> history = gpsService.getHistory(rentalId);
-        return ResponseEntity.ok(Map.of("rentalId", rentalId, "history", history, "totalPoints", history.size()));
+    public ResponseEntity<Map<String, Object>> getHistory(
+            @PathVariable Long rentalId,
+            @RequestParam(defaultValue = "1") int horas) {
+        List<Map<String, Object>> history = gpsService.getHistory(rentalId, horas);
+        return ResponseEntity.ok(Map.of("rentalId", rentalId, "history", history, "totalPoints", history.size(), "horasFiltro", horas));
     }
 
     @Operation(summary = "Stream SSE em tempo real")

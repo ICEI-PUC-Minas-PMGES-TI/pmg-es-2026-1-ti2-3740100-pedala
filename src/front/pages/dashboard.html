@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Dashboard | PedaLa</title>
   <meta name="description" content="Gerencie sua conta, acompanhe seus aluguéis e agende manutenções.">
+  <link rel="icon" href="../favicon.svg" type="image/svg+xml">
   <link rel="stylesheet" href="../css/style.css">
   <script>(function(){document.documentElement.setAttribute('data-theme',localStorage.getItem('pedala_theme')||'dark');})();</script>
 </head>
@@ -168,6 +169,28 @@
           <input type="date" id="dataInicio" class="form-input">
           <p class="form-hint">A data selecionada não pode exceder quatro dias contados de hoje.</p>
         </div>
+
+        <div id="enderecoSection" style="display:none;margin-top:16px;padding-top:16px;border-top:1px solid var(--border);">
+          <div style="display:flex;align-items:center;gap:6px;margin-bottom:10px;">
+            <span style="font-size:1rem;">📍</span>
+            <span style="font-size:0.95rem;font-weight:700;">Endereço de entrega</span>
+            <span style="font-size:0.75rem;color:var(--text-muted);background:var(--warning-bg);color:var(--warning);padding:1px 6px;border-radius:4px;margin-left:4px;">Obrigatório</span>
+          </div>
+          <div style="display:grid;grid-template-columns:1fr 80px;gap:8px;margin-bottom:8px;">
+            <input type="text" id="endLogradouro" placeholder="Rua / Avenida" class="form-input" style="font-size:0.88rem;">
+            <input type="text" id="endNumero" placeholder="Nº" class="form-input" style="font-size:0.88rem;">
+          </div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px;">
+            <input type="text" id="endBairro" placeholder="Bairro" class="form-input" style="font-size:0.88rem;">
+            <input type="text" id="endCidade" placeholder="Cidade" class="form-input" style="font-size:0.88rem;" value="São Paulo">
+          </div>
+          <div style="display:grid;grid-template-columns:120px 1fr;gap:8px;">
+            <input type="text" id="endCep" placeholder="CEP (00000-000)" class="form-input" style="font-size:0.88rem;" maxlength="9">
+            <input type="text" id="endComplemento" placeholder="Complemento (opcional)" class="form-input" style="font-size:0.88rem;">
+          </div>
+          <p style="font-size:0.75rem;color:var(--text-muted);margin-top:6px;">Será salvo no seu perfil para próximas locações.</p>
+        </div>
+
         <div id="modalError" class="form-block" style="display:none;color:var(--danger);background:var(--danger-bg);border-color:var(--danger-border);margin-top:12px;"></div>
         <div class="hero-actions" style="margin-top:18px;">
           <button class="btn btn-secondary" type="button" onclick="backToBikeInfo()">Voltar</button>

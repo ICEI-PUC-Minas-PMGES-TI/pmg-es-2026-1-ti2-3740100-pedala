@@ -247,25 +247,23 @@ function renderDashboardGrid() {
       const specs = bikeTraits(bike.categoria).map(item => `<span class="bike-spec">${dashEscape(item)}</span>`).join('');
       return `
         <article class="bike-card">
-          <div class="bike-photo">
-            <span class="bike-signal">${available ? 'Disponível' : 'Sem estoque'}</span>
+          <div class="bike-img">
+            <span class="bike-badge ${available ? 'disponivel' : 'esgotado'}">${available ? '● Disponível' : '● Esgotado'}</span>
             <img src="${dashEscape(normalizeImagePath(bike.imagem))}" alt="${dashEscape(bike.nome)}" loading="lazy" onerror="this.outerHTML='<span class=&quot;bike-photo-label&quot;>Imagem indisponível</span>'">
           </div>
-          <div class="bike-info">
-            <div class="bike-head">
-              <div>
-                <div class="bike-name">${dashEscape(bike.nome)}</div>
-                <div class="bike-cat">${dashEscape(bike.categoria)}</div>
-              </div>
-            </div>
+          <div class="bike-body">
+            <div class="bike-cat">${dashEscape(bike.categoria)}</div>
+            <div class="bike-name">${dashEscape(bike.nome)}</div>
             <div class="bike-desc">${dashEscape(bike.descricao || 'Bike pronta para uso com entrega em casa.')}</div>
             <div class="bike-specs">${specs}</div>
             <div class="bike-footer">
               <div>
-                <div class="bike-price">${dashEscape(formatCurrency(bike.precos?.semanal))}<span class="bike-price-label">/ semana</span></div>
-                <div class="bike-qty" style="${available ? '' : 'color:var(--danger);'}">${available ? `${bike.quantidadeDisponivel} disponível(is)` : 'Indisponível'}</div>
+                <div class="bike-price">${dashEscape(formatCurrency(bike.precos?.semanal))}<span> / semana</span></div>
+                <div class="bike-qty">${available ? `${bike.quantidadeDisponivel} unidade${bike.quantidadeDisponivel !== 1 ? 's' : ''} disponível` : '<span style="color:var(--danger)">Sem estoque</span>'}</div>
               </div>
-              <button class="btn ${available ? 'btn-primary' : 'btn-secondary'} btn-sm" type="button" onclick="openModal(${bike.id})" ${available ? '' : 'disabled'}>${available ? 'Ver detalhes' : 'Sem estoque'}</button>
+              <button class="btn ${available ? 'btn-primary' : 'btn-secondary'} btn-sm" type="button" onclick="openModal(${bike.id})" ${available ? '' : 'disabled'}>
+                ${available ? 'Assinar' : 'Indisponível'}
+              </button>
             </div>
           </div>
         </article>
@@ -373,16 +371,81 @@ async function loadPerfil() {
     const { ok, data } = await apiJson('/auth/me', { auth: true });
     if (!ok) throw new Error();
     const user = data.usuario || data;
-    const address = user.endereco || {};
+    const addr = user.endereco || {};
+    const addrStr = addr.logradouro
+      ? `${addr.logradouro}, ${addr.numero || 'S/N'}${addr.complemento ? ' ' + addr.complemento : ''} — ${addr.bairro}, ${addr.cidade}/${addr.uf}`
+      : null;
+
     document.getElementById('perfilContent').innerHTML = `
       <div class="info-row"><span class="info-label">Nome</span><span class="info-value">${dashEscape(user.nome || '-')}</span></div>
       <div class="info-row"><span class="info-label">E-mail</span><span class="info-value">${dashEscape(user.email || '-')}</span></div>
       <div class="info-row"><span class="info-label">CPF</span><span class="info-value">${dashEscape(user.cpf || '-')}</span></div>
       <div class="info-row"><span class="info-label">Telefone</span><span class="info-value">${dashEscape(user.telefone || '-')}</span></div>
-      <div class="info-row"><span class="info-label">Endereço</span><span class="info-value">${dashEscape(address.logradouro ? `${address.logradouro}, ${address.numero} - ${address.bairro}, ${address.cidade}/${address.uf}` : 'Não informado')}</span></div>
+      <div class="info-row" style="align-items:flex-start;">
+        <span class="info-label">Endereço de entrega</span>
+        <div style="display:flex;flex-direction:column;gap:6px;flex:1;">
+          ${addrStr
+            ? `<span class="info-value">${dashEscape(addrStr)}</span>`
+            : `<span class="info-value" style="color:var(--text-muted);">⚠ Não informado — necessário para entrega</span>`
+          }
+          <button class="btn btn-ghost btn-sm" style="align-self:flex-start;font-size:0.78rem;padding:2px 10px;" onclick="toggleAddrForm()">
+            ${addrStr ? '✏ Editar endereço' : '📍 Adicionar endereço'}
+          </button>
+          <div id="addrForm" style="display:none;margin-top:4px;">
+            <div style="display:grid;grid-template-columns:1fr 80px;gap:8px;margin-bottom:8px;">
+              <input type="text" id="pfLogradouro" placeholder="Rua / Avenida" class="form-input" style="font-size:0.85rem;" value="${dashEscape(addr.logradouro || '')}">
+              <input type="text" id="pfNumero" placeholder="Nº" class="form-input" style="font-size:0.85rem;" value="${dashEscape(addr.numero || '')}">
+            </div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px;">
+              <input type="text" id="pfBairro" placeholder="Bairro" class="form-input" style="font-size:0.85rem;" value="${dashEscape(addr.bairro || '')}">
+              <input type="text" id="pfCidade" placeholder="Cidade" class="form-input" style="font-size:0.85rem;" value="${dashEscape(addr.cidade || 'São Paulo')}">
+            </div>
+            <div style="display:grid;grid-template-columns:120px 1fr;gap:8px;margin-bottom:10px;">
+              <input type="text" id="pfCep" placeholder="CEP" class="form-input" style="font-size:0.85rem;" maxlength="9" value="${dashEscape(addr.cep || '')}">
+              <input type="text" id="pfComplemento" placeholder="Complemento (opcional)" class="form-input" style="font-size:0.85rem;" value="${dashEscape(addr.complemento || '')}">
+            </div>
+            <button class="btn btn-primary btn-sm" onclick="salvarEndereco()">Salvar endereço</button>
+          </div>
+        </div>
+      </div>
     `;
   } catch (error) {
     document.getElementById('perfilContent').innerHTML = `<div class="empty-state"><strong>Falha ao carregar perfil</strong><span>Tente novamente em instantes.</span></div>`;
+  }
+}
+
+function toggleAddrForm() {
+  const f = document.getElementById('addrForm');
+  if (f) f.style.display = f.style.display === 'none' ? '' : 'none';
+}
+
+async function salvarEndereco() {
+  const logradouro = document.getElementById('pfLogradouro')?.value?.trim();
+  if (!logradouro) { showToast('Informe o logradouro.', 'error'); return; }
+  try {
+    const r = await fetch(`${dashboardApi}/auth/me`, {
+      method: 'PUT',
+      headers: dashboardJsonHeaders,
+      body: JSON.stringify({
+        endereco: {
+          cep:         document.getElementById('pfCep')?.value?.trim() || '',
+          logradouro,
+          numero:      document.getElementById('pfNumero')?.value?.trim() || 'S/N',
+          bairro:      document.getElementById('pfBairro')?.value?.trim() || '',
+          cidade:      document.getElementById('pfCidade')?.value?.trim() || 'São Paulo',
+          uf:          'SP',
+          complemento: document.getElementById('pfComplemento')?.value?.trim() || ''
+        }
+      })
+    });
+    if (r.ok) {
+      showToast('Endereço salvo com sucesso!', 'success');
+      loadPerfil();
+    } else {
+      showToast('Erro ao salvar endereço.', 'error');
+    }
+  } catch (_) {
+    showToast('Erro de conexão.', 'error');
   }
 }
 
@@ -440,9 +503,26 @@ function closeModal() {
   document.getElementById('modalStep2').style.display = 'none';
 }
 
-function goToLocacao() {
+async function goToLocacao() {
   document.getElementById('modalStep1').style.display = 'none';
   document.getElementById('modalStep2').style.display = '';
+  // mostrar form de endereço somente se o usuário não tiver endereço salvo
+  try {
+    const r = await fetch(`${dashboardApi}/auth/me`, { headers: dashboardHeaders });
+    const d = await r.json();
+    const user = d.usuario || d;
+    const hasAddr = user.endereco?.logradouro;
+    const section = document.getElementById('enderecoSection');
+    if (section) section.style.display = hasAddr ? 'none' : '';
+    // se já tem endereço, pré-preencher campos ocultos pra não sobrescrever
+    if (hasAddr && section) {
+      document.getElementById('endLogradouro').value = user.endereco.logradouro || '';
+      document.getElementById('endNumero').value    = user.endereco.numero || '';
+      document.getElementById('endBairro').value    = user.endereco.bairro || '';
+      document.getElementById('endCidade').value    = user.endereco.cidade || 'São Paulo';
+      document.getElementById('endCep').value       = user.endereco.cep || '';
+    }
+  } catch (_) {}
 }
 
 function backToBikeInfo() {
@@ -524,6 +604,36 @@ async function confirmarLocacao() {
 
   button.disabled = true;
   button.textContent = 'Confirmando...';
+
+  // salvar endereço no perfil se o form estiver visível e preenchido
+  const endSection = document.getElementById('enderecoSection');
+  if (endSection && endSection.style.display !== 'none') {
+    const logradouro = document.getElementById('endLogradouro')?.value?.trim();
+    if (!logradouro) {
+      errorBox.textContent = 'Informe o endereço de entrega para continuar.';
+      errorBox.style.display = 'block';
+      button.disabled = false;
+      button.textContent = 'Confirmar locação';
+      return;
+    }
+    try {
+      await fetch(`${dashboardApi}/auth/me`, {
+        method: 'PUT',
+        headers: dashboardJsonHeaders,
+        body: JSON.stringify({
+          endereco: {
+            cep:          document.getElementById('endCep')?.value?.trim() || '',
+            logradouro,
+            numero:       document.getElementById('endNumero')?.value?.trim() || 'S/N',
+            bairro:       document.getElementById('endBairro')?.value?.trim() || '',
+            cidade:       document.getElementById('endCidade')?.value?.trim() || 'São Paulo',
+            uf:           'SP',
+            complemento:  document.getElementById('endComplemento')?.value?.trim() || ''
+          }
+        })
+      });
+    } catch (_) { /* salva best-effort */ }
+  }
 
   try {
     const response = await fetch(`${dashboardApi}/rentals`, {
@@ -683,6 +793,8 @@ window.solicDevol = solicDevol;
 window.renovar = renovar;
 window.baixarContrato = baixarContrato;
 window.loadLocacoes = loadLocacoes;
+window.toggleAddrForm = toggleAddrForm;
+window.salvarEndereco = salvarEndereco;
 
 if (dashboardState.pendingBikeId) showSec('locar', document.getElementById('nav-locar'));
 else loadInicio();
