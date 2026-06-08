@@ -10,13 +10,28 @@ document.addEventListener('DOMContentLoaded', () => {
     if (!chatbotToggle || !chatbotContainer) return;
 
     // Toggle Chatbot
-    chatbotToggle.addEventListener('click', () => {
+    const openChatbot = () => {
         chatbotContainer.classList.add('active');
-        chatbotInput.focus();
-    });
+        chatbotContainer.setAttribute('aria-hidden', 'false');
+        chatbotToggle.setAttribute('aria-expanded', 'true');
+        if (chatbotInput) chatbotInput.focus();
+    };
 
-    chatbotClose.addEventListener('click', () => {
+    const closeChatbot = () => {
         chatbotContainer.classList.remove('active');
+        chatbotContainer.setAttribute('aria-hidden', 'true');
+        chatbotToggle.setAttribute('aria-expanded', 'false');
+    };
+
+    chatbotToggle.addEventListener('click', openChatbot);
+
+    if (chatbotClose) {
+        chatbotClose.addEventListener('click', closeChatbot);
+    }
+
+    // Close on Escape
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') closeChatbot();
     });
 
     // Send Message
@@ -43,10 +58,12 @@ document.addEventListener('DOMContentLoaded', () => {
         }, 350 + Math.min(text.length * 12, 900));
     };
 
-    chatbotSend.addEventListener('click', sendMessage);
-    chatbotInput.addEventListener('keypress', (e) => {
-        if (e.key === 'Enter') sendMessage();
-    });
+    if (chatbotSend) chatbotSend.addEventListener('click', sendMessage);
+    if (chatbotInput) {
+        chatbotInput.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') { e.preventDefault(); sendMessage(); }
+        });
+    }
 
     let messageIdCounter = 0;
 

@@ -248,11 +248,11 @@
   </footer>
 
   <!-- CHATBOT -->
-  <button class="chatbot-trigger" id="chatbotToggle"><i data-lucide="message-square"></i></button>
-  <div class="chatbot-panel" id="chatbotContainer">
+  <button class="chatbot-trigger" id="chatbotToggle" aria-expanded="false" aria-controls="chatbotContainer" aria-label="Abrir chat"><i data-lucide="message-square"></i></button>
+  <div class="chatbot-panel" id="chatbotContainer" role="dialog" aria-hidden="true" aria-label="Assistente Pedala">
     <div class="chat-header">
       <span>Pedala Assistente</span>
-      <button id="chatbotClose">&times;</button>
+      <button id="chatbotClose" type="button" aria-label="Fechar chat">&times;</button>
     </div>
     <div class="chat-body" id="chatbotMessages">
       <div class="msg bot">Olá! Como posso te ajudar com sua assinatura hoje?</div>
