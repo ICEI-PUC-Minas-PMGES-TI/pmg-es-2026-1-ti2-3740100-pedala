@@ -54,6 +54,7 @@ C:\Users\jotaa\OneDrive\Documentos\Prado\PedaLa\pmg-es-2026-1-ti2-3740100-pedala
 C:\Users\jotaa\OneDrive\Documentos\Prado\PedaLa\pmg-es-2026-1-ti2-3740100-pedala\src\back\src\main\java\com\pedala\api\user\domain\UserAddress.java
 C:\Users\jotaa\OneDrive\Documentos\Prado\PedaLa\pmg-es-2026-1-ti2-3740100-pedala\src\back\src\main\java\com\pedala\api\user\domain\UserRole.java
 C:\Users\jotaa\OneDrive\Documentos\Prado\PedaLa\pmg-es-2026-1-ti2-3740100-pedala\src\back\src\main\java\com\pedala\api\user\dto\AddressDto.java
+C:\Users\jotaa\OneDrive\Documentos\Prado\PedaLa\pmg-es-2026-1-ti2-3740100-pedala\src\back\src\main\java\com\pedala\api\user\dto\ChangePasswordRequest.java
 C:\Users\jotaa\OneDrive\Documentos\Prado\PedaLa\pmg-es-2026-1-ti2-3740100-pedala\src\back\src\main\java\com\pedala\api\user\dto\CreateFuncionarioRequest.java
 C:\Users\jotaa\OneDrive\Documentos\Prado\PedaLa\pmg-es-2026-1-ti2-3740100-pedala\src\back\src\main\java\com\pedala\api\user\dto\CreateUserRequest.java
 C:\Users\jotaa\OneDrive\Documentos\Prado\PedaLa\pmg-es-2026-1-ti2-3740100-pedala\src\back\src\main\java\com\pedala\api\user\dto\LoginRequest.java

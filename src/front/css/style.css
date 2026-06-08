@@ -2189,6 +2189,41 @@ tr:hover td { background: var(--color-bg-soft); }
 }
 .chat-link:hover { text-decoration: underline; }
 
+/* Markdown rendering inside bot messages */
+.msg.bot strong { color: var(--color-primary, #F5C000); font-weight: 700; }
+
+.msg-bullet {
+  display: block;
+  padding: 5px 0 5px 10px;
+  border-left: 2px solid var(--color-primary, #F5C000);
+  margin: 3px 0;
+  line-height: 1.45;
+}
+
+.msg-price {
+  display: block;
+  font-size: 0.80rem;
+  color: var(--color-text-muted, #9ca3af);
+  padding-left: 12px;
+  margin: 1px 0 4px;
+  line-height: 1.4;
+}
+
+.msg-section {
+  display: block;
+  font-weight: 600;
+  margin: 6px 0 2px;
+  line-height: 1.4;
+}
+
+.msg-hr {
+  border: none;
+  border-top: 1px solid var(--color-border);
+  margin: 6px 0;
+}
+
+.msg.bot { max-width: 90%; }
+
 /* ══════════════════════════════════════════════════
    RESPONSIVE
 ══════════════════════════════════════════════════ */
