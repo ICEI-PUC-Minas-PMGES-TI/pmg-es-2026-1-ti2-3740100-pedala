@@ -5,7 +5,7 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 
 public record CreateFuncionarioRequest(
-        @NotBlank(message = "Nome e obrigatorio") String nome,
-        @NotBlank(message = "Email e obrigatorio") @Email String email,
-        @NotBlank(message = "Senha e obrigatoria") @Size(min = 3) String senha
+        @NotBlank(message = "Nome é obrigatório") String nome,
+        @NotBlank(message = "Email é obrigatório") @Email(message = "Email inválido") String email,
+        @NotBlank(message = "Senha é obrigatória") @Size(min = 3, message = "A senha deve ter no mínimo 3 caracteres") String senha
 ) {}
