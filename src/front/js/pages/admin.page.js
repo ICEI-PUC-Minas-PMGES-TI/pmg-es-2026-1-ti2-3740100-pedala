@@ -227,6 +227,32 @@ async function loadDash() {
                 }
             });
         }
+        // ── Atrasadas ──
+        try {
+            if (!allLocacoes.length) {
+                const ld = await fetch(`${API_BASE}/admin/alugueis`, { headers: authH }).then(r => r.json());
+                allLocacoes = ld.alugueis || [];
+            }
+            const atrasadas = allLocacoes.filter(a => a.atrasado);
+            const atEl = document.getElementById('dashAtrasadas');
+            if (atEl) {
+                if (!atrasadas.length) {
+                    atEl.innerHTML = '<p style="color:var(--success,#22c55e);font-size:0.85rem;text-align:center;padding:10px 0;">Nenhuma locação em atraso ✓</p>';
+                } else {
+                    atEl.innerHTML = atrasadas.map(a => {
+                        const dd = new Date(a.dataDevolucaoPrevista).toLocaleDateString('pt-BR');
+                        const dias = a.diasRestantes != null ? Math.abs(a.diasRestantes) : '?';
+                        return `<div onclick="showSec('locacoes',null);setTimeout(()=>openLocacaoModal(${a.id}),120)" style="display:flex;align-items:center;justify-content:space-between;background:var(--danger-bg,#fef2f2);border:1px solid var(--danger-border,#fca5a5);border-radius:6px;padding:8px 12px;font-size:0.82rem;cursor:pointer;margin-bottom:6px;gap:8px;" onmouseenter="this.style.opacity='.82'" onmouseleave="this.style.opacity='1'">
+                            <div>
+                                <strong>${escHtml(a.bikeNome || '—')}</strong> — ${escHtml(a.usuarioNome || '—')}
+                                <div style="color:var(--danger,#ef4444);font-size:0.77rem;margin-top:1px;">Devol. ${dd} · ${dias} dias em atraso</div>
+                            </div>
+                            <span class="badge badge-danger">#${a.id}</span>
+                        </div>`;
+                    }).join('');
+                }
+            }
+        } catch (_) {}
     } catch (e) { showToast('Erro ao carregar dashboard.', 'error'); }
 }
 
@@ -649,22 +675,53 @@ async function saveEditBike() {
 }
 
 // ── Locações ──────────────────────────────────────────
+let allLocacoes = [];
+
+function filterLocacoes() {
+    const q = (document.getElementById('locQ')?.value || '').toLowerCase();
+    const sf = document.getElementById('locSF')?.value || 'todos';
+    const filtered = allLocacoes.filter(a => {
+        const matchS = sf === 'todos' || a.status === sf;
+        const matchQ = !q || (a.usuarioNome || '').toLowerCase().includes(q) ||
+            (a.bikeNome || '').toLowerCase().includes(q) || String(a.id).includes(q);
+        return matchS && matchQ;
+    });
+    const cnt = document.getElementById('locCount');
+    if (cnt) cnt.textContent = `${filtered.length} de ${allLocacoes.length}`;
+    renderLocacoes(filtered);
+}
+
+function renderLocacoes(list) {
+    const tb = document.getElementById('locTbody');
+    tb.innerHTML = list.map(a => {
+        const di = new Date(a.dataInicio).toLocaleDateString('pt-BR');
+        const dd = new Date(a.dataDevolucaoPrevista).toLocaleDateString('pt-BR');
+        const atrasadoBadge = a.atrasado ? ' <span class="badge badge-danger" style="font-size:0.62rem;padding:1px 5px;">ATRASO</span>' : '';
+        return `<tr class="clickable-row" onclick="openLocacaoModal(${a.id})" title="Clique para ver detalhes" style="cursor:pointer;">
+            <td><strong>#${a.id}</strong></td>
+            <td>${escHtml(a.usuarioNome || '—')}</td>
+            <td>${escHtml(a.bikeNome || '—')}</td>
+            <td>${escHtml(a.planoLabel || a.tipo)}</td>
+            <td>${di}</td>
+            <td>${dd}${atrasadoBadge}</td>
+            <td>${sBadge(a.status)}</td>
+            <td>${pBadge(a.pagamento)}</td>
+            <td onclick="event.stopPropagation()" style="white-space:nowrap;">
+                ${['aguardando_locacao', 'agendada'].includes(a.status)
+                    ? `<button class="btn btn-primary btn-sm" onclick="ativarLoc(${a.id})">Ativar</button>`
+                    : (a.status === 'ativo' || a.status === 'aguardando_vistoria')
+                    ? `<button class="btn btn-secondary btn-sm" onclick="finalizarLoc(${a.id})">Finalizar</button>`
+                    : '—'}
+            </td>
+        </tr>`;
+    }).join('') || '<tr><td colspan="9" style="text-align:center;padding:24px;color:var(--text-muted);">Nenhuma locação encontrada.</td></tr>';
+}
+
 async function loadLocacoes() {
     try {
         const d = await fetch(`${API_BASE}/admin/alugueis`, { headers: authH }).then(r => r.json());
-        const tb = document.getElementById('locTbody');
-        tb.innerHTML = (d.alugueis || []).map(a => {
-            const di = new Date(a.dataInicio).toLocaleDateString('pt-BR');
-            const dd = new Date(a.dataDevolucaoPrevista).toLocaleDateString('pt-BR');
-            return `<tr>
-        <td><strong>#${a.id}</strong></td><td>${a.usuarioNome || '—'}</td><td>${a.bikeNome || '—'}</td>
-        <td>${a.planoLabel || a.tipo}</td><td>${di}</td><td>${dd}</td>
-        <td>${sBadge(a.status)}</td><td>${pBadge(a.pagamento)}</td>
-        <td>${['aguardando_locacao','agendada'].includes(a.status)
-                ? `<button class="btn btn-primary btn-sm" onclick="ativarLoc(${a.id})">Ativar</button>`
-                : ''}</td>
-      </tr>`;
-        }).join('') || '<tr><td colspan="9" style="text-align:center;padding:24px;color:var(--text-muted);">Nenhuma locação.</td></tr>';
+        allLocacoes = d.alugueis || [];
+        filterLocacoes();
     } catch (e) { showToast('Erro ao carregar locações.', 'error'); }
 }
 
@@ -673,6 +730,167 @@ async function ativarLoc(id) {
     const d = await r.json();
     showToast(d.message || d.error || '', r.ok ? 'success' : 'error');
     if (r.ok) loadLocacoes();
+}
+
+async function finalizarLoc(id) {
+    if (!confirm('Finalizar esta locação permanentemente? Esta ação não pode ser desfeita.')) return;
+    const r = await fetch(`${API_BASE}/rentals/${id}/finalizar`, { method: 'PUT', headers: authH });
+    const d = await r.json();
+    showToast(d.message || d.error || '', r.ok ? 'success' : 'error');
+    if (r.ok) { closeLocacaoModal(); loadLocacoes(); }
+}
+
+function openLocacaoModal(id) {
+    const a = allLocacoes.find(x => x.id === id);
+    if (!a) return;
+
+    document.getElementById('locModalId').textContent = `Locação #${a.id}`;
+    const pag = a.pagamento || {};
+    document.getElementById('locModalBadges').innerHTML =
+        sBadge(a.status) + ' ' + pBadge({ status: pag.status || 'nao_pago' }) +
+        (a.atrasado ? ' <span class="badge badge-danger">Atrasado</span>' : '');
+
+    const fmt = d => d ? new Date(d).toLocaleDateString('pt-BR') : '—';
+    const mon = v => v != null ? 'R$' + Number(v).toFixed(2) : '—';
+    const row = (lbl, val) =>
+        `<div style="display:flex;justify-content:space-between;align-items:baseline;gap:8px;padding:3px 0;">
+            <span style="color:var(--text-muted);font-size:0.82rem;flex-shrink:0;">${lbl}</span>
+            <span style="font-weight:600;font-size:0.85rem;text-align:right;">${val}</span>
+         </div>`;
+    const divider = `<div style="border-top:1px solid var(--border);margin:6px 0;"></div>`;
+
+    document.getElementById('locModalInfo').innerHTML = [
+        row('Usuário', escHtml(a.usuarioNome || '—')),
+        a.usuarioEmail ? row('E-mail', `<span style="font-size:0.78rem;">${escHtml(a.usuarioEmail)}</span>`) : '',
+        row('Bike', escHtml(a.bikeNome || '—')),
+        a.bikeCategoria ? row('Categoria', escHtml(a.bikeCategoria)) : '',
+        divider,
+        row('Plano', escHtml(a.planoLabel || a.tipo || '—')),
+        row('Seguro', escHtml(a.tipoSeguro || 'Básico') + (Number(a.valorSeguro) > 0
+            ? ` <span style="color:var(--text-muted);font-weight:400;">(+${mon(a.valorSeguro)}/ciclo)</span>`
+            : ' <span style="color:var(--text-muted);font-weight:400;">(grátis)</span>')),
+        row('Valor total', `<span style="color:var(--primary,#F5C000);font-size:1rem;">${mon(a.preco)}</span>`),
+        divider,
+        row('Início', fmt(a.dataInicio)),
+        row('Devolução', fmt(a.dataDevolucaoPrevista)),
+        a.ativadoEm ? row('Ativado em', fmt(a.ativadoEm)) : '',
+        a.diasEmUso != null ? row('Dias em uso', a.diasEmUso + ' dias') : '',
+        a.diasRestantes != null ? row('Dias restantes',
+            a.diasRestantes < 0
+                ? `<span style="color:var(--danger,#ef4444);">${Math.abs(a.diasRestantes)} dias de atraso</span>`
+                : `${a.diasRestantes} dias`) : '',
+        divider,
+        row('Criado em', fmt(a.criadoEm)),
+    ].filter(Boolean).join('');
+
+    document.getElementById('locModalPayment').innerHTML = [
+        pag.solicitadoEm ? row('Solicitado em', fmt(pag.solicitadoEm)) : '',
+        pag.aprovadoEm ? row('Aprovado em', fmt(pag.aprovadoEm)) : '',
+        pag.aprovadoPor ? row('Aprovado por', escHtml(pag.aprovadoPor)) : '',
+        pag.motivoRejeicao ? `<div style="background:var(--danger-bg,#fef2f2);color:var(--danger,#dc2626);border:1px solid var(--danger-border,#fca5a5);border-radius:6px;padding:8px 10px;font-size:0.8rem;margin-top:6px;"><strong>Motivo rejeição:</strong> ${escHtml(pag.motivoRejeicao)}</div>` : '',
+        (!pag.solicitadoEm && !pag.aprovadoEm) ? `<p style="color:var(--text-muted);font-size:0.83rem;margin:0;">Nenhuma ação de pagamento registrada.</p>` : '',
+    ].filter(Boolean).join('');
+
+    // Faturas
+    const fatSec = document.getElementById('locModalFaturasSec');
+    const faturas = a.faturas || [];
+    if (faturas.length) {
+        const fsm = { pendente: 'badge-warning', aguardando_aprovacao: 'badge-info', pago: 'badge-success', rejeitado: 'badge-danger' };
+        const fsl = { pendente: 'Pendente', aguardando_aprovacao: 'Ag. aprovação', pago: 'Pago', rejeitado: 'Rejeitado' };
+        document.getElementById('locModalFaturas').innerHTML = faturas.map(f => `
+            <div style="display:flex;align-items:center;justify-content:space-between;background:var(--bg-secondary);border:1px solid var(--border);border-radius:6px;padding:8px 12px;font-size:0.82rem;gap:8px;">
+                <div>
+                    <div style="font-weight:700;font-size:0.77rem;color:var(--text-muted);">${escHtml(f.id)}</div>
+                    <div style="color:var(--text-muted);margin-top:1px;">Venc. ${fmt(f.dataVencimento)}${f.pagoEm ? ` · Pago ${fmt(f.pagoEm)}` : ''}</div>
+                </div>
+                <div style="display:flex;align-items:center;gap:8px;flex-shrink:0;">
+                    <strong>${mon(f.valor)}</strong>
+                    <span class="badge ${fsm[f.status] || 'badge-muted'}">${fsl[f.status] || f.status}</span>
+                </div>
+            </div>`).join('');
+        fatSec.hidden = false;
+    } else {
+        fatSec.hidden = true;
+    }
+
+    // Renovações
+    const renSec = document.getElementById('locModalRenovacoesSec');
+    const renovacoes = a.renovacoes || [];
+    if (renovacoes.length) {
+        document.getElementById('locModalRenovacoes').innerHTML = renovacoes.map(rn => `
+            <div style="display:flex;align-items:center;justify-content:space-between;background:var(--bg-secondary);border:1px solid var(--border);border-radius:6px;padding:7px 12px;font-size:0.82rem;">
+                <div>
+                    <strong>${rn.tipo}</strong> — ${rn.dias} dias
+                    <div style="color:var(--text-muted);font-size:0.77rem;margin-top:1px;">${fmt(rn.de)} → ${fmt(rn.para)}</div>
+                </div>
+                <span style="font-weight:700;">${mon(rn.preco)}</span>
+            </div>`).join('');
+        renSec.hidden = false;
+    } else {
+        renSec.hidden = true;
+    }
+
+    // Endereço
+    const addrSec = document.getElementById('locModalAddrSec');
+    const addr = a.enderecoEntrega;
+    if (addr && addr.logradouro) {
+        document.getElementById('locModalAddr').textContent =
+            [addr.logradouro, addr.numero, addr.bairro, addr.cidade, addr.uf].filter(Boolean).join(', ');
+        addrSec.hidden = false;
+    } else {
+        addrSec.hidden = true;
+    }
+
+    // Ações
+    const acts = [];
+    if (['aguardando_locacao', 'agendada'].includes(a.status)) {
+        acts.push(`<button class="btn btn-primary btn-sm" onclick="ativarLoc(${a.id});closeLocacaoModal()">Ativar locação</button>`);
+    }
+    if (a.status === 'ativo' || a.status === 'aguardando_vistoria') {
+        acts.push(`<button class="btn btn-secondary btn-sm" onclick="finalizarLoc(${a.id})">Finalizar locação</button>`);
+    }
+    if (a.status === 'ativo') {
+        acts.push(`<button class="btn btn-ghost btn-sm" onclick="closeLocacaoModal();setTimeout(()=>{showSec('gps',null);verRotaGPS(${a.id})},100)">Ver rota GPS</button>`);
+    }
+    acts.push(`<button class="btn btn-ghost btn-sm" onclick="closeLocacaoModal()">Fechar</button>`);
+    document.getElementById('locModalActions').innerHTML = acts.join('');
+
+    document.getElementById('locacaoModal').classList.add('open');
+}
+
+function closeLocacaoModal() {
+    document.getElementById('locacaoModal').classList.remove('open');
+}
+
+// ── Export CSV ────────────────────────────────────────
+function exportLocacoesCsv() {
+    const q = (document.getElementById('locQ')?.value || '').toLowerCase();
+    const sf = document.getElementById('locSF')?.value || 'todos';
+    const list = allLocacoes.filter(a => {
+        const matchS = sf === 'todos' || a.status === sf;
+        const matchQ = !q || (a.usuarioNome || '').toLowerCase().includes(q) ||
+            (a.bikeNome || '').toLowerCase().includes(q) || String(a.id).includes(q);
+        return matchS && matchQ;
+    });
+    if (!list.length) { showToast('Nenhuma locação para exportar.', 'warning'); return; }
+    const header = ['ID', 'Usuário', 'E-mail', 'Bike', 'Plano', 'Início', 'Devolução', 'Status', 'Pagamento', 'Valor (R$)', 'Seguro'];
+    const toDate = d => d ? new Date(d).toLocaleDateString('pt-BR') : '';
+    const rows = list.map(a => [
+        `#${a.id}`, a.usuarioNome || '', a.usuarioEmail || '', a.bikeNome || '',
+        a.planoLabel || a.tipo || '', toDate(a.dataInicio), toDate(a.dataDevolucaoPrevista),
+        a.status || '', a.pagamento?.status || '',
+        a.preco != null ? Number(a.preco).toFixed(2).replace('.', ',') : '',
+        a.tipoSeguro || '',
+    ].map(v => `"${String(v).replace(/"/g, '""')}"`));
+    const csv = [header.join(';'), ...rows.map(r => r.join(';'))].join('\n');
+    const blob = new Blob(['﻿' + csv], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    const today = new Date();
+    const dateStr = `${today.getFullYear()}-${String(today.getMonth()+1).padStart(2,'0')}-${String(today.getDate()).padStart(2,'0')}`;
+    link.href = url; link.download = `locacoes_${dateStr}.csv`;
+    link.click(); URL.revokeObjectURL(url);
+    showToast(`${list.length} locações exportadas em CSV.`, 'success');
 }
 
 // ── Pagamentos ────────────────────────────────────────
@@ -729,12 +947,33 @@ async function aprovPag(id) {
     if (r.ok) loadPagamentos();
 }
 
-async function rejPag(id) {
-    const m = prompt('Motivo da rejeição:');
-    const r = await fetch(`${API_BASE}/admin/pagamentos/${id}/rejeitar`, { method: 'PUT', headers: authHJ, body: JSON.stringify({ motivo: m || 'Rejeitado' }) });
+let _rejPagId = null;
+
+function rejPag(id) { openRejPagModal(id); }
+
+function openRejPagModal(id) {
+    _rejPagId = id;
+    document.getElementById('rejPagMotivo').value = '';
+    document.getElementById('rejPagModal').classList.add('open');
+    setTimeout(() => document.getElementById('rejPagMotivo').focus(), 50);
+}
+
+function closeRejPagModal() {
+    document.getElementById('rejPagModal').classList.remove('open');
+    _rejPagId = null;
+}
+
+async function confirmRejPag() {
+    if (!_rejPagId) return;
+    const motivo = document.getElementById('rejPagMotivo').value.trim();
+    if (!motivo) { showToast('Informe o motivo da rejeição.', 'warning'); return; }
+    const btn = document.getElementById('btnConfirmRejPag');
+    btn.disabled = true; btn.textContent = 'Rejeitando...';
+    const r = await fetch(`${API_BASE}/admin/pagamentos/${_rejPagId}/rejeitar`, { method: 'PUT', headers: authHJ, body: JSON.stringify({ motivo }) });
     const d = await r.json();
     showToast(d.message || d.error || '', r.ok ? 'success' : 'error');
-    if (r.ok) loadPagamentos();
+    if (r.ok) { closeRejPagModal(); loadPagamentos(); }
+    btn.disabled = false; btn.textContent = 'Rejeitar';
 }
 
 // ── GPS Map — Leaflet + SSE ───────────────────────────
@@ -835,6 +1074,32 @@ function _gpsFlyTo(bikeId) {
     }
 }
 
+// ── GPS Zone Alert ────────────────────────────────────
+const _gpsPrevSuspeito = {};
+
+function _playGpsAlert() {
+    try {
+        const ctx = new (window.AudioContext || window.webkitAudioContext)();
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.connect(gain); gain.connect(ctx.destination);
+        osc.frequency.setValueAtTime(880, ctx.currentTime);
+        osc.frequency.setValueAtTime(660, ctx.currentTime + 0.15);
+        gain.gain.setValueAtTime(0.28, ctx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.45);
+        osc.start(ctx.currentTime); osc.stop(ctx.currentTime + 0.45);
+    } catch (_) {}
+}
+
+function _flashNavItem(keyword) {
+    document.querySelectorAll('.sidebar-nav a').forEach(a => {
+        if (a.textContent.includes(keyword)) {
+            a.style.color = '#f59e0b';
+            setTimeout(() => a.style.color = '', 4000);
+        }
+    });
+}
+
 function _gpsHandleEvent(evt) {
     let data;
     try { data = JSON.parse(evt.data); } catch { return; }
@@ -855,7 +1120,12 @@ function _gpsHandleEvent(evt) {
     if (data.type === 'update') {
         const latlng = [data.lat, data.lng];
         const prev = _gpsMarkers[data.bikeId]?._gpsData;
-        // alerta de zona apenas no histórico — não no live
+        if (data.isSuspeito && !_gpsPrevSuspeito[data.bikeId]) {
+            showToast(`⚠ ${data.bikeNome || 'Bike #' + data.bikeId} saiu da zona segura!`, 'warning');
+            _playGpsAlert();
+            _flashNavItem('GPS');
+        }
+        _gpsPrevSuspeito[data.bikeId] = data.isSuspeito;
         const iconColor = data.bloqueada ? '#ef4444' : (data.isSuspeito ? '#f59e0b' : '#F5C000');
         if (_gpsMarkers[data.bikeId]) {
             _gpsMarkers[data.bikeId].setLatLng(latlng);
@@ -1120,29 +1390,175 @@ async function verRotaGPS(rentalId, horas=1) {
 function closeGpsHistory(){document.getElementById('gpsHistoryModal')?.classList.remove('open');}
 
 // ── Vistorias ─────────────────────────────────────────
-async function loadVist() {
-    const d = await fetch(`${API_BASE}/vistorias`, { headers: authH }).then(r => r.json());
+let allVistorias = [];
+let _vistId = null;
+
+function filterVistorias() {
+    const sf = document.getElementById('vistSF')?.value || 'todos';
+    const filtered = sf === 'todos' ? allVistorias : allVistorias.filter(v => v.status === sf);
+    const cnt = document.getElementById('vistCount');
+    if (cnt) cnt.textContent = `${filtered.length} de ${allVistorias.length}`;
+    renderVistorias(filtered);
+}
+
+function renderVistorias(list) {
     const m = { pendente: 'badge-warning', aprovada: 'badge-success', reprovada: 'badge-danger' };
-    document.getElementById('vistTbody').innerHTML = (d.vistorias || []).map(v =>
-        `<tr><td>#${v.id}</td><td>#${v.aluguelId}</td><td>${v.bikeNome || '—'}</td><td>${v.usuarioNome || '—'}</td><td><span class="badge ${m[v.status] || 'badge-muted'}">${v.status}</span></td><td style="max-width:180px;overflow:hidden;text-overflow:ellipsis;">${v.observacao || '—'}</td><td>${v.criadaEm ? new Date(v.criadaEm).toLocaleDateString('pt-BR') : '—'}</td></tr>`
-    ).join('') || '<tr><td colspan="7" style="text-align:center;color:var(--text-muted);padding:24px;">Nenhuma vistoria.</td></tr>';
+    const lbl = { pendente: 'Pendente', aprovada: 'Aprovada', reprovada: 'Reprovada' };
+    document.getElementById('vistTbody').innerHTML = list.map(v =>
+        `<tr class="clickable-row" onclick="openVistModal(${v.id})" style="cursor:pointer;" title="Clique para gerenciar">
+            <td><strong>#${v.id}</strong></td>
+            <td>#${v.aluguelId}</td>
+            <td>${escHtml(v.bikeNome || '—')}</td>
+            <td>${escHtml(v.usuarioNome || '—')}</td>
+            <td><span class="badge ${m[v.status] || 'badge-muted'}">${lbl[v.status] || v.status}</span></td>
+            <td style="max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="${escHtml(v.observacao || '')}">${escHtml(v.observacao || '—')}</td>
+            <td>${v.criadaEm ? new Date(v.criadaEm).toLocaleDateString('pt-BR') : '—'}</td>
+            <td onclick="event.stopPropagation()">
+                ${v.status === 'pendente' ? `<button class="btn btn-primary btn-sm" onclick="openVistModal(${v.id})">Gerenciar</button>` : '—'}
+            </td>
+        </tr>`
+    ).join('') || '<tr><td colspan="8" style="text-align:center;color:var(--text-muted);padding:24px;">Nenhuma vistoria encontrada.</td></tr>';
+}
+
+async function loadVist() {
+    try {
+        const d = await fetch(`${API_BASE}/vistorias`, { headers: authH }).then(r => r.json());
+        allVistorias = d.vistorias || [];
+        filterVistorias();
+    } catch (e) { showToast('Erro ao carregar vistorias.', 'error'); }
+}
+
+function openVistModal(id) {
+    const v = allVistorias.find(x => x.id === id);
+    if (!v) return;
+    _vistId = id;
+    const m = { pendente: 'badge-warning', aprovada: 'badge-success', reprovada: 'badge-danger' };
+    const lbl = { pendente: 'Pendente', aprovada: 'Aprovada', reprovada: 'Reprovada' };
+    document.getElementById('vistModalTitle').textContent = `Vistoria #${v.id}`;
+    document.getElementById('vistModalBadge').innerHTML = `<span class="badge ${m[v.status] || 'badge-muted'}">${lbl[v.status] || v.status}</span>`;
+    const row = (label, val) => `<div style="display:flex;justify-content:space-between;padding:3px 0;font-size:0.85rem;"><span style="color:var(--text-muted);">${label}</span><strong>${val}</strong></div>`;
+    document.getElementById('vistModalInfo').innerHTML = [
+        row('Locação', `#${v.aluguelId}`),
+        row('Bike', escHtml(v.bikeNome || '—')),
+        row('Usuário', escHtml(v.usuarioNome || '—')),
+        row('Data', v.criadaEm ? new Date(v.criadaEm).toLocaleDateString('pt-BR') : '—'),
+        v.observacao ? `<div style="margin-top:8px;background:var(--bg-secondary);border:1px solid var(--border);border-radius:6px;padding:10px;font-size:0.82rem;"><strong>Observação anterior:</strong><br><span style="color:var(--text-secondary);">${escHtml(v.observacao)}</span></div>` : '',
+    ].filter(Boolean).join('');
+    const obsEl = document.getElementById('vistModalObs');
+    obsEl.value = '';
+    const obsWrap = document.getElementById('vistModalObsWrap');
+    const actionsEl = document.getElementById('vistModalActions');
+    if (v.status === 'pendente') {
+        if (obsWrap) obsWrap.hidden = false;
+        actionsEl.innerHTML = `
+            <button class="btn btn-success btn-sm" onclick="confirmVist('aprovar')">Aprovar vistoria</button>
+            <button class="btn btn-danger btn-sm" onclick="confirmVist('reprovar')">Reprovar vistoria</button>
+            <button class="btn btn-ghost btn-sm" onclick="closeVistModal()">Fechar</button>`;
+    } else {
+        if (obsWrap) obsWrap.hidden = true;
+        actionsEl.innerHTML = `<button class="btn btn-ghost btn-sm" onclick="closeVistModal()">Fechar</button>`;
+    }
+    document.getElementById('vistModal').classList.add('open');
+    if (v.status === 'pendente') setTimeout(() => obsEl.focus(), 80);
+}
+
+function closeVistModal() {
+    document.getElementById('vistModal').classList.remove('open');
+    _vistId = null;
+}
+
+async function confirmVist(action) {
+    if (!_vistId) return;
+    const obs = document.getElementById('vistModalObs')?.value?.trim();
+    if (!obs) { showToast('Informe a observação técnica antes de confirmar.', 'warning'); return; }
+    const btns = document.querySelectorAll('#vistModalActions button');
+    btns.forEach(b => b.disabled = true);
+    const r = await fetch(`${API_BASE}/vistorias/${_vistId}/${action}`, { method: 'PUT', headers: authHJ, body: JSON.stringify({ observacao: obs }) });
+    const d = await r.json();
+    showToast(d.message || d.error || '', r.ok ? 'success' : 'error');
+    if (r.ok) { closeVistModal(); loadVist(); }
+    btns.forEach(b => b.disabled = false);
 }
 
 // ── Usuários ──────────────────────────────────────────
-async function loadUsers() {
-    const d = await fetch(`${API_BASE}/admin/usuarios`, { headers: authH }).then(r => r.json());
+let allUsers = [];
+
+function filterUsers() {
+    const q = (document.getElementById('userQ')?.value || '').toLowerCase();
+    const filtered = q
+        ? allUsers.filter(u => (u.nome || '').toLowerCase().includes(q) || (u.email || '').toLowerCase().includes(q))
+        : allUsers;
+    const cnt = document.getElementById('userCount');
+    if (cnt) cnt.textContent = `${filtered.length} de ${allUsers.length}`;
+    renderUsers(filtered);
+}
+
+function renderUsers(list) {
     const m = { user: 'badge-success', funcionario: 'badge-warning', admin: 'badge-purple' };
     const label = { user: 'Usuário', funcionario: 'Funcionário', admin: 'Admin' };
-    document.getElementById('userTbody').innerHTML = (d.usuarios || []).map(u =>
-        `<tr>
+    document.getElementById('userTbody').innerHTML = list.map(u =>
+        `<tr class="clickable-row" onclick="openUserModal(${u.id})" style="cursor:pointer;" title="Ver detalhes">
           <td>#${u.id}</td>
           <td><strong>${escHtml(u.nome)}</strong></td>
           <td>${escHtml(u.email)}</td>
           <td><span class="badge ${m[u.role] || 'badge-muted'}">${label[u.role] || u.role}</span></td>
           <td>${u.criadoEm ? new Date(u.criadoEm).toLocaleDateString('pt-BR') : '—'}</td>
-          <td>${u.role !== 'admin' ? `<button class="btn btn-danger btn-sm" style="padding:3px 10px;" onclick="excluirUsuario(${u.id},'${escHtml(u.nome)}')">Excluir</button>` : '—'}</td>
+          <td onclick="event.stopPropagation()">
+            ${u.role !== 'admin' ? `<button class="btn btn-danger btn-sm" style="padding:3px 10px;" onclick="excluirUsuario(${u.id},'${escHtml(u.nome)}')">Excluir</button>` : '—'}
+          </td>
         </tr>`
-    ).join('') || '<tr><td colspan="6" style="text-align:center;color:var(--text-muted);padding:24px;">Nenhum usuário.</td></tr>';
+    ).join('') || '<tr><td colspan="6" style="text-align:center;color:var(--text-muted);padding:24px;">Nenhum usuário encontrado.</td></tr>';
+}
+
+async function loadUsers() {
+    const d = await fetch(`${API_BASE}/admin/usuarios`, { headers: authH }).then(r => r.json());
+    allUsers = d.usuarios || [];
+    filterUsers();
+}
+
+async function openUserModal(id) {
+    const u = allUsers.find(x => x.id === id);
+    if (!u) return;
+    const roleLabel = { user: 'Usuário', funcionario: 'Funcionário', admin: 'Admin' };
+    const roleBadge = { user: 'badge-success', funcionario: 'badge-warning', admin: 'badge-purple' };
+    document.getElementById('userModalName').textContent = u.nome || '—';
+    document.getElementById('userModalBadge').innerHTML = `<span class="badge ${roleBadge[u.role] || 'badge-muted'}">${roleLabel[u.role] || u.role}</span>`;
+    document.getElementById('userModalInfo').innerHTML =
+        `<span style="font-size:0.82rem;color:var(--text-muted);">${escHtml(u.email)}</span>` +
+        (u.criadoEm ? `<span style="font-size:0.79rem;color:var(--text-muted);margin-left:10px;">Membro desde ${new Date(u.criadoEm).toLocaleDateString('pt-BR')}</span>` : '');
+    if (!allLocacoes.length) {
+        try {
+            const ld = await fetch(`${API_BASE}/admin/alugueis`, { headers: authH }).then(r => r.json());
+            allLocacoes = ld.alugueis || [];
+        } catch (_) {}
+    }
+    const userLoc = allLocacoes.filter(a => String(a.usuarioId) === String(u.id) || a.usuarioNome === u.nome);
+    const locList = document.getElementById('userModalLocacoes');
+    if (!userLoc.length) {
+        locList.innerHTML = `<p style="color:var(--text-muted);font-size:0.83rem;text-align:center;padding:16px 0;">Nenhuma locação registrada.</p>`;
+    } else {
+        locList.innerHTML = userLoc.slice(0, 10).map(a => {
+            const di = new Date(a.dataInicio).toLocaleDateString('pt-BR');
+            const dd = new Date(a.dataDevolucaoPrevista).toLocaleDateString('pt-BR');
+            return `<div onclick="closeUserModal();openLocacaoModal(${a.id})" style="display:flex;align-items:center;justify-content:space-between;background:var(--bg-secondary);border:1px solid var(--border);border-radius:6px;padding:9px 12px;font-size:0.82rem;cursor:pointer;gap:8px;margin-bottom:6px;transition:border-color .15s;" onmouseenter="this.style.borderColor='var(--primary,#F5C000)'" onmouseleave="this.style.borderColor='var(--border)'">
+                <div>
+                    <strong>#${a.id}</strong> — ${escHtml(a.bikeNome || '—')}
+                    <div style="color:var(--text-muted);font-size:0.77rem;margin-top:1px;">${escHtml(a.planoLabel || a.tipo)} · ${di} → ${dd}</div>
+                </div>
+                <div style="flex-shrink:0;">${sBadge(a.status)}</div>
+            </div>`;
+        }).join('') + (userLoc.length > 10 ? `<p style="font-size:0.8rem;color:var(--text-muted);text-align:center;margin-top:4px;">+${userLoc.length - 10} locações anteriores</p>` : '');
+    }
+    const actEl = document.getElementById('userModalActions');
+    actEl.innerHTML = u.role !== 'admin'
+        ? `<button class="btn btn-danger btn-sm" onclick="excluirUsuario(${u.id},'${escHtml(u.nome)}');closeUserModal()">Excluir usuário</button>
+           <button class="btn btn-ghost btn-sm" onclick="closeUserModal()">Fechar</button>`
+        : `<button class="btn btn-ghost btn-sm" onclick="closeUserModal()">Fechar</button>`;
+    document.getElementById('userModal').classList.add('open');
+}
+
+function closeUserModal() {
+    document.getElementById('userModal').classList.remove('open');
 }
 
 // ── Criar Usuário ─────────────────────────────────────
@@ -1281,11 +1697,15 @@ async function deleteCategory(id, nome) {
     } catch (e) { showToast('Erro ao remover categoria.', 'error'); }
 }
 
-// ── Close edit modal on Escape ────────────────────────
+// ── Close modals on Escape ────────────────────────────
 document.addEventListener('keydown', e => {
     if (e.key === 'Escape') {
         document.getElementById('editModalOverlay').classList.remove('open');
         closeBikeDetailsModal();
+        closeLocacaoModal();
+        if (typeof closeVistModal === 'function') closeVistModal();
+        if (typeof closeUserModal === 'function') closeUserModal();
+        if (typeof closeRejPagModal === 'function') closeRejPagModal();
     }
 });
 

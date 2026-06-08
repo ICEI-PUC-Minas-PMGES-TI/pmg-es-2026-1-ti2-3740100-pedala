@@ -291,6 +291,32 @@ async function desbloquearBikeGPS(id) {
     }
 }
 
+// ── GPS Zone Alert ────────────────────────────────────
+const _gpsPrevSuspeito = {};
+
+function _playGpsAlert() {
+    try {
+        const ctx = new (window.AudioContext || window.webkitAudioContext)();
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.connect(gain); gain.connect(ctx.destination);
+        osc.frequency.setValueAtTime(880, ctx.currentTime);
+        osc.frequency.setValueAtTime(660, ctx.currentTime + 0.15);
+        gain.gain.setValueAtTime(0.28, ctx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.45);
+        osc.start(ctx.currentTime); osc.stop(ctx.currentTime + 0.45);
+    } catch (_) {}
+}
+
+function _flashNavItem(keyword) {
+    document.querySelectorAll('.sidebar-nav a').forEach(a => {
+        if (a.textContent.includes(keyword)) {
+            a.style.color = '#f59e0b';
+            setTimeout(() => a.style.color = '', 4000);
+        }
+    });
+}
+
 function _gpsHandleEvent(evt) {
     let data;
     try { data = JSON.parse(evt.data); } catch { return; }
@@ -309,7 +335,13 @@ function _gpsHandleEvent(evt) {
     if (data.type === 'update') {
         const latlng = [data.lat, data.lng];
         const prev = _gpsMarkers[data.bikeId]?._gpsData;
-        // alerta de zona apenas no histórico — não no live
+        if (data.isSuspeito && !_gpsPrevSuspeito[data.bikeId]) {
+            showToast(`⚠ ${data.bikeNome || 'Bike #' + data.bikeId} saiu da zona segura!`, 'warning');
+            _playGpsAlert();
+            _flashNavItem('GPS');
+            _flashNavItem('Mapa');
+        }
+        _gpsPrevSuspeito[data.bikeId] = data.isSuspeito;
         const iconColor = data.bloqueada ? '#ef4444' : (data.isSuspeito ? '#f59e0b' : '#6366f1');
         if (_gpsMarkers[data.bikeId]) {
             _gpsMarkers[data.bikeId].setLatLng(latlng);

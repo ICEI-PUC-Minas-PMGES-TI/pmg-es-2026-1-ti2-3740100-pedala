@@ -200,6 +200,49 @@
     </div>
   </div>
 
+  <!-- MODAL ALTERAR SENHA -->
+  <div class="modal-overlay" id="senhaModal" onclick="if(event.target===this)closeSenhaModal()">
+    <div class="modal" style="max-width:420px;width:96%;">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;">
+        <h2 class="modal-title">Alterar senha</h2>
+        <button class="btn btn-ghost btn-sm" onclick="closeSenhaModal()">✕</button>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Senha atual *</label>
+        <input class="form-input" type="password" id="pfSenhaAtual" placeholder="Digite sua senha atual" autocomplete="current-password">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Nova senha *</label>
+        <input class="form-input" type="password" id="pfNovaSenha" placeholder="Mínimo 3 caracteres" autocomplete="new-password">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Confirmar nova senha *</label>
+        <input class="form-input" type="password" id="pfNovaSenhaConf" placeholder="Repita a nova senha" autocomplete="new-password">
+      </div>
+      <div id="pfSenhaErro" style="display:none;color:var(--danger);background:var(--danger-bg,#fef2f2);border:1px solid var(--danger-border,#fca5a5);border-radius:6px;padding:8px 12px;margin-bottom:10px;font-size:0.84rem;"></div>
+      <div style="display:flex;gap:10px;justify-content:flex-end;margin-top:6px;">
+        <button class="btn btn-secondary" onclick="closeSenhaModal()">Cancelar</button>
+        <button class="btn btn-primary" id="btnConfirmarSenha" onclick="confirmarAlterarSenha()">Salvar nova senha</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL EXCLUIR CONTA -->
+  <div class="modal-overlay" id="excluirContaModal" onclick="if(event.target===this)closeExcluirContaModal()">
+    <div class="modal" style="max-width:420px;width:96%;">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
+        <h2 class="modal-title" style="color:var(--danger,#ef4444);">Excluir minha conta</h2>
+        <button class="btn btn-ghost btn-sm" onclick="closeExcluirContaModal()">✕</button>
+      </div>
+      <p style="font-size:0.88rem;color:var(--text-secondary);margin-bottom:10px;">Esta ação é <strong>permanente e irreversível</strong>. Todos os seus dados serão removidos.</p>
+      <p style="font-size:0.84rem;color:var(--text-muted);margin-bottom:18px;">Só é possível excluir a conta se você não tiver locações ativas.</p>
+      <div style="display:flex;gap:10px;justify-content:flex-end;">
+        <button class="btn btn-secondary" onclick="closeExcluirContaModal()">Cancelar</button>
+        <button class="btn btn-danger" id="btnConfirmarExcluir" onclick="confirmarExcluirConta()">Excluir permanentemente</button>
+      </div>
+    </div>
+  </div>
+
   <div id="toast" class="toast" role="status" aria-live="polite"></div>
   <button class="scroll-top" id="scrollTop" type="button">↑ Topo</button>
 

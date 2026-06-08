@@ -252,6 +252,21 @@ public class UserService {
         return result;
     }
 
+    @Transactional
+    public Map<String, Object> changePassword(Long userId, ChangePasswordRequest request) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new ResourceNotFoundException("Usuario nao encontrado."));
+
+        if (!passwordEncoder.matches(request.senhaAtual(), user.getSenha())) {
+            throw new BusinessException("Senha atual incorreta.");
+        }
+
+        user.setSenha(passwordEncoder.encode(request.novaSenha()));
+        userRepository.save(user);
+
+        return Map.of("message", "Senha alterada com sucesso!");
+    }
+
     @Transactional(readOnly = true)
     public List<Map<String, Object>> listAllUsers() {
         return userRepository.findAll().stream()

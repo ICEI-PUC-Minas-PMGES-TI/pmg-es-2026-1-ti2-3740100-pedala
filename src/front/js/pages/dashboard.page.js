@@ -408,6 +408,10 @@ async function loadPerfil() {
           </div>
         </div>
       </div>
+      <div style="margin-top:24px;padding-top:20px;border-top:1px solid var(--border);display:flex;gap:10px;flex-wrap:wrap;">
+        <button class="btn btn-secondary btn-sm" onclick="openSenhaModal()">Alterar senha</button>
+        <button class="btn btn-danger btn-sm" onclick="openExcluirContaModal()">Excluir minha conta</button>
+      </div>
     `;
   } catch (error) {
     document.getElementById('perfilContent').innerHTML = `<div class="empty-state"><strong>Falha ao carregar perfil</strong><span>Tente novamente em instantes.</span></div>`;
@@ -791,10 +795,100 @@ window.confirmarRenovacao = confirmarRenovacao;
 window.solicitarPagFatura = solicitarPagFatura;
 window.solicDevol = solicDevol;
 window.renovar = renovar;
+// ── Alterar senha ─────────────────────────────────────
+function openSenhaModal() {
+  document.getElementById('pfSenhaAtual').value = '';
+  document.getElementById('pfNovaSenha').value = '';
+  document.getElementById('pfNovaSenhaConf').value = '';
+  document.getElementById('pfSenhaErro').style.display = 'none';
+  document.getElementById('senhaModal').classList.add('open');
+  setTimeout(() => document.getElementById('pfSenhaAtual').focus(), 60);
+}
+
+function closeSenhaModal() {
+  document.getElementById('senhaModal').classList.remove('open');
+}
+
+async function confirmarAlterarSenha() {
+  const senhaAtual = document.getElementById('pfSenhaAtual').value.trim();
+  const novaSenha  = document.getElementById('pfNovaSenha').value.trim();
+  const conf       = document.getElementById('pfNovaSenhaConf').value.trim();
+  const erroEl     = document.getElementById('pfSenhaErro');
+
+  if (!senhaAtual || !novaSenha || !conf) {
+    erroEl.textContent = 'Preencha todos os campos.'; erroEl.style.display = ''; return;
+  }
+  if (novaSenha.length < 3) {
+    erroEl.textContent = 'A nova senha deve ter ao menos 3 caracteres.'; erroEl.style.display = ''; return;
+  }
+  if (novaSenha !== conf) {
+    erroEl.textContent = 'As senhas não coincidem.'; erroEl.style.display = ''; return;
+  }
+
+  const btn = document.getElementById('btnConfirmarSenha');
+  btn.disabled = true; btn.textContent = 'Salvando...';
+  try {
+    const r = await fetch(`${dashboardApi}/auth/me/senha`, {
+      method: 'PUT',
+      headers: dashboardJsonHeaders,
+      body: JSON.stringify({ senhaAtual, novaSenha })
+    });
+    const d = await r.json();
+    if (r.ok) {
+      showToast(d.message || 'Senha alterada com sucesso!', 'success');
+      closeSenhaModal();
+    } else {
+      erroEl.textContent = d.message || d.error || 'Erro ao alterar senha.';
+      erroEl.style.display = '';
+    }
+  } catch (_) {
+    erroEl.textContent = 'Erro de conexão.'; erroEl.style.display = '';
+  }
+  btn.disabled = false; btn.textContent = 'Salvar nova senha';
+}
+
+// ── Excluir conta ─────────────────────────────────────
+function openExcluirContaModal() {
+  document.getElementById('excluirContaModal').classList.add('open');
+}
+
+function closeExcluirContaModal() {
+  document.getElementById('excluirContaModal').classList.remove('open');
+}
+
+async function confirmarExcluirConta() {
+  const btn = document.getElementById('btnConfirmarExcluir');
+  btn.disabled = true; btn.textContent = 'Excluindo...';
+  try {
+    const r = await fetch(`${dashboardApi}/auth/me`, { method: 'DELETE', headers: dashboardHeaders });
+    const d = await r.json();
+    if (r.ok) {
+      showToast(d.message || 'Conta excluída.', 'success');
+      setTimeout(() => {
+        localStorage.removeItem('pedala_token');
+        localStorage.removeItem('pedala_user');
+        window.location.href = 'login.html';
+      }, 1200);
+    } else {
+      showToast(d.message || d.error || 'Não foi possível excluir a conta.', 'error');
+      closeExcluirContaModal();
+    }
+  } catch (_) {
+    showToast('Erro de conexão.', 'error');
+  }
+  btn.disabled = false; btn.textContent = 'Excluir permanentemente';
+}
+
 window.baixarContrato = baixarContrato;
 window.loadLocacoes = loadLocacoes;
 window.toggleAddrForm = toggleAddrForm;
 window.salvarEndereco = salvarEndereco;
+window.openSenhaModal = openSenhaModal;
+window.closeSenhaModal = closeSenhaModal;
+window.confirmarAlterarSenha = confirmarAlterarSenha;
+window.openExcluirContaModal = openExcluirContaModal;
+window.closeExcluirContaModal = closeExcluirContaModal;
+window.confirmarExcluirConta = confirmarExcluirConta;
 
 if (dashboardState.pendingBikeId) showSec('locar', document.getElementById('nav-locar'));
 else loadInicio();

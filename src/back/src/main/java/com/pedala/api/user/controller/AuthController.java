@@ -59,6 +59,15 @@ public class AuthController {
         return ResponseEntity.status(HttpStatus.CREATED).body(userService.createFuncionario(request));
     }
 
+    @Operation(summary = "Alterar senha")
+    @PutMapping("/me/senha")
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<Map<String, Object>> changePassword(
+            @AuthenticationPrincipal UserPrincipal principal,
+            @Valid @RequestBody ChangePasswordRequest request) {
+        return ResponseEntity.ok(userService.changePassword(principal.getId(), request));
+    }
+
     @Operation(summary = "Excluir propria conta")
     @DeleteMapping("/me")
     @PreAuthorize("isAuthenticated()")

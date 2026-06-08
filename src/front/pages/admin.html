@@ -126,6 +126,16 @@
             </div>
           </div>
         </div>
+
+        <div class="card" style="margin-top:24px;">
+          <div class="card-header" style="display:flex;align-items:center;justify-content:space-between;">
+            <span class="card-title">Locações em Atraso</span>
+            <button class="btn btn-secondary btn-sm" onclick="showSec('locacoes',null);setTimeout(()=>{document.getElementById('locSF').value='ativo';filterLocacoes()},120)">Ver todas</button>
+          </div>
+          <div class="card-body" style="padding:14px 16px;">
+            <div id="dashAtrasadas"><p style="color:var(--text-muted);font-size:0.84rem;text-align:center;padding:10px 0;">Carregando...</p></div>
+          </div>
+        </div>
       </div>
 
       <!-- BIKES -->
@@ -231,6 +241,22 @@
           <h1>Locações</h1>
           <button class="btn btn-secondary btn-sm" onclick="loadLocacoes()">Atualizar</button>
         </div>
+        <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:16px;">
+          <input class="form-input" id="locQ" placeholder="Buscar por usuário, bike ou ID…" oninput="filterLocacoes()" style="max-width:280px;">
+          <select class="form-input" id="locSF" onchange="filterLocacoes()" style="max-width:220px;">
+            <option value="todos">Todos os status</option>
+            <option value="ativo">Em uso</option>
+            <option value="aguardando_locacao">Ag. entrega</option>
+            <option value="agendada">Agendada</option>
+            <option value="aguardando_vistoria">Ag. vistoria</option>
+            <option value="finalizado">Finalizado</option>
+          </select>
+          <span id="locCount" style="font-size:0.82rem;color:var(--text-muted);"></span>
+          <button class="btn btn-secondary btn-sm" onclick="exportLocacoesCsv()" title="Exportar lista filtrada como CSV">
+            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="margin-right:4px;vertical-align:-2px;"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+            CSV
+          </button>
+        </div>
         <div class="card">
           <div class="table-wrap">
             <table>
@@ -305,14 +331,23 @@
           <h1>Vistorias</h1>
           <button class="btn btn-secondary btn-sm" onclick="loadVist()">Atualizar</button>
         </div>
+        <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:16px;">
+          <select class="form-input" id="vistSF" onchange="filterVistorias()" style="max-width:220px;">
+            <option value="todos">Todos os status</option>
+            <option value="pendente">Pendentes</option>
+            <option value="aprovada">Aprovadas</option>
+            <option value="reprovada">Reprovadas</option>
+          </select>
+          <span id="vistCount" style="font-size:0.82rem;color:var(--text-muted);"></span>
+        </div>
         <div class="card">
           <div class="table-wrap">
             <table>
               <thead>
-                <tr><th>ID</th><th>Locação</th><th>Bike</th><th>Usuário</th><th>Status</th><th>Observação</th><th>Data</th></tr>
+                <tr><th>ID</th><th>Locação</th><th>Bike</th><th>Usuário</th><th>Status</th><th>Observação</th><th>Data</th><th>Ações</th></tr>
               </thead>
               <tbody id="vistTbody">
-                <tr><td colspan="7" style="text-align:center;padding:24px;color:var(--text-muted);">Carregando...</td></tr>
+                <tr><td colspan="8" style="text-align:center;padding:24px;color:var(--text-muted);">Carregando...</td></tr>
               </tbody>
             </table>
           </div>
@@ -327,6 +362,10 @@
             <button class="btn btn-primary btn-sm" onclick="abrirModalCriarUsuario()">+ Criar usuário</button>
             <button class="btn btn-secondary btn-sm" onclick="loadUsers()">Sincronizar</button>
           </div>
+        </div>
+        <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:16px;">
+          <input class="form-input" id="userQ" placeholder="Buscar por nome ou e-mail…" oninput="filterUsers()" style="max-width:300px;">
+          <span id="userCount" style="font-size:0.82rem;color:var(--text-muted);"></span>
         </div>
         <div class="card">
           <div class="table-wrap">
@@ -536,6 +575,53 @@
     </div>
   </div>
 
+  <!-- MODAL DETALHE LOCAÇÃO -->
+  <div class="modal-overlay" id="locacaoModal" onclick="if(event.target===this)closeLocacaoModal()">
+    <div class="modal" style="max-width:760px;width:96%;max-height:90vh;overflow-y:auto;">
+      <!-- Header -->
+      <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:18px;">
+        <div>
+          <h2 class="modal-title" style="margin:0 0 8px;" id="locModalId">Locação #—</h2>
+          <div id="locModalBadges" style="display:flex;gap:6px;flex-wrap:wrap;"></div>
+        </div>
+        <button class="btn btn-ghost btn-sm" onclick="closeLocacaoModal()" style="margin-left:12px;flex-shrink:0;">✕</button>
+      </div>
+
+      <!-- Info + Pagamento -->
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px;">
+        <div style="background:var(--bg-secondary);border-radius:var(--r-md,8px);border:1px solid var(--border);padding:16px;">
+          <div class="section-label" style="margin-bottom:10px;">Informações</div>
+          <div id="locModalInfo"></div>
+        </div>
+        <div style="background:var(--bg-secondary);border-radius:var(--r-md,8px);border:1px solid var(--border);padding:16px;">
+          <div class="section-label" style="margin-bottom:10px;">Pagamento</div>
+          <div id="locModalPayment"></div>
+        </div>
+      </div>
+
+      <!-- Endereço de entrega -->
+      <div id="locModalAddrSec" style="background:var(--bg-secondary);border-radius:var(--r-md,8px);border:1px solid var(--border);padding:14px 16px;margin-bottom:14px;" hidden>
+        <div class="section-label" style="margin-bottom:6px;">Endereço de Entrega</div>
+        <div id="locModalAddr" style="font-size:0.85rem;color:var(--text-secondary);"></div>
+      </div>
+
+      <!-- Faturas -->
+      <div id="locModalFaturasSec" style="margin-bottom:14px;" hidden>
+        <div class="section-label" style="margin-bottom:8px;">Faturas</div>
+        <div id="locModalFaturas" style="display:flex;flex-direction:column;gap:6px;"></div>
+      </div>
+
+      <!-- Renovações -->
+      <div id="locModalRenovacoesSec" style="margin-bottom:14px;" hidden>
+        <div class="section-label" style="margin-bottom:8px;">Renovações</div>
+        <div id="locModalRenovacoes" style="display:flex;flex-direction:column;gap:6px;"></div>
+      </div>
+
+      <!-- Ações -->
+      <div id="locModalActions" style="display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap;padding-top:12px;border-top:1px solid var(--border);"></div>
+    </div>
+  </div>
+
   <!-- GPS History Modal -->
   <div id="gpsHistoryModal" class="modal-overlay" onclick="if(event.target===this)closeGpsHistory()">
     <div class="modal" style="max-width:800px;width:95%;">
@@ -546,6 +632,65 @@
       <div id="gpsHistoryStats"></div>
       <div id="gpsHistoryLoading" style="text-align:center;padding:32px;color:var(--text-muted);">Carregando histórico...</div>
       <div id="gpsHistoryMapContainer" style="height:440px;border-radius:var(--r-md);overflow:hidden;display:none;"></div>
+    </div>
+  </div>
+
+  <!-- MODAL DETALHE VISTORIA -->
+  <div class="modal-overlay" id="vistModal" onclick="if(event.target===this)closeVistModal()">
+    <div class="modal" style="max-width:520px;width:96%;">
+      <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:16px;">
+        <div>
+          <h2 class="modal-title" style="margin:0 0 6px;" id="vistModalTitle">Vistoria #—</h2>
+          <div id="vistModalBadge"></div>
+        </div>
+        <button class="btn btn-ghost btn-sm" onclick="closeVistModal()" style="margin-left:12px;flex-shrink:0;">✕</button>
+      </div>
+      <div id="vistModalInfo" style="margin-bottom:14px;background:var(--bg-secondary);border:1px solid var(--border);border-radius:8px;padding:14px 16px;"></div>
+      <div id="vistModalObsWrap">
+        <div class="form-group" style="margin-bottom:14px;">
+          <label class="form-label">Observação técnica *</label>
+          <textarea class="form-input form-textarea" id="vistModalObs" placeholder="Descreva o resultado da vistoria…" rows="3" style="resize:vertical;min-height:80px;"></textarea>
+        </div>
+      </div>
+      <div id="vistModalActions" style="display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap;padding-top:12px;border-top:1px solid var(--border);"></div>
+    </div>
+  </div>
+
+  <!-- MODAL DETALHE USUÁRIO -->
+  <div class="modal-overlay" id="userModal" onclick="if(event.target===this)closeUserModal()">
+    <div class="modal" style="max-width:560px;width:96%;max-height:90vh;overflow-y:auto;">
+      <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:16px;">
+        <div>
+          <h2 class="modal-title" style="margin:0 0 4px;" id="userModalName">Usuário</h2>
+          <div id="userModalBadge" style="margin-bottom:4px;"></div>
+          <div id="userModalInfo"></div>
+        </div>
+        <button class="btn btn-ghost btn-sm" onclick="closeUserModal()" style="margin-left:12px;flex-shrink:0;">✕</button>
+      </div>
+      <div style="margin-bottom:14px;">
+        <div class="section-label" style="margin-bottom:8px;">Histórico de Locações</div>
+        <div id="userModalLocacoes"></div>
+      </div>
+      <div id="userModalActions" style="display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap;padding-top:12px;border-top:1px solid var(--border);"></div>
+    </div>
+  </div>
+
+  <!-- MODAL REJEITAR PAGAMENTO -->
+  <div class="modal-overlay" id="rejPagModal" onclick="if(event.target===this)closeRejPagModal()">
+    <div class="modal" style="max-width:440px;width:96%;">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;">
+        <h2 class="modal-title">Rejeitar pagamento</h2>
+        <button class="btn btn-ghost btn-sm" onclick="closeRejPagModal()">✕</button>
+      </div>
+      <p style="font-size:0.85rem;color:var(--text-muted);margin-bottom:14px;">Informe o motivo da rejeição. O usuário poderá visualizar esta mensagem.</p>
+      <div class="form-group" style="margin-bottom:16px;">
+        <label class="form-label">Motivo *</label>
+        <textarea class="form-input form-textarea" id="rejPagMotivo" placeholder="Ex: Comprovante ilegível ou inválido…" rows="3" style="resize:vertical;min-height:80px;"></textarea>
+      </div>
+      <div style="display:flex;gap:8px;justify-content:flex-end;">
+        <button class="btn btn-secondary" onclick="closeRejPagModal()">Cancelar</button>
+        <button class="btn btn-danger" id="btnConfirmRejPag" onclick="confirmRejPag()">Rejeitar</button>
+      </div>
     </div>
   </div>
 
