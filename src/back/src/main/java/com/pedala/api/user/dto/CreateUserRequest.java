@@ -5,8 +5,8 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 
 public record CreateUserRequest(
-        @NotBlank(message = "Nome e obrigatorio") String nome,
-        @NotBlank(message = "Email e obrigatorio") @Email(message = "Email invalido") String email,
-        @NotBlank(message = "Senha e obrigatoria") @Size(min = 3, message = "Senha deve ter ao menos 3 caracteres") String senha,
-        @NotBlank(message = "Role e obrigatoria") String role  // "user" ou "funcionario"
+        @NotBlank(message = "Nome é obrigatório") String nome,
+        @NotBlank(message = "Email é obrigatório") @Email(message = "Email inválido") String email,
+        @NotBlank(message = "Senha é obrigatória") @Size(min = 3, message = "A senha deve ter ao menos 3 caracteres") String senha,
+        @NotBlank(message = "Role é obrigatória") String role  // "user" ou "funcionario"
 ) {}

@@ -9,5 +9,3 @@ _Usar o seguinte modelo:_
 | Tempo médio de aprovação do pagamento | Monitorar a agilidade operacional na liberação dos pedidos. Meta: aprovar em até 2 horas. | Média de tempo entre a solicitação e a aprovação do pagamento dos aluguéis. | Tabela Rentals | AVG(data/hora de pagamento_aprovado_em - data/hora de pagamento_solicitado_em) em horas |
 
 _Metas sugeridas:_ manter a taxa de ocupação acima de 70%, a renovação de aluguéis acima de 25% e o tempo médio de aprovação do pagamento abaixo de 2 horas.
-
-_Obs.: todas as informações para gerar os indicadores devem estar no modelo relacional._
