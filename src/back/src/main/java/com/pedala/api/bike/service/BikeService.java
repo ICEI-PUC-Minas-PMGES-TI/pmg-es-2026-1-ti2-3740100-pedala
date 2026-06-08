@@ -3,6 +3,7 @@ package com.pedala.api.bike.service;
 import com.pedala.api.bike.domain.Bike;
 import com.pedala.api.bike.repository.BikeRepository;
 import com.pedala.api.bike.repository.BikeCategoryRepository;
+import com.pedala.api.config.CacheConfig;
 import com.pedala.api.exception.BusinessException;
 import com.pedala.api.exception.ResourceNotFoundException;
 import com.pedala.api.gps.service.GpsSimulatorService;
@@ -11,6 +12,9 @@ import com.pedala.api.rental.repository.RentalRepository;
 import com.pedala.api.shared.FileStorageService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
+import org.springframework.cache.annotation.Caching;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
@@ -43,6 +47,7 @@ public class BikeService {
         return categoria.trim();
     }
 
+    @Cacheable(value = CacheConfig.CACHE_BIKES, key = "#categoria + '_' + #disponivel")
     @Transactional(readOnly = true)
     public Map<String, Object> listBikes(String categoria, String disponivel) {
         List<Bike> bikes;
@@ -66,6 +71,7 @@ public class BikeService {
         return Map.of("bikes", resultado, "total", resultado.size());
     }
 
+    @Cacheable(value = CacheConfig.CACHE_BIKE, key = "#id")
     @Transactional(readOnly = true)
     public Map<String, Object> getBike(Long id) {
         Bike bike = bikeRepository.findById(id)
@@ -73,6 +79,10 @@ public class BikeService {
         return bikeToMap(bike);
     }
 
+    @Caching(evict = {
+        @CacheEvict(value = CacheConfig.CACHE_BIKES, allEntries = true),
+        @CacheEvict(value = CacheConfig.CACHE_STATS, allEntries = true)
+    })
     @Transactional
     public Map<String, Object> createBike(String nome, String categoria, String descricao,
                                            BigDecimal precoSemanal, BigDecimal precoQuinzenal,
@@ -111,6 +121,10 @@ public class BikeService {
         return result;
     }
 
+    @Caching(evict = {
+        @CacheEvict(value = CacheConfig.CACHE_BIKES, allEntries = true),
+        @CacheEvict(value = CacheConfig.CACHE_BIKE, key = "#id")
+    })
     @Transactional
     public Map<String, Object> updateBike(Long id, String nome, String categoria, String descricao,
                                            BigDecimal precoSemanal, BigDecimal precoQuinzenal,
@@ -174,6 +188,11 @@ public class BikeService {
         return result;
     }
 
+    @Caching(evict = {
+        @CacheEvict(value = CacheConfig.CACHE_BIKES, allEntries = true),
+        @CacheEvict(value = CacheConfig.CACHE_BIKE, key = "#id"),
+        @CacheEvict(value = CacheConfig.CACHE_STATS, allEntries = true)
+    })
     @Transactional
     public Map<String, Object> blockBike(Long id, String motivo) {
         Bike bike = bikeRepository.findById(id)
@@ -191,6 +210,11 @@ public class BikeService {
         return result;
     }
 
+    @Caching(evict = {
+        @CacheEvict(value = CacheConfig.CACHE_BIKES, allEntries = true),
+        @CacheEvict(value = CacheConfig.CACHE_BIKE, key = "#id"),
+        @CacheEvict(value = CacheConfig.CACHE_STATS, allEntries = true)
+    })
     @Transactional
     public Map<String, Object> activateBike(Long id) {
         Bike bike = bikeRepository.findById(id)
@@ -208,6 +232,11 @@ public class BikeService {
         return result;
     }
 
+    @Caching(evict = {
+        @CacheEvict(value = CacheConfig.CACHE_BIKES, allEntries = true),
+        @CacheEvict(value = CacheConfig.CACHE_BIKE, key = "#id"),
+        @CacheEvict(value = CacheConfig.CACHE_STATS, allEntries = true)
+    })
     @Transactional
     public Map<String, Object> deleteBike(Long id) {
         Bike bike = bikeRepository.findById(id)

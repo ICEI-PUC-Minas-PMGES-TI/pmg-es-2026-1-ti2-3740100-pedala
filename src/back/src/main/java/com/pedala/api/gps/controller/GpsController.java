@@ -1,6 +1,7 @@
 package com.pedala.api.gps.controller;
 
 import com.pedala.api.gps.service.GpsSimulatorService;
+import com.pedala.api.gps.service.RouteGenerationService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
@@ -20,7 +21,8 @@ import java.util.Map;
 @Tag(name = "GPS", description = "Rastreamento GPS em tempo real")
 public class GpsController {
 
-    private final GpsSimulatorService gpsService;
+    private final GpsSimulatorService   gpsService;
+    private final RouteGenerationService routeService;
 
     @Operation(summary = "Snapshot de posicoes")
     @GetMapping("/positions")
@@ -47,6 +49,13 @@ public class GpsController {
             @RequestParam(defaultValue = "1") int horas) {
         List<Map<String, Object>> history = gpsService.getHistory(rentalId, horas);
         return ResponseEntity.ok(Map.of("rentalId", rentalId, "history", history, "totalPoints", history.size(), "horasFiltro", horas));
+    }
+
+    @Operation(summary = "Rota gerada via OSRM — gera 1x e salva")
+    @GetMapping("/rota/{rentalId}")
+    @PreAuthorize("hasAnyRole('ADMIN','FUNCIONARIO','USER')")
+    public ResponseEntity<Map<String, Object>> getRoute(@PathVariable Long rentalId) {
+        return ResponseEntity.ok(routeService.getOrGenerate(rentalId));
     }
 
     @Operation(summary = "Stream SSE em tempo real")

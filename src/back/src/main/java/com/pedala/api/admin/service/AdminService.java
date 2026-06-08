@@ -2,6 +2,7 @@ package com.pedala.api.admin.service;
 
 import com.pedala.api.bike.domain.Bike;
 import com.pedala.api.bike.repository.BikeRepository;
+import com.pedala.api.config.CacheConfig;
 import com.pedala.api.exception.BusinessException;
 import com.pedala.api.exception.ResourceNotFoundException;
 import com.pedala.api.inspection.domain.InspectionStatus;
@@ -14,6 +15,8 @@ import com.pedala.api.shared.TimeSimulator;
 import com.pedala.api.user.domain.UserRole;
 import com.pedala.api.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -35,6 +38,7 @@ public class AdminService {
 
     private static final List<String> ACTIVE_STATUSES = List.of("ativo", "aguardando_locacao", "agendada", "aguardando_vistoria");
 
+    @Cacheable(CacheConfig.CACHE_STATS)
     @Transactional(readOnly = true)
     public Map<String, Object> getStats() {
         Instant agora = timeSimulator.now();
@@ -85,6 +89,19 @@ public class AdminService {
     public Map<String, Object> getAdminBikes() {
         Instant agora = timeSimulator.now();
         List<Bike> bikes = bikeRepository.findAll();
+
+        // Carrega TODOS os aluguéis ativos em UMA query — evita N+1
+        List<RentalStatus> activeStatuses = List.of(
+                RentalStatus.ativo, RentalStatus.aguardando_locacao,
+                RentalStatus.agendada, RentalStatus.aguardando_vistoria);
+        Map<Long, Rental> activeByBikeId = rentalRepository
+                .findByStatusIn(activeStatuses)
+                .stream()
+                .collect(java.util.stream.Collectors.toMap(
+                        Rental::getBikeId,
+                        r -> r,
+                        (existing, duplicate) -> existing));   // mantém o primeiro se houver duplicata
+
         List<Map<String, Object>> lista = bikes.stream().map(bike -> {
             Map<String, Object> m = new LinkedHashMap<>();
             m.put("id", bike.getId()); m.put("nome", bike.getNome()); m.put("categoria", bike.getCategoria());
@@ -96,10 +113,8 @@ public class AdminService {
             m.put("precos", precos); m.put("imagem", bike.getImagem());
             m.put("adicionadaEm", bike.getAdicionadaEm().toString());
 
-            List<Rental> activeRentals = rentalRepository.findByBikeIdAndStatusIn(bike.getId(),
-                    List.of(RentalStatus.ativo, RentalStatus.aguardando_locacao, RentalStatus.agendada, RentalStatus.aguardando_vistoria));
-            if (!activeRentals.isEmpty()) {
-                Rental r = activeRentals.get(0);
+            Rental r = activeByBikeId.get(bike.getId());
+            if (r != null) {
                 Instant startDate = r.getAtivadoEm() != null ? r.getAtivadoEm() : r.getDataInicio();
                 long diasEmUso = Math.max(0, ChronoUnit.DAYS.between(startDate, agora));
                 long diasRestantes = ChronoUnit.DAYS.between(agora, r.getDataDevolucaoPrevista());

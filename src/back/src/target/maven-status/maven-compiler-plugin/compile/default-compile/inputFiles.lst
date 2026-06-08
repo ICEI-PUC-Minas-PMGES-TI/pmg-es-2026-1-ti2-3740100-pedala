@@ -7,6 +7,7 @@ C:\Users\jotaa\OneDrive\Documentos\Prado\PedaLa\pmg-es-2026-1-ti2-3740100-pedala
 C:\Users\jotaa\OneDrive\Documentos\Prado\PedaLa\pmg-es-2026-1-ti2-3740100-pedala\src\back\src\main\java\com\pedala\api\bike\repository\BikeCategoryRepository.java
 C:\Users\jotaa\OneDrive\Documentos\Prado\PedaLa\pmg-es-2026-1-ti2-3740100-pedala\src\back\src\main\java\com\pedala\api\bike\repository\BikeRepository.java
 C:\Users\jotaa\OneDrive\Documentos\Prado\PedaLa\pmg-es-2026-1-ti2-3740100-pedala\src\back\src\main\java\com\pedala\api\bike\service\BikeService.java
+C:\Users\jotaa\OneDrive\Documentos\Prado\PedaLa\pmg-es-2026-1-ti2-3740100-pedala\src\back\src\main\java\com\pedala\api\config\CacheConfig.java
 C:\Users\jotaa\OneDrive\Documentos\Prado\PedaLa\pmg-es-2026-1-ti2-3740100-pedala\src\back\src\main\java\com\pedala\api\config\CorsConfig.java
 C:\Users\jotaa\OneDrive\Documentos\Prado\PedaLa\pmg-es-2026-1-ti2-3740100-pedala\src\back\src\main\java\com\pedala\api\config\DataSeeder.java
 C:\Users\jotaa\OneDrive\Documentos\Prado\PedaLa\pmg-es-2026-1-ti2-3740100-pedala\src\back\src\main\java\com\pedala\api\config\HealthController.java
@@ -24,6 +25,7 @@ C:\Users\jotaa\OneDrive\Documentos\Prado\PedaLa\pmg-es-2026-1-ti2-3740100-pedala
 C:\Users\jotaa\OneDrive\Documentos\Prado\PedaLa\pmg-es-2026-1-ti2-3740100-pedala\src\back\src\main\java\com\pedala\api\gps\domain\BikeTelemetry.java
 C:\Users\jotaa\OneDrive\Documentos\Prado\PedaLa\pmg-es-2026-1-ti2-3740100-pedala\src\back\src\main\java\com\pedala\api\gps\repository\BikeTelemetryRepository.java
 C:\Users\jotaa\OneDrive\Documentos\Prado\PedaLa\pmg-es-2026-1-ti2-3740100-pedala\src\back\src\main\java\com\pedala\api\gps\service\GpsSimulatorService.java
+C:\Users\jotaa\OneDrive\Documentos\Prado\PedaLa\pmg-es-2026-1-ti2-3740100-pedala\src\back\src\main\java\com\pedala\api\gps\service\RouteGenerationService.java
 C:\Users\jotaa\OneDrive\Documentos\Prado\PedaLa\pmg-es-2026-1-ti2-3740100-pedala\src\back\src\main\java\com\pedala\api\inspection\controller\InspectionController.java
 C:\Users\jotaa\OneDrive\Documentos\Prado\PedaLa\pmg-es-2026-1-ti2-3740100-pedala\src\back\src\main\java\com\pedala\api\inspection\domain\Inspection.java
 C:\Users\jotaa\OneDrive\Documentos\Prado\PedaLa\pmg-es-2026-1-ti2-3740100-pedala\src\back\src\main\java\com\pedala\api\inspection\domain\InspectionStatus.java

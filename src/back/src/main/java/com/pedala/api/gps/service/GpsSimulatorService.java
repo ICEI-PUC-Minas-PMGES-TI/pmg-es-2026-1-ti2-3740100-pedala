@@ -130,13 +130,27 @@ public class GpsSimulatorService {
     // ── Recovery no startup ────────────────────────────────────────────────────
     @EventListener(ApplicationReadyEvent.class)
     public void recoverActiveRentals() {
-        List<Rental> ativos = rentalRepository.findByStatus(RentalStatus.ativo);
-        if (ativos.isEmpty()) return;
-        log.info("[GPS] Recuperando {} locacao(oes) ativa(s) apos startup", ativos.size());
-        for (Rental rental : ativos) {
-            startTracking(rental.getBikeId(), rental.getId(), rental.getBikeNome());
-            log.info("[GPS] Tracking reiniciado: bikeId={}, rentalId={}", rental.getBikeId(), rental.getId());
+        // Retry até 3x com delay de 3s — Azure SQL pode resetar conexão após migrations longas
+        int attempts = 0;
+        while (attempts < 3) {
+            try {
+                List<Rental> ativos = rentalRepository.findByStatus(RentalStatus.ativo);
+                if (ativos.isEmpty()) return;
+                log.info("[GPS] Recuperando {} locacao(oes) ativa(s) apos startup", ativos.size());
+                for (Rental rental : ativos) {
+                    startTracking(rental.getBikeId(), rental.getId(), rental.getBikeNome());
+                    log.info("[GPS] Tracking reiniciado: bikeId={}, rentalId={}", rental.getBikeId(), rental.getId());
+                }
+                return;
+            } catch (Exception e) {
+                attempts++;
+                log.warn("[GPS] Falha ao recuperar locacoes (tentativa {}/3): {}", attempts, e.getMessage());
+                if (attempts < 3) {
+                    try { Thread.sleep(3000); } catch (InterruptedException ie) { Thread.currentThread().interrupt(); return; }
+                }
+            }
         }
+        log.error("[GPS] Nao foi possivel recuperar locacoes ativas apos 3 tentativas. GPS iniciara vazio.");
     }
 
     // ── API pública ────────────────────────────────────────────────────────────
@@ -200,7 +214,8 @@ public class GpsSimulatorService {
     }
 
     public SseEmitter createEmitter() {
-        SseEmitter emitter = new SseEmitter(Long.MAX_VALUE);
+        // 5 minutos — frontend reconecta automaticamente em 5s
+        SseEmitter emitter = new SseEmitter(300_000L);
         emitters.add(emitter);
         emitter.onCompletion(() -> emitters.remove(emitter));
         emitter.onTimeout(()    -> emitters.remove(emitter));

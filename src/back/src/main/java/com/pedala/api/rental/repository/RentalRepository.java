@@ -21,6 +21,9 @@ public interface RentalRepository extends JpaRepository<Rental, Long> {
 
     List<Rental> findByBikeIdAndStatusIn(Long bikeId, List<RentalStatus> statuses);
 
+    // Busca TODOS os aluguéis em determinados statuses — evita N+1 em getAdminBikes()
+    List<Rental> findByStatusIn(List<RentalStatus> statuses);
+
     Optional<Rental> findByIdAndUsuarioId(Long id, Long usuarioId);
 
     long countByStatus(RentalStatus status);

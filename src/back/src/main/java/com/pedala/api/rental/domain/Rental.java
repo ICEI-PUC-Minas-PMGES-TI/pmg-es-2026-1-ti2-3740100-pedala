@@ -138,6 +138,22 @@ public class Rental {
     @Column(name = "pagamento_motivo_rejeicao", length = 500)
     private String pagamentoMotivoRejeicao;
 
+    // Rota GPS gerada via OSRM (salva na primeira solicitação, reutilizada depois)
+    @Column(name = "rota_geojson", columnDefinition = "NVARCHAR(MAX)")
+    private String rotaGeojson;
+
+    @Column(name = "rota_distancia_km", precision = 6, scale = 2)
+    private java.math.BigDecimal rotaDistanciaKm;
+
+    @Column(name = "rota_duracao_min")
+    private Integer rotaDuracaoMin;
+
+    @Column(name = "rota_bairro_inicio", length = 100)
+    private String rotaBairroInicio;
+
+    @Column(name = "rota_bairro_fim", length = 100)
+    private String rotaBairroFim;
+
     @OneToMany(mappedBy = "rental", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
     @Builder.Default
     private Set<RentalInvoice> faturas = new LinkedHashSet<>();
