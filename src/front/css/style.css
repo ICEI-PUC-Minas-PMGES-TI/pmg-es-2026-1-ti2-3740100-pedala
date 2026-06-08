@@ -2285,13 +2285,29 @@ tr:hover td { background: var(--color-bg-soft); }
 }
 
 /* =============================================
-   ADMIN DESIGN IMPROVEMENTS v2.0 - PedaLa
-   Dark-mode-only overrides wrapped in [data-theme="dark"]
-   ============================================= */
+  ADMIN DESIGN IMPROVEMENTS v2.0 - PedaLa
+  Dark-mode-only overrides wrapped in [data-theme="dark"]
+  ============================================= */
 
-/* --- THEME-NEUTRAL (ambos os temas) --- */
-.logo-icon { background: linear-gradient(135deg,#F7B84C,#E5A53B) !important; box-shadow: 0 2px 8px rgba(247,184,76,.4) !important; }
-.nav-avatar { background: linear-gradient(135deg,#F7B84C,#E5A53B) !important; box-shadow: 0 2px 8px rgba(247,184,76,.35) !important; font-weight: 700 !important; }
+/* --- SIDEBAR --- */
+[data-theme="dark"] .sidebar { background: linear-gradient(180deg, #1a1208 0%, #221804 40%, #1a1208 100%) !important; border-right: 1px solid rgba(247,184,76,.15) !important; box-shadow: 4px 0 24px rgba(0,0,0,.35) !important; }
+[data-theme="dark"] .sidebar::before { content: 'PAINEL ADMIN'; display: block; font-size: .6rem; font-weight: 700; letter-spacing: .18em; color: rgba(247,184,76,.5); padding: 20px 26px 10px; text-transform: uppercase; }
+[data-theme="dark"] .sidebar-nav a { color: rgba(255,255,255,.65) !important; }
+[data-theme="dark"] .sidebar-nav a:hover { color: #fff !important; background: rgba(247,184,76,.12) !important; }
+[data-theme="dark"] .sidebar-nav a.active { color: #F7B84C !important; background: rgba(247,184,76,.18) !important; font-weight: 600 !important; }
+
+/* --- NAVBAR --- */
+[data-theme="dark"] .navbar { background: rgba(20,14,6,.97) !important; backdrop-filter: blur(20px) !important; -webkit-backdrop-filter: blur(20px) !important; border-bottom: 1px solid rgba(247,184,76,.12) !important; box-shadow: 0 1px 0 rgba(247,184,76,.08), 0 4px 20px rgba(0,0,0,.3) !important; }
+[data-theme="dark"] .navbar .logo,
+[data-theme="dark"] .navbar .nav-links a,
+[data-theme="dark"] .navbar .nav-username,
+[data-theme="dark"] .navbar .theme-toggle { color: #F4EFE6 !important; }
+[data-theme="dark"] .navbar .theme-toggle:hover { background: rgba(255,255,255,.06) !important; }
+[data-theme="dark"] .logo-icon { background: linear-gradient(135deg,#F7B84C,#E5A53B) !important; box-shadow: 0 2px 8px rgba(247,184,76,.4) !important; }
+[data-theme="dark"] .nav-avatar { background: linear-gradient(135deg,#F7B84C,#E5A53B) !important; box-shadow: 0 2px 8px rgba(247,184,76,.35) !important; font-weight: 700 !important; }
+[data-theme="dark"] .nav-user-info::after { content: 'ADMIN'; font-size: .55rem; font-weight: 700; letter-spacing: .1em; background: rgba(247,184,76,.18); color: #F7B84C; border: 1px solid rgba(247,184,76,.35); border-radius: 4px; padding: 2px 5px; margin-left: 2px; }
+
+/* --- STAT CARDS --- */
 .stat-grid { gap: 14px !important; }
 .stat-card { border-radius: 14px !important; padding: 20px 20px 18px !important; transition: transform .2s ease, box-shadow .2s ease !important; position: relative !important; overflow: hidden !important; }
 .stat-card-icon { position: absolute; top: 14px; right: 14px; width: 36px; height: 36px; display: flex; align-items: center; justify-content: center; border-radius: 10px; }
