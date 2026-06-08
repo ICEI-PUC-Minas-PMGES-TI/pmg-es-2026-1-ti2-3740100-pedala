@@ -13,12 +13,46 @@ function escHtml(s) {
     return String(s ?? '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
 }
 
+const AVARIAS_TIPOS = [
+    { key: 'arranhao_leve',     label: 'Arranhão leve',      custo: 50 },
+    { key: 'amassado_leve',     label: 'Amassado leve',      custo: 150 },
+    { key: 'pneu_furado',       label: 'Pneu furado',        custo: 120 },
+    { key: 'quebra_acessorio',  label: 'Acessório quebrado', custo: 200 },
+    { key: 'dano_mecanico',     label: 'Dano mecânico',      custo: 500 },
+    { key: 'dano_quadro',       label: 'Dano no quadro',     custo: 800 },
+    { key: 'roubo_parcial',     label: 'Roubo parcial',      custo: 1200 },
+    { key: 'perda_total',       label: 'Perda total',        custo: 3000 },
+];
+
+function _cobertoPorPlano(seg, av) {
+    const s = (seg || '').toLowerCase();
+    if (s === 'premium') return true;
+    if (s === 'intermediario') return av === 'arranhao_leve' || av === 'amassado_leve';
+    return false;
+}
+
+function _avariasHtml(vId, tipoSeguro) {
+    return AVARIAS_TIPOS.map(av => {
+        const coberto = _cobertoPorPlano(tipoSeguro, av.key);
+        return `<label style="display:flex;align-items:center;gap:5px;font-size:11px;cursor:pointer;background:var(--bg-secondary);border:1px solid var(--border);border-radius:5px;padding:5px 7px;">
+            <input type="checkbox" value="${av.key}" class="av-chk-${vId}" style="cursor:pointer;flex-shrink:0;">
+            <span style="flex:1;">${escHtml(av.label)}</span>
+            <span class="badge ${coberto ? 'badge-success' : 'badge-muted'}" style="font-size:9px;">${coberto ? 'Coberto' : 'R$' + av.custo}</span>
+        </label>`;
+    }).join('');
+}
+
+function _segBadgeEmp(s) {
+    const c = { premium: 'badge-success', intermediario: 'badge-warning', basico: 'badge-muted' };
+    return s ? `<span class="badge ${c[s]||'badge-muted'}" style="font-size:10px;">${s}</span>` : '';
+}
+
 function showSec(s, el) {
     document.querySelectorAll('.sec').forEach(x => x.classList.remove('show'));
     document.getElementById('sec-' + s).classList.add('show');
     document.querySelectorAll('.sidebar-nav a').forEach(a => a.classList.remove('active'));
     if (el) el.classList.add('active');
-    const m = { vistorias: loadVist, locacoes: loadLoc, gps: initGpsMap };
+    const m = { vistorias: loadVist, locacoes: loadLoc, gps: initGpsMap, chamados: loadChamados };
     if (m[s]) m[s]();
 }
 
@@ -38,14 +72,21 @@ async function loadVist() {
       <div class="card" style="margin-bottom:12px;">
         <div class="card-header">
           <span class="card-title">${escHtml(v.bikeNome || 'Bike #' + v.bikeId)}</span>
-          <span class="badge badge-warning">Pendente</span>
+          <div style="display:flex;gap:5px;align-items:center;">
+            ${_segBadgeEmp(v.tipoSeguro)}
+            <span class="badge badge-warning">Pendente</span>
+          </div>
         </div>
         <div class="card-body">
           <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px;font-size:12px;">
             <div><span style="color:var(--text-secondary);">Locação</span><br><strong>#${v.aluguelId}</strong></div>
             <div><span style="color:var(--text-secondary);">Usuário</span><br><strong>${escHtml(v.usuarioNome || '-')}</strong></div>
           </div>
-          <label class="form-label">Observação</label>
+          <div style="margin-bottom:10px;">
+            <div class="form-label" style="margin-bottom:5px;">Avarias encontradas</div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:3px;">${_avariasHtml(v.id, v.tipoSeguro)}</div>
+          </div>
+          <label class="form-label">Observação técnica</label>
           <textarea class="form-input form-textarea" id="obs-${v.id}" placeholder="Detalhes técnicos sobre o estado da bicicleta..." rows="2"></textarea>
           <div style="display:flex;gap:8px;margin-top:10px;">
             <button class="btn btn-primary" onclick="aprovVist(${v.id})">Aprovar vistoria</button>
@@ -59,7 +100,8 @@ async function loadVist() {
 async function aprovVist(id) {
     const obs = document.getElementById('obs-' + id)?.value?.trim() || '';
     if (!obs) { showToast('Informe a observação técnica ao aprovar a vistoria.', 'warning'); return; }
-    const r = await fetch(`${API_BASE}/vistorias/${id}/aprovar`, { method: 'PUT', headers: hj, body: JSON.stringify({ observacao: obs }) });
+    const avarias = [...document.querySelectorAll(`.av-chk-${id}:checked`)].map(c => c.value);
+    const r = await fetch(`${API_BASE}/vistorias/${id}/aprovar`, { method: 'PUT', headers: hj, body: JSON.stringify({ observacao: obs, avarias }) });
     const d = await r.json();
     showToast(d.message || d.error || '', r.ok ? 'success' : 'error');
     if (r.ok) loadVist();
@@ -136,6 +178,132 @@ async function ativarLoc(id) {
     const d = await r.json();
     showToast(d.message || d.error || '', r.ok ? 'success' : 'error');
     if (r.ok) loadLoc();
+}
+
+// ── Chamados ──────────────────────────────────────────
+let _allChamados = [];
+let _chamadoId = null;
+
+const _sTipoChamado = { manutencao:'Manutenção', duvida_fatura:'Dúvida na fatura', avaria:'Avaria', outros:'Outros' };
+const _sPrioridade  = { baixa:'🔵 Baixa', normal:'🟡 Normal', alta:'🟠 Alta', urgente:'🔴 Urgente' };
+
+async function loadChamados() {
+    const sf = document.getElementById('chamadoSF')?.value || '';
+    try {
+        const url = sf ? `${API_BASE}/chamados?status=${sf}` : `${API_BASE}/chamados`;
+        const d = await fetch(url, { headers: h }).then(r => r.json());
+        _allChamados = sf ? (d.tickets || []) : (d.tickets || []).filter(t => t.status === 'aberto' || t.status === 'em_atendimento');
+        renderChamados(_allChamados);
+        const badgeEl = document.getElementById('chamadosBadge');
+        if (badgeEl) {
+            const cnt = (d.tickets || []).filter(t => t.status === 'aberto').length;
+            badgeEl.textContent = cnt;
+            badgeEl.style.display = cnt > 0 ? '' : 'none';
+        }
+    } catch (e) { showToast('Erro ao carregar chamados.', 'error'); }
+}
+
+function filterChamados() { loadChamados(); }
+
+function renderChamados(list) {
+    const el = document.getElementById('chamadoList');
+    if (!el) return;
+    if (!list.length) {
+        el.innerHTML = '<div class="card"><div class="card-body" style="text-align:center;padding:40px;"><p style="color:var(--text-secondary);">Nenhum chamado encontrado.</p></div></div>';
+        return;
+    }
+    const sMap = { aberto:'badge-danger', em_atendimento:'badge-warning', resolvido:'badge-success', cancelado:'badge-muted' };
+    const sLbl = { aberto:'Aberto', em_atendimento:'Em atendimento', resolvido:'Resolvido', cancelado:'Cancelado' };
+    el.innerHTML = list.map(t => `
+    <div class="card" style="margin-bottom:10px;cursor:pointer;" onclick="openChamadoEmpModal(${t.id})">
+      <div class="card-header" style="padding:10px 14px;">
+        <div>
+          <span class="card-title" style="font-size:0.88rem;">#${t.id} — ${escHtml(_sTipoChamado[t.tipo] || t.tipo)}</span>
+          <div style="font-size:11px;color:var(--text-muted);margin-top:2px;">${escHtml(t.usuarioNome||'—')} · Loc.#${t.rentalId} · ${_segBadgeEmp(t.tipoSeguro)}</div>
+        </div>
+        <div style="display:flex;gap:5px;align-items:center;">
+          <span class="badge ${sMap[t.status]||'badge-muted'}" style="font-size:10px;">${sLbl[t.status]||t.status}</span>
+          <span style="font-size:10px;color:var(--text-muted);">${_sPrioridade[t.prioridade]||''}</span>
+        </div>
+      </div>
+      <div style="padding:5px 14px 10px;font-size:12px;color:var(--text-secondary);">${escHtml((t.descricao||'').substring(0,120))}${(t.descricao||'').length>120?'...':''}</div>
+    </div>`).join('');
+}
+
+function openChamadoEmpModal(id) {
+    const t = _allChamados.find(x => x.id === id);
+    if (!t) return;
+    _chamadoId = id;
+    const sMap = { aberto:'badge-danger', em_atendimento:'badge-warning', resolvido:'badge-success', cancelado:'badge-muted' };
+    const sLbl = { aberto:'Aberto', em_atendimento:'Em atendimento', resolvido:'Resolvido', cancelado:'Cancelado' };
+    document.getElementById('chamadoEmpModalTitle').textContent = `Chamado #${t.id}`;
+    document.getElementById('chamadoEmpModalBadge').innerHTML = `<span class="badge ${sMap[t.status]||'badge-muted'}">${sLbl[t.status]||t.status}</span>`;
+    const row = (l,v) => `<div style="display:flex;justify-content:space-between;padding:3px 0;font-size:0.84rem;"><span style="color:var(--text-muted);">${l}</span><strong>${v}</strong></div>`;
+    document.getElementById('chamadoEmpModalInfo').innerHTML = [
+        row('Tipo', escHtml(_sTipoChamado[t.tipo]||t.tipo)),
+        row('Locação', `#${t.rentalId}` + (t.bikeNome ? ` · ${escHtml(t.bikeNome)}`  : '')),
+        row('Plano seguro', _segBadgeEmp(t.tipoSeguro) || '—'),
+        row('Prioridade', _sPrioridade[t.prioridade]||t.prioridade),
+        row('Aberto em', t.criadoEm ? new Date(t.criadoEm).toLocaleDateString('pt-BR') : '—'),
+        t.funcionarioNome ? row('Atendente', escHtml(t.funcionarioNome)) : '',
+        `<div style="margin-top:8px;background:var(--bg-primary,var(--bg-main));border:1px solid var(--border);border-radius:6px;padding:10px;font-size:0.82rem;"><strong>Descrição:</strong><br><span style="color:var(--text-secondary);">${escHtml(t.descricao)}</span></div>`,
+        t.resolucao ? `<div style="margin-top:6px;background:var(--bg-primary,var(--bg-main));border:1px solid var(--border);border-radius:6px;padding:10px;font-size:0.82rem;"><strong>Resolução:</strong><br><span style="color:var(--text-secondary);">${escHtml(t.resolucao)}</span></div>` : '',
+    ].filter(Boolean).join('');
+    const resolveWrap = document.getElementById('chamadoEmpModalResolveWrap');
+    if (resolveWrap) resolveWrap.style.display = t.status === 'em_atendimento' ? '' : 'none';
+    if (t.status === 'em_atendimento') {
+        const re = document.getElementById('chamadoEmpResolucao'); if (re) re.value = '';
+        const ce = document.getElementById('chamadoEmpCusto');     if (ce) ce.value = '';
+        const ci = document.getElementById('chamadoEmpCoberturaInfo'); if (ci) ci.innerHTML = '';
+    }
+    const actEl = document.getElementById('chamadoEmpModalActions');
+    if (t.status === 'aberto') {
+        actEl.innerHTML = `<button class="btn btn-primary btn-sm" onclick="atenderChamado()">Atender chamado</button><button class="btn btn-ghost btn-sm" onclick="closeChamadoEmpModal()">Fechar</button>`;
+    } else if (t.status === 'em_atendimento') {
+        actEl.innerHTML = `<button class="btn btn-success btn-sm" onclick="resolverChamado()">Resolver</button><button class="btn btn-ghost btn-sm" onclick="closeChamadoEmpModal()">Fechar</button>`;
+    } else {
+        actEl.innerHTML = `<button class="btn btn-ghost btn-sm" onclick="closeChamadoEmpModal()">Fechar</button>`;
+    }
+    document.getElementById('chamadoEmpModal').classList.add('open');
+}
+
+function closeChamadoEmpModal() {
+    document.getElementById('chamadoEmpModal')?.classList.remove('open');
+    _chamadoId = null;
+}
+
+function updateChamadoCobertura() {
+    const custo = parseFloat(document.getElementById('chamadoEmpCusto')?.value) || 0;
+    const el = document.getElementById('chamadoEmpCoberturaInfo');
+    if (!el) return;
+    const t = _allChamados.find(x => x.id === _chamadoId);
+    if (!t) return;
+    const seg = (t.tipoSeguro || '').toLowerCase();
+    const coberto = seg === 'premium' || custo === 0
+        || (seg === 'intermediario' && (t.tipo === 'manutencao' || t.tipo === 'duvida_fatura'))
+        || (seg === 'basico' && t.tipo === 'duvida_fatura');
+    el.innerHTML = coberto
+        ? '<span class="badge badge-success">Coberto pelo plano</span>'
+        : `<span class="badge badge-danger">Cobra R$${custo.toFixed(2)}</span>`;
+}
+
+async function atenderChamado() {
+    if (!_chamadoId) return;
+    const r = await fetch(`${API_BASE}/chamados/${_chamadoId}/atender`, { method: 'PUT', headers: hj });
+    const d = await r.json();
+    showToast(d.message || d.error || '', r.ok ? 'success' : 'error');
+    if (r.ok) { closeChamadoEmpModal(); loadChamados(); }
+}
+
+async function resolverChamado() {
+    if (!_chamadoId) return;
+    const resolucao = document.getElementById('chamadoEmpResolucao')?.value?.trim();
+    if (!resolucao) { showToast('Informe a resolução antes de confirmar.', 'warning'); return; }
+    const custo = parseFloat(document.getElementById('chamadoEmpCusto')?.value) || 0;
+    const r = await fetch(`${API_BASE}/chamados/${_chamadoId}/resolver`, { method: 'PUT', headers: hj, body: JSON.stringify({ resolucao, custo }) });
+    const d = await r.json();
+    showToast(d.message || d.error || '', r.ok ? 'success' : 'error');
+    if (r.ok) { closeChamadoEmpModal(); loadChamados(); }
 }
 
 // ── GPS Map — Leaflet + SSE ───────────────────────────
@@ -583,6 +751,16 @@ window.verRotaGPS = verRotaGPS;
 window.closeGpsHistory = closeGpsHistory;
 window._gpsFlyTo = _gpsFlyTo;
 window._toggleHomeMarker = _toggleHomeMarker;
+window.openChamadoEmpModal = openChamadoEmpModal;
+window.closeChamadoEmpModal = closeChamadoEmpModal;
+window.atenderChamado = atenderChamado;
+window.resolverChamado = resolverChamado;
+window.updateChamadoCobertura = updateChamadoCobertura;
+window.filterChamados = filterChamados;
+
+document.addEventListener('keydown', e => {
+    if (e.key === 'Escape') closeChamadoEmpModal();
+});
 
 // ── Init ──────────────────────────────────────────────
 loadVist();

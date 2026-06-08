@@ -25,8 +25,8 @@ function showSec(s, el) {
     const loaders = {
         dashboard: loadDash, bikes: loadBikes,
         locacoes: loadLocacoes, pagamentos: loadPagamentos,
-        gps: initGpsMap, vistorias: loadVist, usuarios: loadUsers,
-        configuracoes: loadCategories
+        gps: initGpsMap, vistorias: loadVist, chamados: loadChamadosAdmin,
+        usuarios: loadUsers, configuracoes: loadCategories
     };
     if (loaders[s]) loaders[s]();
 }
@@ -252,6 +252,16 @@ async function loadDash() {
                     }).join('');
                 }
             }
+        } catch (_) {}
+        // ── Chamados stats ──
+        try {
+            const cs = await fetch(`${API_BASE}/chamados/stats`, { headers: authH }).then(r => r.json());
+            const ca = document.getElementById('dashChamAbertos');
+            const cb = document.getElementById('dashChamAtend');
+            const cc = document.getElementById('dashChamResolvidos');
+            if (ca) ca.textContent = cs.abertos ?? 0;
+            if (cb) cb.textContent = cs.emAtendimento ?? 0;
+            if (cc) cc.textContent = cs.resolvidos ?? 0;
         } catch (_) {}
     } catch (e) { showToast('Erro ao carregar dashboard.', 'error'); }
 }
@@ -1332,7 +1342,8 @@ async function verRotaGPS(rentalId, horas=1) {
         const zoneExits=[];let exitTs=null;
         for(const p of points){const out=_hav(p.lat,p.lng,ZONE_LAT,ZONE_LNG)>ZONE_KM;if(out&&!exitTs)exitTs=new Date(p.registradoEm);else if(!out&&exitTs){zoneExits.push({exitTs,returnTs:new Date(p.registradoEm),dMin:Math.round((new Date(p.registradoEm)-exitTs)/60000)});exitTs=null;}}
         if(exitTs)zoneExits.push({exitTs,returnTs:null,dMin:Math.round((lastTs-exitTs)/60000)});
-        const zoneHtml=zoneExits.length?`<div style="margin-bottom:10px;display:flex;flex-wrap:wrap;gap:5px;align-items:center;"><span style="font-size:11px;color:var(--warning);font-weight:600;">⚠ Fora da zona:</span>${zoneExits.map(e=>`<span style="background:var(--warning-bg);color:var(--warning);border:1px solid var(--warning-border);padding:2px 9px;border-radius:99px;font-size:11px;font-weight:600;">${fmtTime(e.exitTs)} — ${e.dMin<1?'<1':e.dMin}min fora${e.returnTs?` · voltou ${fmtTime(e.returnTs)}`:'  (ainda fora)'}</span>`).join('')}</div>`:'';
+        const zoneShow=zoneExits.slice(-5);const zoneMore=zoneExits.length-zoneShow.length;
+        const zoneHtml=zoneExits.length?`<div style="margin-bottom:10px;"><span style="font-size:11px;color:var(--warning);font-weight:600;">⚠ Fora da zona${zoneExits.length>1?' ('+zoneExits.length+'x)':''}:</span><div style="display:flex;flex-wrap:wrap;gap:5px;margin-top:5px;">${zoneMore>0?`<span style="background:var(--bg-secondary);color:var(--text-muted);border:1px solid var(--border);padding:2px 9px;border-radius:99px;font-size:11px;">... e mais ${zoneMore} ocorrência${zoneMore>1?'s':''}</span>`:''}${zoneShow.map(e=>`<span style="background:var(--warning-bg);color:var(--warning);border:1px solid var(--warning-border);padding:2px 9px;border-radius:99px;font-size:11px;font-weight:600;">${fmtTime(e.exitTs)} — ${e.dMin<1?'<1':e.dMin}min fora${e.returnTs?` · voltou ${fmtTime(e.returnTs)}`:'  (ainda fora)'}</span>`).join('')}</div></div>`:'';
 
         stats.innerHTML=filterHtml+
             `<div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px;">${card('Duração',durStr)}${card('Vel. Média',avgSpeed+' km/h')}${card('Vel. Máx',maxSpeed+' km/h')}${card('Pontos GPS',points.length)}</div>
@@ -1478,6 +1489,91 @@ async function confirmVist(action) {
     showToast(d.message || d.error || '', r.ok ? 'success' : 'error');
     if (r.ok) { closeVistModal(); loadVist(); }
     btns.forEach(b => b.disabled = false);
+}
+
+// ── Chamados Admin ────────────────────────────────────
+let _allChamadosAdmin = [];
+let _chamadoAdminId = null;
+
+const _aTipoChamado = { manutencao:'Manutenção', duvida_fatura:'Dúvida na fatura', avaria:'Avaria', outros:'Outros' };
+const _aPrioridade  = { baixa:'🔵 Baixa', normal:'🟡 Normal', alta:'🟠 Alta', urgente:'🔴 Urgente' };
+
+function filterChamadosAdmin() { loadChamadosAdmin(); }
+
+async function loadChamadosAdmin() {
+    const sf = document.getElementById('chamadoAdminSF')?.value || '';
+    const tf = document.getElementById('chamadoAdminTF')?.value || '';
+    try {
+        const url = sf ? `${API_BASE}/chamados?status=${sf}` : `${API_BASE}/chamados`;
+        const d = await fetch(url, { headers: authH }).then(r => r.json());
+        _allChamadosAdmin = (d.tickets || []).filter(t => !tf || t.tipo === tf);
+        const cnt = document.getElementById('chamadoAdminCount');
+        if (cnt) cnt.textContent = `${_allChamadosAdmin.length} chamados`;
+        renderChamadosAdmin(_allChamadosAdmin);
+    } catch (e) { showToast('Erro ao carregar chamados.', 'error'); }
+}
+
+function renderChamadosAdmin(list) {
+    const sMap = { aberto:'badge-danger', em_atendimento:'badge-warning', resolvido:'badge-success', cancelado:'badge-muted' };
+    const sLbl = { aberto:'Aberto', em_atendimento:'Em atendimento', resolvido:'Resolvido', cancelado:'Cancelado' };
+    const segB = s => { const c = { premium:'badge-success', intermediario:'badge-warning', basico:'badge-muted' }; return s ? `<span class="badge ${c[s]||'badge-muted'}" style="font-size:10px;">${s}</span>` : '—'; };
+    document.getElementById('chamadoAdminTbody').innerHTML = list.map(t =>
+        `<tr class="clickable-row" onclick="openChamadoAdminModal(${t.id})" style="cursor:pointer;">
+            <td><strong>#${t.id}</strong></td>
+            <td>${escHtml(t.usuarioNome||'—')}</td>
+            <td>${escHtml(_aTipoChamado[t.tipo]||t.tipo)}</td>
+            <td>${segB(t.tipoSeguro)}</td>
+            <td style="font-size:11px;">${_aPrioridade[t.prioridade]||t.prioridade}</td>
+            <td><span class="badge ${sMap[t.status]||'badge-muted'}">${sLbl[t.status]||t.status}</span></td>
+            <td>${escHtml(t.funcionarioNome||'—')}</td>
+            <td>${t.criadoEm ? new Date(t.criadoEm).toLocaleDateString('pt-BR') : '—'}</td>
+            <td onclick="event.stopPropagation()">
+                ${t.status !== 'resolvido' && t.status !== 'cancelado'
+                    ? `<button class="btn btn-danger btn-sm" onclick="cancelarChamadoAdmin(${t.id})">Cancelar</button>` : '—'}
+            </td>
+        </tr>`
+    ).join('') || '<tr><td colspan="9" style="text-align:center;color:var(--text-muted);padding:24px;">Nenhum chamado encontrado.</td></tr>';
+}
+
+function openChamadoAdminModal(id) {
+    const t = _allChamadosAdmin.find(x => x.id === id);
+    if (!t) return;
+    _chamadoAdminId = id;
+    const sMap = { aberto:'badge-danger', em_atendimento:'badge-warning', resolvido:'badge-success', cancelado:'badge-muted' };
+    const sLbl = { aberto:'Aberto', em_atendimento:'Em atendimento', resolvido:'Resolvido', cancelado:'Cancelado' };
+    document.getElementById('chamadoAdminModalTitle').textContent = `Chamado #${t.id}`;
+    document.getElementById('chamadoAdminModalBadge').innerHTML = `<span class="badge ${sMap[t.status]||'badge-muted'}">${sLbl[t.status]||t.status}</span>`;
+    const row = (l,v) => `<div style="display:flex;justify-content:space-between;padding:3px 0;font-size:0.84rem;"><span style="color:var(--text-muted);">${l}</span><strong>${v}</strong></div>`;
+    const segB = s => { const c = {premium:'badge-success',intermediario:'badge-warning',basico:'badge-muted'}; return s?`<span class="badge ${c[s]||'badge-muted'}">${s}</span>`:'—'; };
+    document.getElementById('chamadoAdminModalInfo').innerHTML = [
+        row('Tipo', escHtml(_aTipoChamado[t.tipo]||t.tipo)),
+        row('Usuário', escHtml(t.usuarioNome||'—')),
+        row('Locação', `#${t.rentalId}` + (t.bikeNome?` · ${escHtml(t.bikeNome)}`:'')),
+        row('Plano seguro', segB(t.tipoSeguro)),
+        row('Prioridade', _aPrioridade[t.prioridade]||t.prioridade),
+        row('Atendente', escHtml(t.funcionarioNome||'—')),
+        t.custoGerado ? row('Custo gerado', `R$ ${Number(t.custoGerado).toFixed(2)} ${t.cobertoPLano?'(coberto pelo plano)':'(fatura gerada)'}`) : '',
+        `<div style="margin-top:8px;background:var(--bg-primary,var(--bg-main));border:1px solid var(--border);border-radius:6px;padding:10px;font-size:0.82rem;"><strong>Descrição:</strong><br><span style="color:var(--text-secondary);">${escHtml(t.descricao)}</span></div>`,
+        t.resolucao ? `<div style="margin-top:6px;background:var(--bg-primary,var(--bg-main));border:1px solid var(--border);border-radius:6px;padding:10px;font-size:0.82rem;"><strong>Resolução:</strong><br><span style="color:var(--text-secondary);">${escHtml(t.resolucao)}</span></div>` : '',
+    ].filter(Boolean).join('');
+    const actEl = document.getElementById('chamadoAdminModalActions');
+    actEl.innerHTML = t.status !== 'resolvido' && t.status !== 'cancelado'
+        ? `<button class="btn btn-danger btn-sm" onclick="cancelarChamadoAdmin(${t.id})">Cancelar chamado</button><button class="btn btn-ghost btn-sm" onclick="closeChamadoAdminModal()">Fechar</button>`
+        : `<button class="btn btn-ghost btn-sm" onclick="closeChamadoAdminModal()">Fechar</button>`;
+    document.getElementById('chamadoAdminModal').classList.add('open');
+}
+
+function closeChamadoAdminModal() {
+    document.getElementById('chamadoAdminModal')?.classList.remove('open');
+    _chamadoAdminId = null;
+}
+
+async function cancelarChamadoAdmin(id) {
+    if (!confirm('Cancelar este chamado?')) return;
+    const r = await fetch(`${API_BASE}/chamados/${id}/cancelar`, { method: 'PUT', headers: authH });
+    const d = await r.json();
+    showToast(d.message || d.error || '', r.ok ? 'success' : 'error');
+    if (r.ok) { closeChamadoAdminModal(); loadChamadosAdmin(); }
 }
 
 // ── Usuários ──────────────────────────────────────────
@@ -1706,6 +1802,7 @@ document.addEventListener('keydown', e => {
         if (typeof closeVistModal === 'function') closeVistModal();
         if (typeof closeUserModal === 'function') closeUserModal();
         if (typeof closeRejPagModal === 'function') closeRejPagModal();
+        if (typeof closeChamadoAdminModal === 'function') closeChamadoAdminModal();
     }
 });
 
@@ -1733,6 +1830,11 @@ window.abrirModalCriarUsuario = abrirModalCriarUsuario;
 window.fecharModalCriarUsuario = fecharModalCriarUsuario;
 window.confirmarCriarUsuario = confirmarCriarUsuario;
 window.excluirUsuario = excluirUsuario;
+window.loadChamadosAdmin = loadChamadosAdmin;
+window.filterChamadosAdmin = filterChamadosAdmin;
+window.openChamadoAdminModal = openChamadoAdminModal;
+window.closeChamadoAdminModal = closeChamadoAdminModal;
+window.cancelarChamadoAdmin = cancelarChamadoAdmin;
 
 // ── Init ──────────────────────────────────────────────
 loadDash();

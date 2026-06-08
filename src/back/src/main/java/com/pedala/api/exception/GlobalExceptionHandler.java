@@ -59,7 +59,10 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(Exception.class)
     public ResponseEntity<Map<String, Object>> handleGeneric(Exception ex) {
         log.error("[ERROR] Unhandled exception: ", ex);
+        String detail = ex.getMessage();
+        Throwable cause = ex.getCause();
+        if (cause != null && cause.getMessage() != null) detail = cause.getMessage();
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                .body(Map.of("error", "Erro interno do servidor."));
+                .body(Map.of("error", "Erro interno do servidor.", "detail", String.valueOf(detail)));
     }
 }

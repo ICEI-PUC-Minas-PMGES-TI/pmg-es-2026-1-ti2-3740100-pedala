@@ -1,5 +1,6 @@
 package com.pedala.api.inspection.controller;
 
+import com.pedala.api.inspection.dto.AprovarVistoriaRequest;
 import com.pedala.api.inspection.service.InspectionService;
 import com.pedala.api.security.UserPrincipal;
 import io.swagger.v3.oas.annotations.Operation;
@@ -10,6 +11,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
 import java.util.Map;
 
 @RestController
@@ -31,10 +33,12 @@ public class InspectionController {
     @PutMapping("/{id}/aprovar")
     @PreAuthorize("hasAnyRole('FUNCIONARIO','ADMIN')")
     public ResponseEntity<Map<String, Object>> approve(
-            @PathVariable Long id, @RequestBody(required = false) Map<String, String> body,
+            @PathVariable Long id,
+            @RequestBody(required = false) AprovarVistoriaRequest body,
             @AuthenticationPrincipal UserPrincipal p) {
-        String obs = body != null ? body.get("observacao") : null;
-        return ResponseEntity.ok(inspectionService.approve(id, obs, p.getId(), p.getNome()));
+        String obs = body != null ? body.observacao() : null;
+        List<String> avarias = body != null && body.avarias() != null ? body.avarias() : List.of();
+        return ResponseEntity.ok(inspectionService.approve(id, obs, avarias, p.getId(), p.getNome()));
     }
 
     @Operation(summary = "Reprovar vistoria")

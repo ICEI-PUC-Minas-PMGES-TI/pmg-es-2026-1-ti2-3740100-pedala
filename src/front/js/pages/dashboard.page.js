@@ -160,7 +160,8 @@ function showSec(section, element) {
     inicio: loadInicio,
     locar: loadLocar,
     locacoes: loadLocacoes,
-    perfil: loadPerfil
+    perfil: loadPerfil,
+    suporte: loadSuporte
   };
 
   loaders[section]?.();
@@ -768,6 +769,238 @@ async function baixarContrato(id) {
   popup.document.close();
 }
 
+// ── Suporte / Chamados ────────────────────────────────
+
+async function loadSuporte() {
+  const target = document.getElementById('suporteList');
+  try {
+    const r = await fetch(`${dashboardApi}/chamados/meus`, { headers: dashboardHeaders });
+    const data = await r.json();
+    const chamados = Array.isArray(data) ? data : (data.tickets || []);
+
+    if (!chamados.length) {
+      target.innerHTML = `<div class="empty-state"><strong>Nenhum chamado encontrado</strong><span>Clique em "+ Abrir chamado" para solicitar suporte.</span></div>`;
+      return;
+    }
+
+    const statusLabel = { aberto: 'Aberto', em_atendimento: 'Em atendimento', resolvido: 'Resolvido', cancelado: 'Cancelado' };
+    const statusTone  = { aberto: 'badge-warning', em_atendimento: 'badge-info', resolvido: 'badge-success', cancelado: 'badge-muted' };
+    const tipoLabel   = { manutencao: 'Manutenção', duvida_fatura: 'Dúvida na fatura', avaria: 'Avaria', outros: 'Outros' };
+
+    target.innerHTML = chamados.map(c => `
+      <article class="card" style="margin-bottom:12px;">
+        <div class="card-body" style="padding:14px 16px;">
+          <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:10px;margin-bottom:10px;">
+            <div>
+              <div style="font-weight:600;font-size:0.95rem;">#${c.id} — ${dashEscape(tipoLabel[c.tipo] || c.tipo)}</div>
+              <div style="font-size:0.78rem;color:var(--text-muted);margin-top:2px;">${formatDashboardDate(c.criadoEm)}</div>
+            </div>
+            <span class="badge ${statusTone[c.status] || 'badge-muted'}">${statusLabel[c.status] || dashEscape(c.status)}</span>
+          </div>
+          <div style="font-size:0.87rem;color:var(--text-secondary);margin-bottom:10px;">${dashEscape(c.descricao)}</div>
+          ${c.resolucao ? `<div style="background:var(--bg-secondary);border:1px solid var(--border);border-radius:6px;padding:10px 12px;font-size:0.84rem;"><strong>Resolução:</strong> ${dashEscape(c.resolucao)}</div>` : ''}
+          ${c.custoGerado ? `<div style="margin-top:8px;font-size:0.84rem;color:var(--danger);">Custo gerado: <strong>${formatCurrency(c.custoGerado)}</strong>${c.cobertoPLano ? ' <span style="color:var(--success);">(coberto pelo plano)</span>' : ''}</div>` : ''}
+        </div>
+      </article>
+    `).join('');
+  } catch (_) {
+    target.innerHTML = `<div class="empty-state"><strong>Falha ao carregar chamados</strong><span>Tente novamente em instantes.</span></div>`;
+  }
+}
+
+let _suporteRentalId = null;
+let _suporteTipoSelecionado = '';
+let _suportePresetSelecionado = '';
+
+const _CHAMADO_PRESETS = {
+  manutencao: [
+    { key: 'Freio não funciona corretamente', icon: '🛑' },
+    { key: 'Câmbio com problemas', icon: '⚙️' },
+    { key: 'Pneu com ar baixo ou furado', icon: '🔩' },
+    { key: 'Guidão ou selim solto', icon: '🔧' },
+    { key: 'Corrente solta ou quebrada', icon: '🔗' },
+    { key: 'Outro problema mecânico', icon: '🔨' },
+  ],
+  duvida_fatura: [
+    { key: 'Valor cobrado incorreto', icon: '💰' },
+    { key: 'Fatura não reconhecida', icon: '❓' },
+    { key: 'Dúvida sobre desconto aplicado', icon: '🏷️' },
+    { key: 'Prazo de pagamento', icon: '📅' },
+    { key: 'Cobrança em duplicidade', icon: '🔄' },
+  ],
+  avaria: [
+    { key: 'Arranhão ou amassado na estrutura', icon: '⚠️' },
+    { key: 'Acessório quebrado (cesta, lanterna, etc.)', icon: '💥' },
+    { key: 'Dano mecânico grave', icon: '🚨' },
+    { key: 'Roubo ou furto de parte da bike', icon: '🔒' },
+    { key: 'Bike perdida ou roubada completamente', icon: '🚨' },
+  ],
+  outros: [
+    { key: 'Dúvida sobre o contrato', icon: '📄' },
+    { key: 'Solicitação de troca de bike', icon: '🔄' },
+    { key: 'Problema no aplicativo ou portal', icon: '📱' },
+    { key: 'Outro assunto', icon: '💬' },
+  ],
+};
+
+const _CHAMADO_TIPO_INFO = {
+  manutencao:    { icon: '🔧', label: 'Manutenção', prioridade: 'alta' },
+  duvida_fatura: { icon: '💳', label: 'Dúvida na fatura', prioridade: 'normal' },
+  avaria:        { icon: '⚠️', label: 'Avaria / Dano', prioridade: 'alta' },
+  outros:        { icon: '💬', label: 'Outros', prioridade: 'normal' },
+};
+
+async function openAbrirChamadoModal() {
+  const info = document.getElementById('abrirChamadoLocacaoInfo');
+  _suporteRentalId = null;
+  _suporteTipoSelecionado = '';
+  _suportePresetSelecionado = '';
+
+  document.getElementById('chamadoStep1').style.display = '';
+  document.getElementById('chamadoStep2').style.display = 'none';
+  document.querySelectorAll('.chamado-tipo-card').forEach(b => b.classList.remove('selected'));
+
+  const erro = document.getElementById('abrirChamadoErro');
+  if (erro) { erro.style.display = 'none'; erro.textContent = ''; }
+  const desc = document.getElementById('chamadoDescricao');
+  if (desc) desc.value = '';
+
+  try {
+    const r = await fetch(`${dashboardApi}/rentals/meus`, { headers: dashboardHeaders });
+    const d = await r.json();
+    const active = (d.alugueis || []).find(al => al.status !== 'finalizado');
+    if (active) {
+      _suporteRentalId = active.id;
+      if (info) {
+        info.style.display = '';
+        info.innerHTML = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-2px;margin-right:4px;"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg><strong>Locação #${active.id}</strong> — ${dashEscape(active.bikeNome)}`;
+      }
+    } else {
+      if (info) {
+        info.style.display = '';
+        info.innerHTML = `<span style="color:var(--danger);">Nenhuma locação ativa. É necessário ter uma locação para abrir um chamado.</span>`;
+      }
+    }
+  } catch (_) {
+    if (info) info.style.display = 'none';
+  }
+
+  document.getElementById('abrirChamadoModal').classList.add('open');
+}
+
+function selecionarTipoChamado(tipo, el) {
+  _suporteTipoSelecionado = tipo;
+  _suportePresetSelecionado = '';
+  document.querySelectorAll('.chamado-tipo-card').forEach(b => b.classList.remove('selected'));
+  el.classList.add('selected');
+
+  const info = _CHAMADO_TIPO_INFO[tipo];
+  const badge = document.getElementById('chamadoTipoSelecionadoBadge');
+  if (badge) badge.innerHTML = `<span style="display:inline-flex;align-items:center;gap:6px;background:var(--bg-secondary);border:1px solid var(--border);border-radius:8px;padding:6px 12px;font-size:0.84rem;font-weight:600;">${info.icon} ${dashEscape(info.label)}</span>`;
+
+  const presets = _CHAMADO_PRESETS[tipo] || [];
+  const container = document.getElementById('chamadoPresets');
+  container.innerHTML = presets.map(p => `
+    <button type="button" class="chamado-preset-btn" onclick="selecionarPreset(this,'${dashEscape(p.key)}')">
+      <span class="preset-check"></span>
+      <span>${p.icon} ${dashEscape(p.key)}</span>
+    </button>
+  `).join('');
+
+  const descLabel = document.getElementById('chamadoDescLabel');
+  if (descLabel) descLabel.innerHTML = tipo === 'outros'
+    ? 'Descreva o problema <span style="font-size:0.76rem;color:var(--text-muted);">(obrigatório)</span>'
+    : 'Detalhes adicionais <span style="font-size:0.76rem;color:var(--text-muted);">(opcional)</span>';
+
+  document.getElementById('chamadoStep1').style.display = 'none';
+  document.getElementById('chamadoStep2').style.display = '';
+}
+
+function selecionarPreset(el, texto) {
+  _suportePresetSelecionado = texto;
+  document.querySelectorAll('.chamado-preset-btn').forEach(b => {
+    b.classList.remove('selected');
+    const chk = b.querySelector('.preset-check');
+    if (chk) chk.textContent = '';
+  });
+  el.classList.add('selected');
+  const chk = el.querySelector('.preset-check');
+  if (chk) chk.textContent = '✓';
+}
+
+function voltarTipoChamado() {
+  _suporteTipoSelecionado = '';
+  _suportePresetSelecionado = '';
+  document.getElementById('chamadoStep2').style.display = 'none';
+  document.getElementById('chamadoStep1').style.display = '';
+  document.querySelectorAll('.chamado-tipo-card').forEach(b => b.classList.remove('selected'));
+}
+
+function closeAbrirChamadoModal() {
+  document.getElementById('abrirChamadoModal').classList.remove('open');
+}
+
+async function confirmarAbrirChamado() {
+  const tipo       = _suporteTipoSelecionado;
+  const preset     = _suportePresetSelecionado;
+  const detalhes   = document.getElementById('chamadoDescricao')?.value?.trim() || '';
+  const erro       = document.getElementById('abrirChamadoErro');
+  const btn        = document.getElementById('btnConfirmarChamado');
+
+  if (erro) erro.style.display = 'none';
+
+  if (!tipo) {
+    if (erro) { erro.textContent = 'Selecione o tipo do chamado.'; erro.style.display = ''; }
+    return;
+  }
+  if (!preset && tipo !== 'outros') {
+    if (erro) { erro.textContent = 'Selecione uma opção de problema.'; erro.style.display = ''; }
+    return;
+  }
+  if (tipo === 'outros' && detalhes.length < 10) {
+    if (erro) { erro.textContent = 'Descreva o problema com ao menos 10 caracteres.'; erro.style.display = ''; }
+    return;
+  }
+  if (!_suporteRentalId) {
+    if (erro) { erro.textContent = 'Nenhuma locação ativa para associar ao chamado.'; erro.style.display = ''; }
+    return;
+  }
+
+  const descricao = preset
+    ? (detalhes ? `${preset}. ${detalhes}` : preset)
+    : detalhes;
+  const prioridade = _CHAMADO_TIPO_INFO[tipo]?.prioridade || 'normal';
+
+  btn.disabled = true;
+  btn.textContent = 'Abrindo...';
+
+  try {
+    const r = await fetch(`${dashboardApi}/chamados`, {
+      method: 'POST',
+      headers: dashboardJsonHeaders,
+      body: JSON.stringify({ rentalId: _suporteRentalId, tipo, descricao, prioridade })
+    });
+    const d = await r.json();
+    if (r.ok) {
+      showToast(d.message || 'Chamado aberto com sucesso!', 'success');
+      closeAbrirChamadoModal();
+      loadSuporte();
+    } else {
+      if (erro) { erro.textContent = d.error || d.message || 'Erro ao abrir chamado.'; erro.style.display = ''; }
+    }
+  } catch (_) {
+    if (erro) { erro.textContent = 'Erro de conexão.'; erro.style.display = ''; }
+  } finally {
+    btn.disabled = false;
+    btn.textContent = 'Abrir chamado';
+  }
+}
+
+document.addEventListener('keydown', event => {
+  if (event.key !== 'Escape') return;
+  if (typeof closeAbrirChamadoModal === 'function') closeAbrirChamadoModal();
+});
+
 document.getElementById('filterBtns')?.addEventListener('click', event => {
   const button = event.target.closest('[data-cat]');
   if (!button) return;
@@ -881,6 +1114,13 @@ async function confirmarExcluirConta() {
 
 window.baixarContrato = baixarContrato;
 window.loadLocacoes = loadLocacoes;
+window.loadSuporte = loadSuporte;
+window.openAbrirChamadoModal = openAbrirChamadoModal;
+window.closeAbrirChamadoModal = closeAbrirChamadoModal;
+window.confirmarAbrirChamado = confirmarAbrirChamado;
+window.selecionarTipoChamado = selecionarTipoChamado;
+window.selecionarPreset = selecionarPreset;
+window.voltarTipoChamado = voltarTipoChamado;
 window.toggleAddrForm = toggleAddrForm;
 window.salvarEndereco = salvarEndereco;
 window.openSenhaModal = openSenhaModal;

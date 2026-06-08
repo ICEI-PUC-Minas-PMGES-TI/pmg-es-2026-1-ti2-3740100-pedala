@@ -28,7 +28,11 @@ C:\Users\jotaa\OneDrive\Documentos\Prado\PedaLa\pmg-es-2026-1-ti2-3740100-pedala
 C:\Users\jotaa\OneDrive\Documentos\Prado\PedaLa\pmg-es-2026-1-ti2-3740100-pedala\src\back\src\main\java\com\pedala\api\gps\service\RouteGenerationService.java
 C:\Users\jotaa\OneDrive\Documentos\Prado\PedaLa\pmg-es-2026-1-ti2-3740100-pedala\src\back\src\main\java\com\pedala\api\inspection\controller\InspectionController.java
 C:\Users\jotaa\OneDrive\Documentos\Prado\PedaLa\pmg-es-2026-1-ti2-3740100-pedala\src\back\src\main\java\com\pedala\api\inspection\domain\Inspection.java
+C:\Users\jotaa\OneDrive\Documentos\Prado\PedaLa\pmg-es-2026-1-ti2-3740100-pedala\src\back\src\main\java\com\pedala\api\inspection\domain\InspectionDamage.java
 C:\Users\jotaa\OneDrive\Documentos\Prado\PedaLa\pmg-es-2026-1-ti2-3740100-pedala\src\back\src\main\java\com\pedala\api\inspection\domain\InspectionStatus.java
+C:\Users\jotaa\OneDrive\Documentos\Prado\PedaLa\pmg-es-2026-1-ti2-3740100-pedala\src\back\src\main\java\com\pedala\api\inspection\domain\InsuranceCoverage.java
+C:\Users\jotaa\OneDrive\Documentos\Prado\PedaLa\pmg-es-2026-1-ti2-3740100-pedala\src\back\src\main\java\com\pedala\api\inspection\dto\AprovarVistoriaRequest.java
+C:\Users\jotaa\OneDrive\Documentos\Prado\PedaLa\pmg-es-2026-1-ti2-3740100-pedala\src\back\src\main\java\com\pedala\api\inspection\repository\InspectionDamageRepository.java
 C:\Users\jotaa\OneDrive\Documentos\Prado\PedaLa\pmg-es-2026-1-ti2-3740100-pedala\src\back\src\main\java\com\pedala\api\inspection\repository\InspectionRepository.java
 C:\Users\jotaa\OneDrive\Documentos\Prado\PedaLa\pmg-es-2026-1-ti2-3740100-pedala\src\back\src\main\java\com\pedala\api\inspection\service\InspectionService.java
 C:\Users\jotaa\OneDrive\Documentos\Prado\PedaLa\pmg-es-2026-1-ti2-3740100-pedala\src\back\src\main\java\com\pedala\api\PedalaApplication.java
@@ -49,6 +53,15 @@ C:\Users\jotaa\OneDrive\Documentos\Prado\PedaLa\pmg-es-2026-1-ti2-3740100-pedala
 C:\Users\jotaa\OneDrive\Documentos\Prado\PedaLa\pmg-es-2026-1-ti2-3740100-pedala\src\back\src\main\java\com\pedala\api\shared\FileStorageService.java
 C:\Users\jotaa\OneDrive\Documentos\Prado\PedaLa\pmg-es-2026-1-ti2-3740100-pedala\src\back\src\main\java\com\pedala\api\shared\service\GeminiService.java
 C:\Users\jotaa\OneDrive\Documentos\Prado\PedaLa\pmg-es-2026-1-ti2-3740100-pedala\src\back\src\main\java\com\pedala\api\shared\TimeSimulator.java
+C:\Users\jotaa\OneDrive\Documentos\Prado\PedaLa\pmg-es-2026-1-ti2-3740100-pedala\src\back\src\main\java\com\pedala\api\support\controller\SupportTicketController.java
+C:\Users\jotaa\OneDrive\Documentos\Prado\PedaLa\pmg-es-2026-1-ti2-3740100-pedala\src\back\src\main\java\com\pedala\api\support\domain\SupportTicket.java
+C:\Users\jotaa\OneDrive\Documentos\Prado\PedaLa\pmg-es-2026-1-ti2-3740100-pedala\src\back\src\main\java\com\pedala\api\support\domain\TicketPrioridade.java
+C:\Users\jotaa\OneDrive\Documentos\Prado\PedaLa\pmg-es-2026-1-ti2-3740100-pedala\src\back\src\main\java\com\pedala\api\support\domain\TicketStatus.java
+C:\Users\jotaa\OneDrive\Documentos\Prado\PedaLa\pmg-es-2026-1-ti2-3740100-pedala\src\back\src\main\java\com\pedala\api\support\domain\TicketTipo.java
+C:\Users\jotaa\OneDrive\Documentos\Prado\PedaLa\pmg-es-2026-1-ti2-3740100-pedala\src\back\src\main\java\com\pedala\api\support\dto\AbrirTicketRequest.java
+C:\Users\jotaa\OneDrive\Documentos\Prado\PedaLa\pmg-es-2026-1-ti2-3740100-pedala\src\back\src\main\java\com\pedala\api\support\dto\ResolverTicketRequest.java
+C:\Users\jotaa\OneDrive\Documentos\Prado\PedaLa\pmg-es-2026-1-ti2-3740100-pedala\src\back\src\main\java\com\pedala\api\support\repository\SupportTicketRepository.java
+C:\Users\jotaa\OneDrive\Documentos\Prado\PedaLa\pmg-es-2026-1-ti2-3740100-pedala\src\back\src\main\java\com\pedala\api\support\service\SupportTicketService.java
 C:\Users\jotaa\OneDrive\Documentos\Prado\PedaLa\pmg-es-2026-1-ti2-3740100-pedala\src\back\src\main\java\com\pedala\api\user\controller\AuthController.java
 C:\Users\jotaa\OneDrive\Documentos\Prado\PedaLa\pmg-es-2026-1-ti2-3740100-pedala\src\back\src\main\java\com\pedala\api\user\domain\User.java
 C:\Users\jotaa\OneDrive\Documentos\Prado\PedaLa\pmg-es-2026-1-ti2-3740100-pedala\src\back\src\main\java\com\pedala\api\user\domain\UserAddress.java

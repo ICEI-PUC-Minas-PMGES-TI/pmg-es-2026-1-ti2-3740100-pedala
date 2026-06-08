@@ -9,6 +9,22 @@
   <link rel="icon" href="../favicon.svg" type="image/svg+xml">
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin="">
   <script>(function(){document.documentElement.setAttribute('data-theme',localStorage.getItem('pedala_theme')||'dark');})();</script>
+  <script>(function(){
+    var icons={
+      'Vistorias':'<svg xmlns="http://www.w3.org/2000/svg" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>',
+      'Entregas':'<svg xmlns="http://www.w3.org/2000/svg" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="1" y="3" width="15" height="13"/><polygon points="16 8 20 8 23 11 23 16 16 16 16 8"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg>',
+      'Chamados':'<svg xmlns="http://www.w3.org/2000/svg" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>',
+      'Mapa GPS':'<svg xmlns="http://www.w3.org/2000/svg" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="3 11 22 2 13 21 11 13 3 11"/></svg>'
+    };
+    document.addEventListener('DOMContentLoaded',function(){
+      document.querySelectorAll('.sidebar-nav a').forEach(function(link){
+        var firstText='';
+        link.childNodes.forEach(function(n){if(n.nodeType===3&&n.textContent.trim())firstText=firstText||n.textContent.trim();});
+        var key=Object.keys(icons).find(function(k){return firstText.indexOf(k)===0||k===firstText;});
+        if(key&&!link.querySelector('.nav-icon')){var span=document.createElement('span');span.className='nav-icon';span.innerHTML=icons[key];link.insertBefore(span,link.firstChild);}
+      });
+    });
+  })();</script>
 </head>
 <body>
   <nav class="navbar">
@@ -30,6 +46,7 @@
       <ul class="sidebar-nav">
         <li><a href="#" class="active" onclick="showSec('vistorias',this)">Vistorias</a></li>
         <li><a href="#" onclick="showSec('locacoes',this)">Entregas</a></li>
+        <li><a href="#" onclick="showSec('chamados',this)">Chamados <span id="chamadosBadge" class="badge badge-danger" style="display:none;font-size:10px;padding:1px 5px;margin-left:4px;">0</span></a></li>
         <li><a href="#" onclick="showSec('gps',this)">Mapa GPS</a></li>
       </ul>
     </aside>
@@ -67,6 +84,26 @@
         <div id="locList">
           <p style="color:var(--text-secondary);">Carregando...</p>
         </div>
+      </div>
+
+      <!-- CHAMADOS -->
+      <div id="sec-chamados" class="sec">
+        <div class="page-header-row">
+          <div class="page-header">
+            <h1>Chamados</h1>
+            <p>Gerencie os chamados de suporte dos clientes.</p>
+          </div>
+          <div class="flex-center gap-sm">
+            <select class="form-input" id="chamadoSF" onchange="filterChamados()" style="max-width:200px;">
+              <option value="">Abertos + Em atendimento</option>
+              <option value="aberto">Abertos</option>
+              <option value="em_atendimento">Em atendimento</option>
+              <option value="resolvido">Resolvidos</option>
+            </select>
+            <button class="btn btn-secondary btn-sm" onclick="loadChamados()">Sincronizar</button>
+          </div>
+        </div>
+        <div id="chamadoList"><p style="color:var(--text-secondary);">Carregando...</p></div>
       </div>
 
       <!-- GPS -->
@@ -119,6 +156,34 @@
       <div id="gpsHistoryStats"></div>
       <div id="gpsHistoryLoading" style="text-align:center;padding:32px;color:var(--text-muted);">Carregando histórico...</div>
       <div id="gpsHistoryMapContainer" style="height:440px;border-radius:var(--r-md);overflow:hidden;display:none;"></div>
+    </div>
+  </div>
+
+  <!-- MODAL CHAMADO (FUNCIONÁRIO) -->
+  <div class="modal-overlay" id="chamadoEmpModal" onclick="if(event.target===this)closeChamadoEmpModal()">
+    <div class="modal" style="max-width:560px;width:96%;">
+      <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:16px;">
+        <div>
+          <h2 class="modal-title" style="margin:0 0 6px;" id="chamadoEmpModalTitle">Chamado #—</h2>
+          <div id="chamadoEmpModalBadge"></div>
+        </div>
+        <button class="btn btn-ghost btn-sm" onclick="closeChamadoEmpModal()" style="margin-left:12px;">✕</button>
+      </div>
+      <div id="chamadoEmpModalInfo" style="margin-bottom:14px;background:var(--bg-secondary);border:1px solid var(--border);border-radius:8px;padding:14px 16px;"></div>
+      <div id="chamadoEmpModalResolveWrap" style="display:none;">
+        <div class="form-group" style="margin-bottom:10px;">
+          <label class="form-label">Resolução *</label>
+          <textarea class="form-input form-textarea" id="chamadoEmpResolucao" placeholder="Descreva a solução aplicada..." rows="3" style="resize:vertical;min-height:80px;"></textarea>
+        </div>
+        <div style="display:flex;gap:10px;align-items:flex-end;margin-bottom:14px;">
+          <div class="form-group" style="flex:1;margin:0;">
+            <label class="form-label">Custo para o cliente (R$)</label>
+            <input class="form-input" type="number" id="chamadoEmpCusto" placeholder="0.00" step="0.01" min="0" oninput="updateChamadoCobertura()">
+          </div>
+          <div id="chamadoEmpCoberturaInfo" style="padding:8px 12px;border-radius:6px;font-size:0.82rem;white-space:nowrap;"></div>
+        </div>
+      </div>
+      <div id="chamadoEmpModalActions" style="display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap;padding-top:12px;border-top:1px solid var(--border);"></div>
     </div>
   </div>
 

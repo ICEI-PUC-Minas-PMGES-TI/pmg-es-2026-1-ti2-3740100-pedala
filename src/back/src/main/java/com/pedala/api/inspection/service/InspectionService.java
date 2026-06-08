@@ -5,10 +5,11 @@ import com.pedala.api.bike.repository.BikeRepository;
 import com.pedala.api.exception.BusinessException;
 import com.pedala.api.exception.ResourceNotFoundException;
 import com.pedala.api.gps.service.GpsSimulatorService;
-import com.pedala.api.inspection.domain.Inspection;
-import com.pedala.api.inspection.domain.InspectionStatus;
+import com.pedala.api.inspection.domain.*;
+import com.pedala.api.inspection.repository.InspectionDamageRepository;
 import com.pedala.api.inspection.repository.InspectionRepository;
 import com.pedala.api.rental.domain.Rental;
+import com.pedala.api.rental.domain.RentalInvoice;
 import com.pedala.api.rental.domain.RentalStatus;
 import com.pedala.api.rental.repository.RentalRepository;
 import com.pedala.api.shared.TimeSimulator;
@@ -16,13 +17,17 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.math.BigDecimal;
+import java.time.temporal.ChronoUnit;
 import java.util.*;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
 public class InspectionService {
 
     private final InspectionRepository inspectionRepository;
+    private final InspectionDamageRepository inspectionDamageRepository;
     private final RentalRepository rentalRepository;
     private final BikeRepository bikeRepository;
     private final GpsSimulatorService gpsSimulatorService;
@@ -42,12 +47,26 @@ public class InspectionService {
             return b.getCriadaEm().compareTo(a.getCriadaEm());
         });
         long pendentes = lista.stream().filter(v -> v.getStatus() == InspectionStatus.pendente).count();
-        List<Map<String, Object>> mapped = lista.stream().map(this::toMap).toList();
+
+        // Enrich with tipoSeguro from rental
+        Set<Long> rentalIds = lista.stream().map(Inspection::getAluguelId).collect(Collectors.toSet());
+        Map<Long, String> seguroMap = rentalIds.isEmpty() ? Map.of() :
+                rentalRepository.findAllById(rentalIds).stream()
+                        .collect(Collectors.toMap(Rental::getId,
+                                r -> r.getTipoSeguro() != null ? r.getTipoSeguro() : "basico"));
+
+        List<Map<String, Object>> mapped = lista.stream().map(v -> {
+            Map<String, Object> m = toMap(v);
+            m.put("tipoSeguro", seguroMap.getOrDefault(v.getAluguelId(), "basico"));
+            return m;
+        }).toList();
+
         return Map.of("vistorias", mapped, "total", mapped.size(), "pendentes", pendentes);
     }
 
     @Transactional
-    public Map<String, Object> approve(Long id, String observacao, Long funcionarioId, String funcionarioNome) {
+    public Map<String, Object> approve(Long id, String observacao, List<String> avarias,
+                                       Long funcionarioId, String funcionarioNome) {
         Inspection v = inspectionRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Vistoria nao encontrada."));
         if (v.getStatus() != InspectionStatus.pendente) throw new BusinessException("Vistoria ja avaliada.");
@@ -70,9 +89,54 @@ public class InspectionService {
             try { gpsSimulatorService.stopTracking(rental.getBikeId()); } catch (Exception e) {}
         }
 
+        // Process avarias
+        List<Map<String, Object>> danosSalvos = new ArrayList<>();
+        if (avarias != null && !avarias.isEmpty() && rental != null) {
+            String tipoSeguro = rental.getTipoSeguro();
+            BigDecimal totalNaoCoberto = BigDecimal.ZERO;
+            List<InspectionDamage> damages = new ArrayList<>();
+
+            for (String tipoAvaria : avarias) {
+                boolean coberto = InsuranceCoverage.cobre(tipoSeguro, tipoAvaria);
+                BigDecimal custo = coberto ? BigDecimal.ZERO : InsuranceCoverage.custoAvaria(tipoAvaria);
+                damages.add(InspectionDamage.builder()
+                        .inspectionId(id)
+                        .tipoAvaria(tipoAvaria)
+                        .cobertoPLano(coberto)
+                        .custo(custo)
+                        .build());
+                totalNaoCoberto = totalNaoCoberto.add(custo);
+            }
+
+            String faturaId = null;
+            if (totalNaoCoberto.compareTo(BigDecimal.ZERO) > 0) {
+                faturaId = "FAT-AV-" + id;
+                RentalInvoice fatura = RentalInvoice.builder()
+                        .id(faturaId)
+                        .rental(rental)
+                        .dataVencimento(timeSimulator.now().plus(7, ChronoUnit.DAYS))
+                        .valor(totalNaoCoberto)
+                        .status("aguardando_aprovacao")
+                        .build();
+                rental.addFatura(fatura);
+                rentalRepository.save(rental);
+            }
+
+            for (InspectionDamage d : damages) {
+                if (!d.getCobertoPLano() && faturaId != null) d.setFaturaId(faturaId);
+                inspectionDamageRepository.save(d);
+                Map<String, Object> dm = new LinkedHashMap<>();
+                dm.put("tipoAvaria", d.getTipoAvaria());
+                dm.put("coberto", d.getCobertoPLano());
+                dm.put("custo", d.getCusto());
+                danosSalvos.add(dm);
+            }
+        }
+
         Map<String, Object> result = new LinkedHashMap<>();
         result.put("message", "Vistoria aprovada! Aluguel finalizado e bicicleta liberada.");
         result.put("vistoria", toMap(v));
+        if (!danosSalvos.isEmpty()) result.put("avarias", danosSalvos);
         return result;
     }
 

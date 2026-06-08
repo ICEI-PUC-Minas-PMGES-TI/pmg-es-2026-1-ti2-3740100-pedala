@@ -8,6 +8,22 @@
   <link rel="icon" href="../favicon.svg" type="image/svg+xml">
   <link rel="stylesheet" href="../css/style.css">
   <script>(function(){document.documentElement.setAttribute('data-theme',localStorage.getItem('pedala_theme')||'dark');})();</script>
+  <script>(function(){
+    var icons={
+      'Visão Geral':'<svg xmlns="http://www.w3.org/2000/svg" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>',
+      'Nova Locação':'<svg xmlns="http://www.w3.org/2000/svg" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="18.5" cy="17.5" r="3.5"/><circle cx="5.5" cy="17.5" r="3.5"/><circle cx="15" cy="5" r="1"/><path d="m12 17.5-5.5-7L12 3l3 4.5M8 17.5l4-7.5"/><line x1="15" y1="5" x2="18.5" y2="17.5"/></svg>',
+      'Histórico':'<svg xmlns="http://www.w3.org/2000/svg" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>',
+      'Suporte':'<svg xmlns="http://www.w3.org/2000/svg" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>',
+      'Meus Dados':'<svg xmlns="http://www.w3.org/2000/svg" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>',
+      'Página Inicial':'<svg xmlns="http://www.w3.org/2000/svg" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>'
+    };
+    document.addEventListener('DOMContentLoaded',function(){
+      document.querySelectorAll('.sidebar-nav a').forEach(function(link){
+        var text=(link.textContent||'').trim();
+        if(icons[text]&&!link.querySelector('.nav-icon')){var span=document.createElement('span');span.className='nav-icon';span.innerHTML=icons[text];link.insertBefore(span,link.firstChild);}
+      });
+    });
+  })();</script>
 </head>
 <body>
   <nav class="navbar">
@@ -31,6 +47,7 @@
         <li><a href="#" class="active" onclick="showSec('inicio',this)">Visão Geral</a></li>
         <li><a href="#" onclick="showSec('locar',this)">Nova Locação</a></li>
         <li><a href="#" onclick="showSec('locacoes',this)">Histórico</a></li>
+        <li><a href="#" onclick="showSec('suporte',this)">Suporte</a></li>
         <li><a href="#" onclick="showSec('perfil',this)">Meus Dados</a></li>
         <li><a href="../index.html">Página Inicial</a></li>
       </ul>
@@ -99,6 +116,20 @@
           <button class="btn btn-secondary btn-sm" type="button" onclick="loadLocacoes()">Sincronizar</button>
         </div>
         <div id="locList"></div>
+      </section>
+
+      <section id="sec-suporte" class="sec">
+        <div class="page-header-row">
+          <div class="page-header">
+            <h1>Suporte</h1>
+            <p>Abra chamados e acompanhe o atendimento das suas solicitações.</p>
+          </div>
+          <div class="flex-center gap-sm">
+            <button class="btn btn-primary btn-sm" type="button" onclick="openAbrirChamadoModal()">+ Abrir chamado</button>
+            <button class="btn btn-secondary btn-sm" type="button" onclick="loadSuporte()">Sincronizar</button>
+          </div>
+        </div>
+        <div id="suporteList"><p style="color:var(--text-secondary);">Carregando...</p></div>
       </section>
 
       <section id="sec-perfil" class="sec">
@@ -239,6 +270,64 @@
       <div style="display:flex;gap:10px;justify-content:flex-end;">
         <button class="btn btn-secondary" onclick="closeExcluirContaModal()">Cancelar</button>
         <button class="btn btn-danger" id="btnConfirmarExcluir" onclick="confirmarExcluirConta()">Excluir permanentemente</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL ABRIR CHAMADO -->
+  <div class="modal-overlay" id="abrirChamadoModal" onclick="if(event.target===this)closeAbrirChamadoModal()">
+    <div class="modal" style="max-width:520px;width:96%;">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;">
+        <h2 class="modal-title">Abrir chamado de suporte</h2>
+        <button class="btn btn-ghost btn-sm" onclick="closeAbrirChamadoModal()">✕</button>
+      </div>
+      <div id="abrirChamadoLocacaoInfo" style="display:none;margin-bottom:14px;background:var(--bg-secondary);border:1px solid var(--border);border-radius:8px;padding:10px 14px;font-size:0.84rem;"></div>
+
+      <!-- Step 1: tipo -->
+      <div id="chamadoStep1">
+        <p style="font-size:0.85rem;color:var(--text-secondary);margin-bottom:14px;">Sobre o que é o seu chamado?</p>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+          <button type="button" class="chamado-tipo-card" onclick="selecionarTipoChamado('manutencao',this)">
+            <span class="chamado-tipo-icon">🔧</span>
+            <span class="chamado-tipo-label">Manutenção</span>
+            <span class="chamado-tipo-desc">Problema mecânico ou de peças</span>
+          </button>
+          <button type="button" class="chamado-tipo-card" onclick="selecionarTipoChamado('duvida_fatura',this)">
+            <span class="chamado-tipo-icon">💳</span>
+            <span class="chamado-tipo-label">Dúvida na fatura</span>
+            <span class="chamado-tipo-desc">Cobrança ou pagamento</span>
+          </button>
+          <button type="button" class="chamado-tipo-card" onclick="selecionarTipoChamado('avaria',this)">
+            <span class="chamado-tipo-icon">⚠️</span>
+            <span class="chamado-tipo-label">Avaria / Dano</span>
+            <span class="chamado-tipo-desc">Dano físico na bicicleta</span>
+          </button>
+          <button type="button" class="chamado-tipo-card" onclick="selecionarTipoChamado('outros',this)">
+            <span class="chamado-tipo-icon">💬</span>
+            <span class="chamado-tipo-label">Outros</span>
+            <span class="chamado-tipo-desc">Qualquer outra dúvida</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Step 2: preset + detalhes -->
+      <div id="chamadoStep2" style="display:none;">
+        <button type="button" onclick="voltarTipoChamado()" style="display:inline-flex;align-items:center;gap:5px;background:none;border:none;color:var(--text-secondary);font-size:0.82rem;cursor:pointer;padding:0;margin-bottom:14px;">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="15 18 9 12 15 6"/></svg>
+          Voltar
+        </button>
+        <div id="chamadoTipoSelecionadoBadge" style="margin-bottom:14px;"></div>
+        <p style="font-size:0.84rem;color:var(--text-secondary);margin-bottom:10px;">Qual é o problema?</p>
+        <div id="chamadoPresets" style="display:flex;flex-direction:column;gap:6px;margin-bottom:14px;"></div>
+        <div class="form-group" style="margin-bottom:10px;">
+          <label class="form-label" id="chamadoDescLabel">Detalhes adicionais <span style="font-size:0.76rem;color:var(--text-muted);">(opcional)</span></label>
+          <textarea class="form-input form-textarea" id="chamadoDescricao" placeholder="Descreva com mais detalhes se necessário..." rows="3" style="resize:vertical;min-height:70px;"></textarea>
+        </div>
+        <div id="abrirChamadoErro" style="display:none;color:var(--danger);background:var(--danger-bg,#fef2f2);border:1px solid var(--danger-border,#fca5a5);border-radius:6px;padding:8px 12px;margin-bottom:10px;font-size:0.84rem;"></div>
+        <div style="display:flex;gap:10px;justify-content:flex-end;margin-top:4px;">
+          <button class="btn btn-secondary" type="button" onclick="closeAbrirChamadoModal()">Cancelar</button>
+          <button class="btn btn-primary" type="button" id="btnConfirmarChamado" onclick="confirmarAbrirChamado()">Abrir chamado</button>
+        </div>
       </div>
     </div>
   </div>
