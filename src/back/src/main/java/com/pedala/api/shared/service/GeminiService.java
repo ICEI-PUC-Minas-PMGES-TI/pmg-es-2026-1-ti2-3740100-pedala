@@ -19,7 +19,7 @@ import java.util.Map;
 @RequiredArgsConstructor
 public class GeminiService {
 
-    private static final String API_KEY = "AQ.Ab8RN6K2F7KKqn1qu2N-NFbvWcPm7n2eVKXjmlm9jqdanfn86A";
+    private static final String API_KEY = System.getenv().getOrDefault("GEMINI_API_KEY", "");
     private static final String MODEL   = "gemini-2.5-flash";
     private static final String URL     =
             "https://generativelanguage.googleapis.com/v1beta/models/" + MODEL + ":generateContent";

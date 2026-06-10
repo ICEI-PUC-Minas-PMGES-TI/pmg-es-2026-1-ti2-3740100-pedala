@@ -1,8 +1,0 @@
-spring:
-  jpa:
-    show-sql: false
-
-logging:
-  level:
-    com.pedala: INFO
-    org.hibernate.SQL: WARN

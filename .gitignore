@@ -1,0 +1,25 @@
+# Maven build output
+**/target/
+**/target
+
+# Environment / secrets
+.env
+*.env
+.env.local
+
+# IDE
+.idea/
+*.iml
+.vscode/
+*.code-workspace
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+logs/
+
+# Node
+node_modules/
