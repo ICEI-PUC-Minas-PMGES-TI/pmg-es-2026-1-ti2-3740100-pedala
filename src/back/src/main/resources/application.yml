@@ -72,7 +72,7 @@ app:
     max-size-mb: 8
 
   groq:
-    api-key: ${GROQ_API_KEY}
+    api-key: ${GROQ_API_KEY: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}
     model: ${GROQ_MODEL:llama-3.3-70b-versatile}
 
 logging:
