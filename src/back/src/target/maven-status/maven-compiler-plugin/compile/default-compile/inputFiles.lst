@@ -36,6 +36,11 @@ C:\Users\jotaa\OneDrive\Documentos\Prado\PedaLa\pmg-es-2026-1-ti2-3740100-pedala
 C:\Users\jotaa\OneDrive\Documentos\Prado\PedaLa\pmg-es-2026-1-ti2-3740100-pedala\src\back\src\main\java\com\pedala\api\inspection\repository\InspectionRepository.java
 C:\Users\jotaa\OneDrive\Documentos\Prado\PedaLa\pmg-es-2026-1-ti2-3740100-pedala\src\back\src\main\java\com\pedala\api\inspection\service\InspectionService.java
 C:\Users\jotaa\OneDrive\Documentos\Prado\PedaLa\pmg-es-2026-1-ti2-3740100-pedala\src\back\src\main\java\com\pedala\api\PedalaApplication.java
+C:\Users\jotaa\OneDrive\Documentos\Prado\PedaLa\pmg-es-2026-1-ti2-3740100-pedala\src\back\src\main\java\com\pedala\api\plano\controller\PlanoController.java
+C:\Users\jotaa\OneDrive\Documentos\Prado\PedaLa\pmg-es-2026-1-ti2-3740100-pedala\src\back\src\main\java\com\pedala\api\plano\domain\Plano.java
+C:\Users\jotaa\OneDrive\Documentos\Prado\PedaLa\pmg-es-2026-1-ti2-3740100-pedala\src\back\src\main\java\com\pedala\api\plano\dto\PlanoRequest.java
+C:\Users\jotaa\OneDrive\Documentos\Prado\PedaLa\pmg-es-2026-1-ti2-3740100-pedala\src\back\src\main\java\com\pedala\api\plano\repository\PlanoRepository.java
+C:\Users\jotaa\OneDrive\Documentos\Prado\PedaLa\pmg-es-2026-1-ti2-3740100-pedala\src\back\src\main\java\com\pedala\api\plano\service\PlanoService.java
 C:\Users\jotaa\OneDrive\Documentos\Prado\PedaLa\pmg-es-2026-1-ti2-3740100-pedala\src\back\src\main\java\com\pedala\api\rental\controller\RentalController.java
 C:\Users\jotaa\OneDrive\Documentos\Prado\PedaLa\pmg-es-2026-1-ti2-3740100-pedala\src\back\src\main\java\com\pedala\api\rental\domain\Rental.java
 C:\Users\jotaa\OneDrive\Documentos\Prado\PedaLa\pmg-es-2026-1-ti2-3740100-pedala\src\back\src\main\java\com\pedala\api\rental\domain\RentalInvoice.java
@@ -52,6 +57,7 @@ C:\Users\jotaa\OneDrive\Documentos\Prado\PedaLa\pmg-es-2026-1-ti2-3740100-pedala
 C:\Users\jotaa\OneDrive\Documentos\Prado\PedaLa\pmg-es-2026-1-ti2-3740100-pedala\src\back\src\main\java\com\pedala\api\shared\controller\ChatController.java
 C:\Users\jotaa\OneDrive\Documentos\Prado\PedaLa\pmg-es-2026-1-ti2-3740100-pedala\src\back\src\main\java\com\pedala\api\shared\FileStorageService.java
 C:\Users\jotaa\OneDrive\Documentos\Prado\PedaLa\pmg-es-2026-1-ti2-3740100-pedala\src\back\src\main\java\com\pedala\api\shared\service\GeminiService.java
+C:\Users\jotaa\OneDrive\Documentos\Prado\PedaLa\pmg-es-2026-1-ti2-3740100-pedala\src\back\src\main\java\com\pedala\api\shared\service\GroqService.java
 C:\Users\jotaa\OneDrive\Documentos\Prado\PedaLa\pmg-es-2026-1-ti2-3740100-pedala\src\back\src\main\java\com\pedala\api\shared\TimeSimulator.java
 C:\Users\jotaa\OneDrive\Documentos\Prado\PedaLa\pmg-es-2026-1-ti2-3740100-pedala\src\back\src\main\java\com\pedala\api\support\controller\SupportTicketController.java
 C:\Users\jotaa\OneDrive\Documentos\Prado\PedaLa\pmg-es-2026-1-ti2-3740100-pedala\src\back\src\main\java\com\pedala\api\support\domain\SupportTicket.java

@@ -454,13 +454,14 @@ async function salvarEndereco() {
   }
 }
 
-function openModal(id) {
+async function openModal(id) {
   const bike = dashboardState.bikes.find(item => item.id === Number(id));
   if (!bike) return;
 
   dashboardState.selectedBike = bike;
   dashboardState.selectedPlan = '';
-  dashboardState.selectedInsurance = 'Basico';
+  dashboardState.selectedInsurance = null;
+  dashboardState.selectedPlanoId   = null;
   document.getElementById('modalBikeImage').src = normalizeImagePath(bike.imagem);
   document.getElementById('modalBikeName').textContent = bike.nome;
   document.getElementById('modalBikeDesc').textContent = bike.descricao || 'Bike pronta para assinatura com entrega em casa.';
@@ -487,19 +488,63 @@ function openModal(id) {
     `)
     .join('');
 
-  document.getElementById('seguroOptions').innerHTML = getInsuranceOptions()
-    .map(option => `
-      <div class="plan-option ${option.key === dashboardState.selectedInsurance ? 'selected' : ''}" data-insurance="${dashEscape(option.key)}" onclick="selSeguro(this.dataset.insurance,this)">
-        <div class="plan-option-name">${dashEscape(option.label)}</div>
-        <div class="plan-option-price">${option.price > 0 ? `+ ${formatCurrency(option.price)}` : 'Incluso'}</div>
-        <div style="color:var(--text-secondary);font-size:0.9rem;margin-top:6px;">${dashEscape(option.description)}</div>
-      </div>
-    `)
-    .join('');
+  // Carrega planos dinâmicos da API para esta bike
+  const seguroEl = document.getElementById('seguroOptions');
+  if (seguroEl) {
+    seguroEl.innerHTML = '<p style="font-size:0.82rem;color:var(--text-muted);">Carregando planos…</p>';
+    try {
+      const r = await fetch(`${dashboardApi}/planos/bike/${bike.id}`);
+      const planos = r.ok ? await r.json() : [];
+      if (planos.length) {
+        seguroEl.innerHTML = planos.map((p, i) => `
+          <div class="plan-option ${i === 0 ? 'selected' : ''}" data-plano-id="${p.id}" onclick="selPlano(${p.id},'${dashEscape(p.nome)}',this)">
+            <div class="plan-option-name">${dashEscape(p.nome)}</div>
+            <div class="plan-option-price">${Number(p.valorAdicional) > 0 ? `+ ${formatCurrency(p.valorAdicional)}` : 'Incluso'}</div>
+            <div style="color:var(--text-secondary);font-size:0.82rem;margin-top:6px;">${dashEscape(p.descricao || _coberturaResumo(p))}</div>
+          </div>
+        `).join('');
+        // Pré-seleciona o primeiro plano
+        selPlano(planos[0].id, planos[0].nome, seguroEl.querySelector('.plan-option'));
+      } else {
+        // Fallback: planos legados hardcoded
+        seguroEl.innerHTML = _renderInsuranceLegado();
+        selSeguro('Basico', seguroEl.querySelector('.plan-option'));
+      }
+    } catch {
+      seguroEl.innerHTML = _renderInsuranceLegado();
+      selSeguro('Basico', seguroEl.querySelector('.plan-option'));
+    }
+  }
 
   document.getElementById('modalStep1').style.display = '';
   document.getElementById('modalStep2').style.display = 'none';
   document.getElementById('modalOverlay').classList.add('open');
+}
+
+function _coberturaResumo(p) {
+  const tags = [];
+  if (p.cobreDuvidaFatura) tags.push('Fatura');
+  if (p.cobreManutencao)   tags.push('Manutenção');
+  if (p.cobreAvaria)       tags.push('Avaria');
+  if (p.cobreOutros)       tags.push('Outros');
+  return tags.length ? `Cobre: ${tags.join(', ')}` : 'Apenas consultas básicas';
+}
+
+function _renderInsuranceLegado() {
+  return getInsuranceOptions().map((option, i) => `
+    <div class="plan-option ${i === 0 ? 'selected' : ''}" data-insurance="${dashEscape(option.key)}" onclick="selSeguro(this.dataset.insurance,this)">
+      <div class="plan-option-name">${dashEscape(option.label)}</div>
+      <div class="plan-option-price">${option.price > 0 ? `+ ${formatCurrency(option.price)}` : 'Incluso'}</div>
+      <div style="color:var(--text-secondary);font-size:0.9rem;margin-top:6px;">${dashEscape(option.description)}</div>
+    </div>
+  `).join('');
+}
+
+function selPlano(planoId, planoNome, element) {
+  dashboardState.selectedPlanoId   = planoId;
+  dashboardState.selectedInsurance = planoNome;
+  document.querySelectorAll('.plan-option[data-plano-id]').forEach(el => el.classList.remove('selected'));
+  if (element) element.classList.add('selected');
 }
 
 function closeModal() {
@@ -641,15 +686,21 @@ async function confirmarLocacao() {
   }
 
   try {
+    const rentalBody = {
+      bikeId:    dashboardState.selectedBike.id,
+      tipo:      dashboardState.selectedPlan,
+      dataInicio: document.getElementById('dataInicio').value,
+    };
+    // Novo sistema: planoId; fallback legado: tipoSeguro
+    if (dashboardState.selectedPlanoId) {
+      rentalBody.planoId = dashboardState.selectedPlanoId;
+    } else {
+      rentalBody.tipoSeguro = dashboardState.selectedInsurance || 'Basico';
+    }
     const response = await fetch(`${dashboardApi}/rentals`, {
       method: 'POST',
       headers: dashboardJsonHeaders,
-      body: JSON.stringify({
-        bikeId: dashboardState.selectedBike.id,
-        tipo: dashboardState.selectedPlan,
-        tipoSeguro: dashboardState.selectedInsurance,
-        dataInicio: document.getElementById('dataInicio').value
-      })
+      body: JSON.stringify(rentalBody)
     });
 
     const data = await response.json();
@@ -783,12 +834,12 @@ async function loadSuporte() {
       return;
     }
 
-    const statusLabel = { aberto: 'Aberto', em_atendimento: 'Em atendimento', resolvido: 'Resolvido', cancelado: 'Cancelado' };
-    const statusTone  = { aberto: 'badge-warning', em_atendimento: 'badge-info', resolvido: 'badge-success', cancelado: 'badge-muted' };
+    const statusLabel = { aberto: 'Aberto', em_atendimento: 'Em atendimento', aguardando_pagamento: 'Aguard. pagamento', resolvido: 'Resolvido', cancelado: 'Cancelado' };
+    const statusTone  = { aberto: 'badge-warning', em_atendimento: 'badge-info', aguardando_pagamento: 'badge-danger', resolvido: 'badge-success', cancelado: 'badge-muted' };
     const tipoLabel   = { manutencao: 'Manutenção', duvida_fatura: 'Dúvida na fatura', avaria: 'Avaria', outros: 'Outros' };
 
     target.innerHTML = chamados.map(c => `
-      <article class="card" style="margin-bottom:12px;">
+      <article class="card" style="margin-bottom:12px;${c.status === 'aguardando_pagamento' ? 'border-color:rgba(255,100,50,.35);' : ''}">
         <div class="card-body" style="padding:14px 16px;">
           <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:10px;margin-bottom:10px;">
             <div>
@@ -799,7 +850,14 @@ async function loadSuporte() {
           </div>
           <div style="font-size:0.87rem;color:var(--text-secondary);margin-bottom:10px;">${dashEscape(c.descricao)}</div>
           ${c.resolucao ? `<div style="background:var(--bg-secondary);border:1px solid var(--border);border-radius:6px;padding:10px 12px;font-size:0.84rem;"><strong>Resolução:</strong> ${dashEscape(c.resolucao)}</div>` : ''}
-          ${c.custoGerado ? `<div style="margin-top:8px;font-size:0.84rem;color:var(--danger);">Custo gerado: <strong>${formatCurrency(c.custoGerado)}</strong>${c.cobertoPLano ? ' <span style="color:var(--success);">(coberto pelo plano)</span>' : ''}</div>` : ''}
+          ${c.custoGerado ? `<div style="margin-top:8px;font-size:0.84rem;color:${c.cobertoPLano ? 'var(--success)' : 'var(--danger)'};">
+            Custo: <strong>${formatCurrency(c.custoGerado)}</strong>${c.cobertoPLano ? ' — coberto pelo plano ✓' : ''}
+          </div>` : ''}
+          ${c.status === 'aguardando_pagamento' ? `
+            <div style="margin-top:10px;padding:10px 12px;background:rgba(255,100,50,.06);border:1px solid rgba(255,100,50,.25);border-radius:6px;display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;">
+              <span style="font-size:0.84rem;color:var(--danger);font-weight:600;">⚠️ Pagamento de <strong>${formatCurrency(c.custoGerado)}</strong> necessário para concluir o chamado.</span>
+              <button class="btn btn-primary btn-sm" onclick="solicitarPagamentoChamado(${c.id})">Solicitar pagamento</button>
+            </div>` : ''}
         </div>
       </article>
     `).join('');
@@ -1021,6 +1079,7 @@ window.goToLocacao = goToLocacao;
 window.backToBikeInfo = backToBikeInfo;
 window.selPlan = selPlan;
 window.selSeguro = selSeguro;
+window.selPlano = selPlano;
 window.selRenewPlan = selRenewPlan;
 window.confirmarLocacao = confirmarLocacao;
 window.closeRenewModal = closeRenewModal;
@@ -1112,9 +1171,24 @@ async function confirmarExcluirConta() {
   btn.disabled = false; btn.textContent = 'Excluir permanentemente';
 }
 
+// ── Solicitar pagamento de chamado ─────────────────────
+async function solicitarPagamentoChamado(chamadoId) {
+  try {
+    const r = await fetch(`${dashboardApi}/chamados/${chamadoId}/pagar`, {
+      method: 'PUT', headers: dashboardJsonHeaders
+    });
+    const d = await r.json();
+    showToast(d.message || (r.ok ? 'Solicitação enviada!' : (d.error || 'Erro.')), r.ok ? 'success' : 'error');
+    if (r.ok) loadSuporte();
+  } catch (_) {
+    showToast('Erro de conexão.', 'error');
+  }
+}
+
 window.baixarContrato = baixarContrato;
 window.loadLocacoes = loadLocacoes;
 window.loadSuporte = loadSuporte;
+window.solicitarPagamentoChamado = solicitarPagamentoChamado;
 window.openAbrirChamadoModal = openAbrirChamadoModal;
 window.closeAbrirChamadoModal = closeAbrirChamadoModal;
 window.confirmarAbrirChamado = confirmarAbrirChamado;

@@ -66,6 +66,15 @@ public class SupportTicketController {
         return ResponseEntity.ok(service.resolver(id, req, p.getId(), p.getNome()));
     }
 
+    @Operation(summary = "Solicitar pagamento de chamado não coberto (usuário)")
+    @PutMapping("/{id}/pagar")
+    @PreAuthorize("hasRole('USER')")
+    public ResponseEntity<Map<String, Object>> pagar(
+            @PathVariable Long id,
+            @AuthenticationPrincipal UserPrincipal p) {
+        return ResponseEntity.ok(service.pagar(id, p.getId()));
+    }
+
     @Operation(summary = "Cancelar chamado (usuário/admin)")
     @PutMapping("/{id}/cancelar")
     @PreAuthorize("hasAnyRole('USER','ADMIN')")

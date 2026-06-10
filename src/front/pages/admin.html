@@ -5,6 +5,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Painel Admin — PedaLa</title>
   <link rel="icon" href="../favicon.svg" type="image/svg+xml">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="stylesheet" href="../css/style.css">
   <link rel="icon" href="../favicon.svg" type="image/svg+xml">
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin="">
@@ -17,6 +19,7 @@
       'Bikes':'<svg xmlns="http://www.w3.org/2000/svg" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="18.5" cy="17.5" r="3.5"/><circle cx="5.5" cy="17.5" r="3.5"/><circle cx="15" cy="5" r="1"/><path d="m12 17.5-5.5-7L12 3l3 4.5M8 17.5l4-7.5"/><line x1="15" y1="5" x2="18.5" y2="17.5"/></svg>',
       'Locações':'<svg xmlns="http://www.w3.org/2000/svg" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>',
       'Pagamentos':'<svg xmlns="http://www.w3.org/2000/svg" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>',
+      'Seguros':'<svg xmlns="http://www.w3.org/2000/svg" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>',
       'GPS / Rotas':'<svg xmlns="http://www.w3.org/2000/svg" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="3 11 22 2 13 21 11 13 3 11"/></svg>',
       'Vistorias':'<svg xmlns="http://www.w3.org/2000/svg" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>',
       'Usuários':'<svg xmlns="http://www.w3.org/2000/svg" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>',
@@ -85,6 +88,7 @@
         <li><a href="#" onclick="showSec('bikes',this)">Bikes</a></li>
         <li><a href="#" onclick="showSec('locacoes',this)">Locações</a></li>
         <li><a href="#" onclick="showSec('pagamentos',this)">Pagamentos</a></li>
+        <li><a href="#" onclick="showSec('planos',this)">Seguros</a></li>
         <li><a href="#" onclick="showSec('gps',this)">GPS / Rotas</a></li>
         <li><a href="#" onclick="showSec('vistorias',this)">Vistorias</a></li>
         <li><a href="#" onclick="showSec('chamados',this)">Chamados</a></li>
@@ -312,6 +316,91 @@
         </div>
       </div>
 
+      <!-- SEGUROS POR BICICLETA -->
+      <div id="sec-planos" class="sec">
+        <div class="page-banner">
+          <div class="page-banner-content">
+            <h1>Seguros por Bicicleta</h1>
+            <p>Configure os planos de seguro disponíveis para cada bike. O cliente escolhe o seguro ao contratar uma locação.</p>
+          </div>
+        </div>
+
+        <!-- Planos disponíveis (compact) -->
+        <div class="card" style="margin-bottom:28px;">
+          <div class="card-header" style="display:flex;align-items:center;justify-content:space-between;">
+            <span class="card-title">Planos de seguro disponíveis</span>
+            <div class="flex-center gap-sm">
+              <button class="btn btn-primary btn-sm" onclick="openCriarPlanoModal()">+ Novo seguro</button>
+              <button class="btn btn-secondary btn-sm" onclick="loadPlanos()">Atualizar</button>
+            </div>
+          </div>
+          <div class="card-body" style="padding:14px 16px;">
+            <div id="coberturaPlanosList"><p style="color:var(--text-secondary);">Carregando...</p></div>
+          </div>
+        </div>
+
+        <!-- Bikes com seus seguros -->
+        <div class="page-header-row" style="margin-bottom:16px;">
+          <div class="page-header">
+            <h2>Seguros por bike</h2>
+            <p>Clique em uma bike para gerenciar os planos de seguro disponíveis para ela.</p>
+          </div>
+        </div>
+        <div id="segurosPosBikeList"><p style="color:var(--text-secondary);">Carregando...</p></div>
+
+        <!-- Painel: seguros de uma bike selecionada -->
+        <div id="planoBikesWrap" style="margin-top:32px;display:none;">
+          <div class="page-header-row" style="margin-bottom:16px;">
+            <div class="page-header">
+              <h2 id="planoBikesTitle">Seguros da bike</h2>
+              <p>Ative ou desative planos de seguro para esta bike.</p>
+            </div>
+            <button class="btn btn-ghost btn-sm" onclick="fecharPlanoBikes()">✕ Fechar</button>
+          </div>
+          <div id="planoBikesList"><p style="color:var(--text-secondary);">Carregando...</p></div>
+        </div>
+
+        <!-- Modal criar/editar seguro -->
+        <div id="planoModal" class="modal-overlay" style="display:none;">
+          <div class="modal" style="max-width:520px;">
+            <div class="modal-header">
+              <h2 class="modal-title" id="planoModalTitle">Novo plano de seguro</h2>
+              <button class="modal-close" onclick="closePlanoModal()">✕</button>
+            </div>
+            <div class="modal-body">
+              <input type="hidden" id="planoModalId">
+              <div class="form-group">
+                <label class="form-label">Nome do seguro *</label>
+                <input class="form-input" id="planoModalNome" placeholder="Ex: Básico, Premium…" maxlength="100">
+              </div>
+              <div class="form-group">
+                <label class="form-label">Descrição</label>
+                <textarea class="form-input" id="planoModalDesc" rows="2" placeholder="Descreva o que este seguro cobre" style="resize:vertical;"></textarea>
+              </div>
+              <div class="form-group">
+                <label class="form-label">Valor adicional por ciclo (R$)</label>
+                <input class="form-input" id="planoModalValor" type="number" min="0" step="0.01" placeholder="0,00" style="max-width:160px;">
+                <span style="font-size:0.78rem;color:var(--text-muted);margin-top:4px;display:block;">Somado ao valor base da bike na locação</span>
+              </div>
+              <div class="form-group">
+                <label class="form-label" style="margin-bottom:10px;">Coberturas inclusas</label>
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+                  <label class="cobertura-toggle"><input type="checkbox" id="pCM"><span>🔧 Manutenção</span></label>
+                  <label class="cobertura-toggle"><input type="checkbox" id="pCA"><span>💥 Avaria</span></label>
+                  <label class="cobertura-toggle"><input type="checkbox" id="pCDF" checked><span>📄 Dúvida na fatura</span></label>
+                  <label class="cobertura-toggle"><input type="checkbox" id="pCO"><span>📦 Outros</span></label>
+                </div>
+              </div>
+              <div id="planoModalError" style="display:none;color:var(--danger);font-size:0.84rem;margin-top:8px;"></div>
+            </div>
+            <div class="modal-footer">
+              <button class="btn btn-ghost" onclick="closePlanoModal()">Cancelar</button>
+              <button class="btn btn-primary" id="planoModalSaveBtn" onclick="salvarPlano()">Criar seguro</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
       <!-- GPS -->
       <div id="sec-gps" class="sec">
         <div class="page-header-row" style="margin-bottom:16px;">
@@ -390,6 +479,7 @@
             <option value="">Todos</option>
             <option value="aberto">Abertos</option>
             <option value="em_atendimento">Em atendimento</option>
+            <option value="aguardando_pagamento">Aguard. pagamento</option>
             <option value="resolvido">Resolvidos</option>
             <option value="cancelado">Cancelados</option>
           </select>

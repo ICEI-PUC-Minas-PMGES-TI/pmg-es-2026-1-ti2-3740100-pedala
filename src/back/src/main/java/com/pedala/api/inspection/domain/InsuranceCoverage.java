@@ -1,10 +1,21 @@
 package com.pedala.api.inspection.domain;
 
+import com.pedala.api.plano.domain.Plano;
+
 import java.math.BigDecimal;
 
 public final class InsuranceCoverage {
 
     private InsuranceCoverage() {}
+
+    /**
+     * Verifica cobertura de chamado usando o novo sistema de Planos.
+     * Prioridade: Plano (se disponível) > tipoSeguro legado (fallback).
+     */
+    public static boolean cobreChamadoPorPlano(Plano plano, String tipoTicket) {
+        if (plano == null) return false;
+        return plano.cobreTipoChamado(tipoTicket);
+    }
 
     public static boolean cobre(String tipoSeguro, String tipoAvaria) {
         if (tipoSeguro == null || tipoAvaria == null) return false;

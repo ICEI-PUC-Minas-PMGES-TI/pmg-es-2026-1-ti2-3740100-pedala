@@ -71,9 +71,9 @@ app:
     allowed-types: image/jpeg,image/png,image/webp,image/gif
     max-size-mb: 8
 
-  gemini:
-    api-key: ${GEMINI_API_KEY:}
-    model: ${GEMINI_MODEL:gemini-3.1-flash-lite}
+  groq:
+    api-key: ${GROQ_API_KEY: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}
+    model: ${GROQ_MODEL:llama-3.3-70b-versatile}
 
 logging:
   level:

@@ -35,6 +35,7 @@ public class SecurityConfig {
                         // Public endpoints
                         .requestMatchers("/api/auth/login", "/api/auth/register", "/api/auth/seed-admin").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/bikes", "/api/bikes/**", "/api/bike-categories").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/planos", "/api/planos/**").permitAll()
                         .requestMatchers("/api/health", "/api/chat").permitAll()
                         .requestMatchers("/actuator/health").permitAll()
                         // Swagger

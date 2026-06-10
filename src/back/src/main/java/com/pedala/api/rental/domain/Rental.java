@@ -91,6 +91,9 @@ public class Rental {
     @Column(name = "multa_aplicada", precision = 10, scale = 2)
     private BigDecimal multaAplicada;
 
+    @Column(name = "plano_id")
+    private Long planoId;
+
     @Column(name = "tipo_seguro", length = 50)
     private String tipoSeguro;
 

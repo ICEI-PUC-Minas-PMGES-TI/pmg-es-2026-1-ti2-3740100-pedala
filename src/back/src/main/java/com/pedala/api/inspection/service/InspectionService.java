@@ -116,9 +116,10 @@ public class InspectionService {
                         .rental(rental)
                         .dataVencimento(timeSimulator.now().plus(7, ChronoUnit.DAYS))
                         .valor(totalNaoCoberto)
-                        .status("aguardando_aprovacao")
+                        .status("pendente")
                         .build();
                 rental.addFatura(fatura);
+                rental.setPagamentoStatus("pendente");
                 rentalRepository.save(rental);
             }
 

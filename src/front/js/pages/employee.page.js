@@ -182,17 +182,22 @@ async function ativarLoc(id) {
 
 // ── Chamados ──────────────────────────────────────────
 let _allChamados = [];
-let _chamadoId = null;
+let _chamadoId   = null;
+let _chamadoPlanoCache = {}; // planoId → plano data
 
 const _sTipoChamado = { manutencao:'Manutenção', duvida_fatura:'Dúvida na fatura', avaria:'Avaria', outros:'Outros' };
 const _sPrioridade  = { baixa:'🔵 Baixa', normal:'🟡 Normal', alta:'🟠 Alta', urgente:'🔴 Urgente' };
+const _sMapChamado  = { aberto:'badge-danger', em_atendimento:'badge-warning', aguardando_pagamento:'badge-info', resolvido:'badge-success', cancelado:'badge-muted' };
+const _sLblChamado  = { aberto:'Aberto', em_atendimento:'Em atendimento', aguardando_pagamento:'Aguard. pagamento', resolvido:'Resolvido', cancelado:'Cancelado' };
 
 async function loadChamados() {
     const sf = document.getElementById('chamadoSF')?.value || '';
     try {
         const url = sf ? `${API_BASE}/chamados?status=${sf}` : `${API_BASE}/chamados`;
         const d = await fetch(url, { headers: h }).then(r => r.json());
-        _allChamados = sf ? (d.tickets || []) : (d.tickets || []).filter(t => t.status === 'aberto' || t.status === 'em_atendimento');
+        _allChamados = sf ? (d.tickets || []) : (d.tickets || []).filter(t =>
+            t.status === 'aberto' || t.status === 'em_atendimento' || t.status === 'aguardando_pagamento'
+        );
         renderChamados(_allChamados);
         const badgeEl = document.getElementById('chamadosBadge');
         if (badgeEl) {
@@ -212,8 +217,6 @@ function renderChamados(list) {
         el.innerHTML = '<div class="card"><div class="card-body" style="text-align:center;padding:40px;"><p style="color:var(--text-secondary);">Nenhum chamado encontrado.</p></div></div>';
         return;
     }
-    const sMap = { aberto:'badge-danger', em_atendimento:'badge-warning', resolvido:'badge-success', cancelado:'badge-muted' };
-    const sLbl = { aberto:'Aberto', em_atendimento:'Em atendimento', resolvido:'Resolvido', cancelado:'Cancelado' };
     el.innerHTML = list.map(t => `
     <div class="card" style="margin-bottom:10px;cursor:pointer;" onclick="openChamadoEmpModal(${t.id})">
       <div class="card-header" style="padding:10px 14px;">
@@ -222,7 +225,7 @@ function renderChamados(list) {
           <div style="font-size:11px;color:var(--text-muted);margin-top:2px;">${escHtml(t.usuarioNome||'—')} · Loc.#${t.rentalId} · ${_segBadgeEmp(t.tipoSeguro)}</div>
         </div>
         <div style="display:flex;gap:5px;align-items:center;">
-          <span class="badge ${sMap[t.status]||'badge-muted'}" style="font-size:10px;">${sLbl[t.status]||t.status}</span>
+          <span class="badge ${_sMapChamado[t.status]||'badge-muted'}" style="font-size:10px;">${_sLblChamado[t.status]||t.status}</span>
           <span style="font-size:10px;color:var(--text-muted);">${_sPrioridade[t.prioridade]||''}</span>
         </div>
       </div>
@@ -230,32 +233,41 @@ function renderChamados(list) {
     </div>`).join('');
 }
 
-function openChamadoEmpModal(id) {
+async function openChamadoEmpModal(id) {
     const t = _allChamados.find(x => x.id === id);
     if (!t) return;
     _chamadoId = id;
-    const sMap = { aberto:'badge-danger', em_atendimento:'badge-warning', resolvido:'badge-success', cancelado:'badge-muted' };
-    const sLbl = { aberto:'Aberto', em_atendimento:'Em atendimento', resolvido:'Resolvido', cancelado:'Cancelado' };
+
     document.getElementById('chamadoEmpModalTitle').textContent = `Chamado #${t.id}`;
-    document.getElementById('chamadoEmpModalBadge').innerHTML = `<span class="badge ${sMap[t.status]||'badge-muted'}">${sLbl[t.status]||t.status}</span>`;
+    document.getElementById('chamadoEmpModalBadge').innerHTML =
+        `<span class="badge ${_sMapChamado[t.status]||'badge-muted'}">${_sLblChamado[t.status]||t.status}</span>`;
+
     const row = (l,v) => `<div style="display:flex;justify-content:space-between;padding:3px 0;font-size:0.84rem;"><span style="color:var(--text-muted);">${l}</span><strong>${v}</strong></div>`;
     document.getElementById('chamadoEmpModalInfo').innerHTML = [
         row('Tipo', escHtml(_sTipoChamado[t.tipo]||t.tipo)),
-        row('Locação', `#${t.rentalId}` + (t.bikeNome ? ` · ${escHtml(t.bikeNome)}`  : '')),
+        row('Locação', `#${t.rentalId}` + (t.bikeNome ? ` · ${escHtml(t.bikeNome)}` : '')),
         row('Plano seguro', _segBadgeEmp(t.tipoSeguro) || '—'),
         row('Prioridade', _sPrioridade[t.prioridade]||t.prioridade),
         row('Aberto em', t.criadoEm ? new Date(t.criadoEm).toLocaleDateString('pt-BR') : '—'),
         t.funcionarioNome ? row('Atendente', escHtml(t.funcionarioNome)) : '',
         `<div style="margin-top:8px;background:var(--bg-primary,var(--bg-main));border:1px solid var(--border);border-radius:6px;padding:10px;font-size:0.82rem;"><strong>Descrição:</strong><br><span style="color:var(--text-secondary);">${escHtml(t.descricao)}</span></div>`,
         t.resolucao ? `<div style="margin-top:6px;background:var(--bg-primary,var(--bg-main));border:1px solid var(--border);border-radius:6px;padding:10px;font-size:0.82rem;"><strong>Resolução:</strong><br><span style="color:var(--text-secondary);">${escHtml(t.resolucao)}</span></div>` : '',
+        t.custoGerado && t.status === 'aguardando_pagamento' ? `<div style="margin-top:6px;padding:8px 12px;background:rgba(255,120,50,.08);border:1px solid rgba(255,120,50,.25);border-radius:6px;font-size:0.82rem;color:var(--danger);">⏳ Custo gerado: <strong>R$ ${Number(t.custoGerado).toFixed(2)}</strong> — aguardando pagamento do usuário</div>` : '',
     ].filter(Boolean).join('');
+
+    // Resolve wrap — só em atendimento
     const resolveWrap = document.getElementById('chamadoEmpModalResolveWrap');
     if (resolveWrap) resolveWrap.style.display = t.status === 'em_atendimento' ? '' : 'none';
+
     if (t.status === 'em_atendimento') {
         const re = document.getElementById('chamadoEmpResolucao'); if (re) re.value = '';
         const ce = document.getElementById('chamadoEmpCusto');     if (ce) ce.value = '';
-        const ci = document.getElementById('chamadoEmpCoberturaInfo'); if (ci) ci.innerHTML = '';
+        const ci = document.getElementById('chamadoEmpCoberturaInfo');
+        if (ci) ci.innerHTML = '';
+        // Pré-verifica cobertura com base no plano da locação
+        _preCheckCobertura(t);
     }
+
     const actEl = document.getElementById('chamadoEmpModalActions');
     if (t.status === 'aberto') {
         actEl.innerHTML = `<button class="btn btn-primary btn-sm" onclick="atenderChamado()">Atender chamado</button><button class="btn btn-ghost btn-sm" onclick="closeChamadoEmpModal()">Fechar</button>`;
@@ -267,24 +279,93 @@ function openChamadoEmpModal(id) {
     document.getElementById('chamadoEmpModal').classList.add('open');
 }
 
-function closeChamadoEmpModal() {
-    document.getElementById('chamadoEmpModal')?.classList.remove('open');
-    _chamadoId = null;
+/**
+ * Pré-verifica cobertura via plano quando o modal abre no modo "em_atendimento".
+ * Usa cache para evitar chamadas repetidas.
+ */
+async function _preCheckCobertura(t) {
+    const ci = document.getElementById('chamadoEmpCoberturaInfo');
+    if (!ci) return;
+
+    if (t.planoId) {
+        // Novo sistema de planos — busca dados do plano
+        try {
+            let plano = _chamadoPlanoCache[t.planoId];
+            if (!plano) {
+                const r = await fetch(`${API_BASE}/planos/${t.planoId}`);
+                if (r.ok) {
+                    plano = await r.json();
+                    _chamadoPlanoCache[t.planoId] = plano;
+                }
+            }
+            if (plano) {
+                const coberto = _cobrePorPlanoObj(plano, t.tipo);
+                if (coberto) {
+                    ci.innerHTML = '<span class="badge badge-success">✓ Coberto pelo plano — sem custo</span>';
+                    // Oculta o campo custo
+                    const custoEl = document.getElementById('chamadoEmpCusto');
+                    if (custoEl) { custoEl.value = '0'; custoEl.disabled = true; }
+                } else {
+                    ci.innerHTML = `<span class="badge badge-warning">Não coberto — informe o custo</span>`;
+                    const custoEl = document.getElementById('chamadoEmpCusto');
+                    if (custoEl) custoEl.disabled = false;
+                }
+                return;
+            }
+        } catch { /* fallback para tipoSeguro */ }
+    }
+    // Fallback: legado tipoSeguro
+    _updateCoberturaLegado(t);
 }
 
-function updateChamadoCobertura() {
+/** Verifica cobertura usando dados do plano (objeto da API) */
+function _cobrePorPlanoObj(plano, tipoTicket) {
+    switch (tipoTicket) {
+        case 'manutencao':    return !!plano.cobreManutencao;
+        case 'avaria':        return !!plano.cobreAvaria;
+        case 'duvida_fatura': return !!plano.cobreDuvidaFatura;
+        case 'outros':        return !!plano.cobreOutros;
+        default:              return false;
+    }
+}
+
+/** Fallback — verifica cobertura pelo tipoSeguro legado */
+function _updateCoberturaLegado(t) {
     const custo = parseFloat(document.getElementById('chamadoEmpCusto')?.value) || 0;
     const el = document.getElementById('chamadoEmpCoberturaInfo');
-    if (!el) return;
-    const t = _allChamados.find(x => x.id === _chamadoId);
-    if (!t) return;
+    if (!el || !t) return;
     const seg = (t.tipoSeguro || '').toLowerCase();
     const coberto = seg === 'premium' || custo === 0
         || (seg === 'intermediario' && (t.tipo === 'manutencao' || t.tipo === 'duvida_fatura'))
         || (seg === 'basico' && t.tipo === 'duvida_fatura');
     el.innerHTML = coberto
         ? '<span class="badge badge-success">Coberto pelo plano</span>'
-        : `<span class="badge badge-danger">Cobra R$${custo.toFixed(2)}</span>`;
+        : (custo > 0 ? `<span class="badge badge-danger">Cobra R$${custo.toFixed(2)}</span>` : '<span class="badge badge-muted">Informe o custo</span>');
+}
+
+function updateChamadoCobertura() {
+    const t = _allChamados.find(x => x.id === _chamadoId);
+    if (!t) return;
+    // Se planoId está disponível e foi cacheado, usa o plano
+    if (t.planoId && _chamadoPlanoCache[t.planoId]) {
+        const plano = _chamadoPlanoCache[t.planoId];
+        const coberto = _cobrePorPlanoObj(plano, t.tipo);
+        const custo   = parseFloat(document.getElementById('chamadoEmpCusto')?.value) || 0;
+        const ci = document.getElementById('chamadoEmpCoberturaInfo');
+        if (ci) ci.innerHTML = coberto
+            ? '<span class="badge badge-success">✓ Coberto pelo plano</span>'
+            : (custo > 0 ? `<span class="badge badge-danger">Cobra R$${custo.toFixed(2)}</span>` : '<span class="badge badge-muted">Informe o custo</span>');
+        return;
+    }
+    _updateCoberturaLegado(t);
+}
+
+function closeChamadoEmpModal() {
+    document.getElementById('chamadoEmpModal')?.classList.remove('open');
+    _chamadoId = null;
+    // Reabilita campo custo caso estivesse desabilitado
+    const custoEl = document.getElementById('chamadoEmpCusto');
+    if (custoEl) custoEl.disabled = false;
 }
 
 async function atenderChamado() {
@@ -299,7 +380,12 @@ async function resolverChamado() {
     if (!_chamadoId) return;
     const resolucao = document.getElementById('chamadoEmpResolucao')?.value?.trim();
     if (!resolucao) { showToast('Informe a resolução antes de confirmar.', 'warning'); return; }
-    const custo = parseFloat(document.getElementById('chamadoEmpCusto')?.value) || 0;
+    const t = _allChamados.find(x => x.id === _chamadoId);
+    // Se coberto pelo plano, força custo = 0
+    let custo = parseFloat(document.getElementById('chamadoEmpCusto')?.value) || 0;
+    if (t?.planoId && _chamadoPlanoCache[t.planoId] && _cobrePorPlanoObj(_chamadoPlanoCache[t.planoId], t.tipo)) {
+        custo = 0;
+    }
     const r = await fetch(`${API_BASE}/chamados/${_chamadoId}/resolver`, { method: 'PUT', headers: hj, body: JSON.stringify({ resolucao, custo }) });
     const d = await r.json();
     showToast(d.message || d.error || '', r.ok ? 'success' : 'error');

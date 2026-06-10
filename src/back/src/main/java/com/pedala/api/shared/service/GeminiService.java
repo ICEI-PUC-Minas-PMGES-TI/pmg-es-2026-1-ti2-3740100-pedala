@@ -14,8 +14,8 @@ import org.springframework.web.client.RestTemplate;
 import java.util.List;
 import java.util.Map;
 
+// @deprecated Substituído por GroqService — mantido apenas como referência histórica
 @Slf4j
-@Service
 @RequiredArgsConstructor
 public class GeminiService {
 
@@ -36,7 +36,7 @@ public class GeminiService {
         if (input.length() > MAX_INPUT) input = input.substring(0, MAX_INPUT);
 
         if (isInjectionAttempt(input))
-            return "Posso te ajudar com dúvidas sobre planos, bikes, entrega e pagamentos da Pedala. Como posso ajudar?";
+            return "Não posso responder isso. 😊 Sou o assistente virtual da **Pedala** e estou aqui para ajudar com dúvidas sobre planos, bikes, entrega e pagamentos. Como posso te ajudar?";
 
         String catalog  = buildCatalog(bikeRepository.findAll());
         String sysPrompt = buildSystemPrompt(catalog);
@@ -75,7 +75,14 @@ public class GeminiService {
                 List<Map<String, Object>> candidates = (List<Map<String, Object>>) response.getBody().get("candidates");
                 if (candidates != null && !candidates.isEmpty()) {
                     @SuppressWarnings("unchecked")
-                    Map<String, Object> content = (Map<String, Object>) candidates.get(0).get("content");
+                    Map<String, Object> candidate0 = candidates.get(0);
+                    String finishReason = (String) candidate0.get("finishReason");
+                    // Safety / recitation block — return friendly refusal instead of error
+                    if ("SAFETY".equals(finishReason) || "RECITATION".equals(finishReason)) {
+                        return "Não posso responder isso. 😊 Sou o assistente virtual da **Pedala** e estou aqui para ajudar com dúvidas sobre planos, bikes, entrega e pagamentos. Como posso te ajudar?";
+                    }
+                    @SuppressWarnings("unchecked")
+                    Map<String, Object> content = (Map<String, Object>) candidate0.get("content");
                     if (content != null) {
                         @SuppressWarnings("unchecked")
                         List<Map<String, Object>> parts = (List<Map<String, Object>>) content.get("parts");
@@ -137,7 +144,7 @@ Você NÃO é ChatGPT, Claude, Bard, Gemini nem qualquer outro assistente genér
 
 ## Planos de Proteção (Seguro) — obrigatório escolher um
 - Básico (incluso no preço base): cobre defeitos de fabricação.
-- Intermediário (+20%% sobre o valor base): cobre danos acidentais leves (arranhões, amassados).
+- Intermediário (+20% sobre o valor base): cobre danos acidentais leves (arranhões, amassados).
 - Premium (valor fixo adicional): cobertura total — inclui furto e roubo mediante Boletim de Ocorrência (B.O.).
 
 ## Pagamento
@@ -216,9 +223,13 @@ Nunca responda em bloco único sem estrutura. Sempre use emojis e **negrito** pa
         if (contains(t, "ignore","esqueca","desconsider","override","disregard")
             && contains(t, "instrucao","instrucoes","prompt","sistema","regra","anterior","previous","all")) return true;
 
-        // Reveal secrets
+        // Reveal secrets — with explicit verb
         if (contains(t, "revela","mostre","exiba","diga","reveal","show","print","output","display","get","give")
             && contains(t, "api","chave","key","senha","secret","token","credencial","prompt do sistema","instrucao")) return true;
+
+        // Sensitive credential queries — even without reveal verb (e.g. "qual a senha da api?")
+        if (contains(t, "senha","password","credencial") && contains(t, "api","sistema","admin","plataforma","backend","banco","db")) return true;
+        if (contains(t, "token","chave","key","secret") && contains(t, "api","gemini","openai","sistema","autenticacao","auth","backend")) return true;
 
         // Jailbreak / roleplay
         if (anyMatch(t, "jailbreak","dan mode","developer mode","modo desenvolvedor","modo dev",

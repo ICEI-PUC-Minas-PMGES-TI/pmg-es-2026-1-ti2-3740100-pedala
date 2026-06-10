@@ -7,6 +7,8 @@ import com.pedala.api.exception.ResourceNotFoundException;
 import com.pedala.api.gps.service.GpsSimulatorService;
 import com.pedala.api.inspection.domain.Inspection;
 import com.pedala.api.inspection.repository.InspectionRepository;
+import com.pedala.api.plano.domain.Plano;
+import com.pedala.api.plano.repository.PlanoRepository;
 import com.pedala.api.rental.domain.*;
 import com.pedala.api.rental.repository.RentalRepository;
 import com.pedala.api.shared.TimeSimulator;
@@ -36,10 +38,12 @@ public class RentalService {
     private final InspectionRepository inspectionRepository;
     private final GpsSimulatorService gpsSimulatorService;
     private final TimeSimulator timeSimulator;
+    private final PlanoRepository planoRepository;
 
     @Transactional
     public Map<String, Object> createRental(Long userId, String userNome, String userEmail,
-                                             Long bikeId, String tipo, String dataInicio, Integer recorrenciaMeses, String tipoSeguro) {
+                                             Long bikeId, String tipo, String dataInicio, Integer recorrenciaMeses,
+                                             String tipoSeguro, Long planoId) {
         if (bikeId == null || tipo == null || tipo.isBlank()) {
             throw new BusinessException("bikeId e tipo sao obrigatorios.");
         }
@@ -82,12 +86,25 @@ public class RentalService {
             case mensal -> bike.getPrecoMensal(); 
         };
         
-        String seguroDesc = (tipoSeguro != null && !tipoSeguro.isBlank()) ? tipoSeguro : "Básico";
-        BigDecimal valorSeguroPorCiclo = switch (seguroDesc.toLowerCase()) {
-            case "intermediário", "intermediario" -> BigDecimal.valueOf(15.00);
-            case "premium" -> BigDecimal.valueOf(30.00);
-            default -> BigDecimal.ZERO;
-        };
+        // Resolução do plano de proteção — prioridade: planoId novo > tipoSeguro legado
+        String seguroDesc;
+        BigDecimal valorSeguroPorCiclo;
+        Long planoIdFinal = null;
+
+        if (planoId != null) {
+            Plano plano = planoRepository.findById(planoId)
+                    .orElseThrow(() -> new BusinessException("Plano de proteção não encontrado."));
+            seguroDesc = plano.getNome();
+            valorSeguroPorCiclo = plano.getValorAdicional() != null ? plano.getValorAdicional() : BigDecimal.ZERO;
+            planoIdFinal = plano.getId();
+        } else {
+            seguroDesc = (tipoSeguro != null && !tipoSeguro.isBlank()) ? tipoSeguro : "Básico";
+            valorSeguroPorCiclo = switch (seguroDesc.toLowerCase()) {
+                case "intermediário", "intermediario" -> BigDecimal.valueOf(15.00);
+                case "premium" -> BigDecimal.valueOf(30.00);
+                default -> BigDecimal.ZERO;
+            };
+        }
 
         BigDecimal precoTotalPorCiclo = precoPorCiclo.add(valorSeguroPorCiclo);
         BigDecimal precoTotal = precoTotalPorCiclo.multiply(BigDecimal.valueOf(ciclosRecorrencia));
@@ -102,7 +119,7 @@ public class RentalService {
         Rental rental = Rental.builder().usuarioId(userId).usuarioNome(userNome).usuarioEmail(userEmail)
                 .bikeId(bike.getId()).bikeNome(bike.getNome()).bikeCategoria(bike.getCategoria())
                 .tipo(rentalType).planoLabel(planoLabel).ciclosRecorrencia(ciclosRecorrencia)
-                .tipoSeguro(seguroDesc).valorSeguro(valorSeguroPorCiclo)
+                .tipoSeguro(seguroDesc).valorSeguro(valorSeguroPorCiclo).planoId(planoIdFinal)
                 .preco(precoTotal).status(statusInicial).dataInicio(inicio).dataDevolucaoPrevista(dataDevolucaoPrevista).criadoEm(agora).build();
         if (usuario.getEndereco() != null) {
             var addr = usuario.getEndereco();
@@ -232,7 +249,7 @@ public class RentalService {
         m.put("usuarioEmail", r.getUsuarioEmail()); m.put("bikeId", r.getBikeId()); m.put("bikeNome", r.getBikeNome());
         m.put("bikeCategoria", r.getBikeCategoria()); m.put("tipo", r.getTipo().name()); m.put("planoLabel", r.getPlanoLabel());
         m.put("ciclosRecorrencia", r.getCiclosRecorrencia()); m.put("preco", r.getPreco());
-        m.put("tipoSeguro", r.getTipoSeguro()); m.put("valorSeguro", r.getValorSeguro());
+        m.put("planoId", r.getPlanoId()); m.put("tipoSeguro", r.getTipoSeguro()); m.put("valorSeguro", r.getValorSeguro());
         m.put("alertaDesvio", r.getAlertaDesvio());
         if (r.getEnderecoLogradouro() != null) {
             m.put("enderecoEntrega", Map.of("logradouro", r.getEnderecoLogradouro(), "numero", r.getEnderecoNumero() != null ? r.getEnderecoNumero() : "",

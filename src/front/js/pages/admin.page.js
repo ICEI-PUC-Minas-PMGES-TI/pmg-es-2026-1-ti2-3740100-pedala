@@ -24,7 +24,7 @@ function showSec(s, el) {
     if (el) el.classList.add('active');
     const loaders = {
         dashboard: loadDash, bikes: loadBikes,
-        locacoes: loadLocacoes, pagamentos: loadPagamentos,
+        locacoes: loadLocacoes, pagamentos: loadPagamentos, planos: loadPlanos,
         gps: initGpsMap, vistorias: loadVist, chamados: loadChamadosAdmin,
         usuarios: loadUsers, configuracoes: loadCategories
     };
@@ -1514,8 +1514,8 @@ async function loadChamadosAdmin() {
 }
 
 function renderChamadosAdmin(list) {
-    const sMap = { aberto:'badge-danger', em_atendimento:'badge-warning', resolvido:'badge-success', cancelado:'badge-muted' };
-    const sLbl = { aberto:'Aberto', em_atendimento:'Em atendimento', resolvido:'Resolvido', cancelado:'Cancelado' };
+    const sMap = { aberto:'badge-danger', em_atendimento:'badge-warning', aguardando_pagamento:'badge-info', resolvido:'badge-success', cancelado:'badge-muted' };
+    const sLbl = { aberto:'Aberto', em_atendimento:'Em atendimento', aguardando_pagamento:'Aguard. pagamento', resolvido:'Resolvido', cancelado:'Cancelado' };
     const segB = s => { const c = { premium:'badge-success', intermediario:'badge-warning', basico:'badge-muted' }; return s ? `<span class="badge ${c[s]||'badge-muted'}" style="font-size:10px;">${s}</span>` : '—'; };
     document.getElementById('chamadoAdminTbody').innerHTML = list.map(t =>
         `<tr class="clickable-row" onclick="openChamadoAdminModal(${t.id})" style="cursor:pointer;">
@@ -1539,8 +1539,8 @@ function openChamadoAdminModal(id) {
     const t = _allChamadosAdmin.find(x => x.id === id);
     if (!t) return;
     _chamadoAdminId = id;
-    const sMap = { aberto:'badge-danger', em_atendimento:'badge-warning', resolvido:'badge-success', cancelado:'badge-muted' };
-    const sLbl = { aberto:'Aberto', em_atendimento:'Em atendimento', resolvido:'Resolvido', cancelado:'Cancelado' };
+    const sMap = { aberto:'badge-danger', em_atendimento:'badge-warning', aguardando_pagamento:'badge-info', resolvido:'badge-success', cancelado:'badge-muted' };
+    const sLbl = { aberto:'Aberto', em_atendimento:'Em atendimento', aguardando_pagamento:'Aguard. pagamento', resolvido:'Resolvido', cancelado:'Cancelado' };
     document.getElementById('chamadoAdminModalTitle').textContent = `Chamado #${t.id}`;
     document.getElementById('chamadoAdminModalBadge').innerHTML = `<span class="badge ${sMap[t.status]||'badge-muted'}">${sLbl[t.status]||t.status}</span>`;
     const row = (l,v) => `<div style="display:flex;justify-content:space-between;padding:3px 0;font-size:0.84rem;"><span style="color:var(--text-muted);">${l}</span><strong>${v}</strong></div>`;
@@ -1830,11 +1830,292 @@ window.abrirModalCriarUsuario = abrirModalCriarUsuario;
 window.fecharModalCriarUsuario = fecharModalCriarUsuario;
 window.confirmarCriarUsuario = confirmarCriarUsuario;
 window.excluirUsuario = excluirUsuario;
+// ── Seguros por Bicicleta ─────────────────────────────
+let _coberturaPlanos = [];
+let _segurosAllBikes  = [];
+let _planoEditingId   = null;
+
+async function loadPlanos() {
+    const listEl  = document.getElementById('coberturaPlanosList');
+    const bikesEl = document.getElementById('segurosPosBikeList');
+    if (listEl)  listEl.innerHTML  = '<p style="color:var(--text-secondary);">Carregando...</p>';
+    if (bikesEl) bikesEl.innerHTML = '<p style="color:var(--text-secondary);">Carregando...</p>';
+    try {
+        const [planosRes, bikesRes] = await Promise.all([
+            fetch(`${API_BASE}/admin/planos`, { headers: authH }),
+            fetch(`${API_BASE}/bikes`)
+        ]);
+        const planosData = await planosRes.json();
+        const bikesData  = await bikesRes.json();
+        _coberturaPlanos = Array.isArray(planosData) ? planosData : [];
+        _segurosAllBikes = bikesData.bikes || [];
+        renderCoberturaPlanos();
+        renderSegurosPosBike(_segurosAllBikes);
+    } catch {
+        if (listEl) listEl.innerHTML = '<p style="color:var(--danger);">Erro ao carregar seguros.</p>';
+    }
+}
+
+function renderCoberturaPlanos() {
+    const el = document.getElementById('coberturaPlanosList');
+    if (!el) return;
+    if (!_coberturaPlanos.length) {
+        el.innerHTML = `<p style="color:var(--text-muted);font-size:0.85rem;">Nenhum plano cadastrado. Clique em "+ Novo seguro" para criar.</p>`;
+        return;
+    }
+    el.innerHTML = `<div style="display:flex;flex-direction:column;gap:8px;">
+      ${_coberturaPlanos.map(p => {
+        const cobList = [
+            p.cobreManutencao   && '🔧 Manutenção',
+            p.cobreAvaria       && '💥 Avaria',
+            p.cobreDuvidaFatura && '📄 Fatura',
+            p.cobreOutros       && '📦 Outros'
+        ].filter(Boolean).join(', ') || 'Sem coberturas';
+        return `<div style="display:flex;align-items:center;gap:12px;padding:10px 14px;background:var(--bg-secondary);border:1px solid var(--border);border-radius:8px;${p.ativo ? '' : 'opacity:0.55;'}">
+          <div style="flex:1;min-width:0;">
+            <div style="font-weight:600;font-size:0.88rem;">
+              ${escHtml(p.nome)}
+              ${!p.ativo ? '<span class="badge badge-muted" style="font-size:0.7rem;margin-left:6px;">Inativo</span>' : ''}
+            </div>
+            <div style="font-size:0.74rem;color:var(--text-muted);margin-top:2px;">
+              ${Number(p.valorAdicional) > 0 ? `+ R$ ${Number(p.valorAdicional).toFixed(2).replace('.',',')} / ciclo · ` : 'Sem custo adicional · '}${cobList}
+            </div>
+          </div>
+          <div style="display:flex;align-items:center;gap:8px;flex-shrink:0;">
+            <span class="badge badge-muted" style="font-size:0.72rem;">${(p.bikeIds||[]).length} bike${(p.bikeIds||[]).length !== 1 ? 's' : ''}</span>
+            <button class="btn btn-ghost btn-sm" onclick="openEditarPlanoModal(${p.id})">Editar</button>
+            ${p.ativo ? `<button class="btn btn-ghost btn-sm" style="color:var(--danger);" onclick="desativarPlano(${p.id})">Desativar</button>` : ''}
+          </div>
+        </div>`;
+      }).join('')}
+    </div>`;
+}
+
+function renderSegurosPosBike(bikes) {
+    const el = document.getElementById('segurosPosBikeList');
+    if (!el) return;
+    const activeBikes = (bikes || []).filter(b => !b.removida);
+    if (!activeBikes.length) {
+        el.innerHTML = `<div class="empty-state"><strong>Nenhuma bike cadastrada</strong><span>Cadastre bikes na aba Bikes para associar seguros.</span></div>`;
+        return;
+    }
+    el.innerHTML = `<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:16px;">
+      ${activeBikes.map(b => {
+        const assignedPlans = _coberturaPlanos.filter(p => (p.bikeIds || []).includes(b.id));
+        const nomeSafe = escHtml(b.nome).replace(/'/g, "\\'");
+        return `<div class="card">
+          <div class="card-body" style="padding:16px 18px;">
+            <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:8px;margin-bottom:10px;">
+              <div>
+                <div style="font-weight:700;font-size:0.95rem;">${escHtml(b.nome)}</div>
+                <div style="font-size:0.76rem;color:var(--text-muted);margin-top:2px;">${escHtml(b.categoria || '')}</div>
+              </div>
+              <span class="badge ${assignedPlans.length > 0 ? 'badge-success' : 'badge-muted'}" style="flex-shrink:0;">
+                ${assignedPlans.length} seguro${assignedPlans.length !== 1 ? 's' : ''}
+              </span>
+            </div>
+            ${assignedPlans.length > 0
+              ? `<div style="display:flex;flex-wrap:wrap;gap:4px;margin-bottom:12px;">
+                  ${assignedPlans.map(p => `<span class="badge badge-accent" style="font-size:0.72rem;">${escHtml(p.nome)}</span>`).join('')}
+                 </div>`
+              : `<p style="font-size:0.78rem;color:var(--text-muted);margin-bottom:12px;">Nenhum seguro vinculado.</p>`
+            }
+            <button class="btn btn-secondary btn-sm" style="width:100%;" onclick="abrirBikePlanos(${b.id},'${nomeSafe}')">
+              ⚙️ Gerenciar seguros
+            </button>
+          </div>
+        </div>`;
+      }).join('')}
+    </div>`;
+}
+
+// ── Modal criar/editar plano ──────────────────────────
+
+function openCriarPlanoModal() {
+    _planoEditingId = null;
+    document.getElementById('planoModalTitle').textContent = 'Novo plano de cobertura';
+    document.getElementById('planoModalSaveBtn').textContent = 'Criar plano';
+    document.getElementById('planoModalId').value   = '';
+    document.getElementById('planoModalNome').value = '';
+    document.getElementById('planoModalDesc').value = '';
+    document.getElementById('planoModalValor').value = '0';
+    document.getElementById('pCM').checked   = false;
+    document.getElementById('pCA').checked   = false;
+    document.getElementById('pCDF').checked  = true;
+    document.getElementById('pCO').checked   = false;
+    document.getElementById('planoModalError').style.display = 'none';
+    document.getElementById('planoModal').style.display = 'flex';
+}
+
+function openEditarPlanoModal(id) {
+    const p = _coberturaPlanos.find(x => x.id === id);
+    if (!p) return;
+    _planoEditingId = id;
+    document.getElementById('planoModalTitle').textContent = 'Editar plano';
+    document.getElementById('planoModalSaveBtn').textContent = 'Salvar';
+    document.getElementById('planoModalId').value   = id;
+    document.getElementById('planoModalNome').value = p.nome;
+    document.getElementById('planoModalDesc').value = p.descricao || '';
+    document.getElementById('planoModalValor').value = p.valorAdicional || 0;
+    document.getElementById('pCM').checked   = !!p.cobreManutencao;
+    document.getElementById('pCA').checked   = !!p.cobreAvaria;
+    document.getElementById('pCDF').checked  = !!p.cobreDuvidaFatura;
+    document.getElementById('pCO').checked   = !!p.cobreOutros;
+    document.getElementById('planoModalError').style.display = 'none';
+    document.getElementById('planoModal').style.display = 'flex';
+}
+
+function closePlanoModal() {
+    document.getElementById('planoModal').style.display = 'none';
+}
+
+async function salvarPlano() {
+    const nome = document.getElementById('planoModalNome').value.trim();
+    if (!nome) {
+        const errEl = document.getElementById('planoModalError');
+        errEl.textContent = 'Informe um nome para o plano.';
+        errEl.style.display = 'block';
+        return;
+    }
+    const body = {
+        nome,
+        descricao:         document.getElementById('planoModalDesc').value.trim() || null,
+        valorAdicional:    parseFloat(document.getElementById('planoModalValor').value) || 0,
+        cobreManutencao:   document.getElementById('pCM').checked,
+        cobreAvaria:       document.getElementById('pCA').checked,
+        cobreDuvidaFatura: document.getElementById('pCDF').checked,
+        cobreOutros:       document.getElementById('pCO').checked,
+        ativo:             true,
+    };
+    try {
+        const url    = _planoEditingId ? `${API_BASE}/admin/planos/${_planoEditingId}` : `${API_BASE}/admin/planos`;
+        const method = _planoEditingId ? 'PUT' : 'POST';
+        const r = await fetch(url, { method, headers: authHJ, body: JSON.stringify(body) });
+        const d = await r.json();
+        showToast(d.message || (r.ok ? 'Salvo!' : (d.error || 'Erro.')), r.ok ? 'success' : 'error');
+        if (r.ok) { closePlanoModal(); loadPlanos(); }
+    } catch {
+        showToast('Erro ao salvar plano.', 'error');
+    }
+}
+
+async function desativarPlano(id) {
+    if (!confirm('Desativar este plano? Ele não aparecerá para novas locações.')) return;
+    try {
+        const r = await fetch(`${API_BASE}/admin/planos/${id}`, { method: 'DELETE', headers: authH });
+        const d = await r.json();
+        showToast(d.message || (r.ok ? 'Plano desativado.' : (d.error || 'Erro.')), r.ok ? 'success' : 'error');
+        if (r.ok) loadPlanos();
+    } catch {
+        showToast('Erro ao desativar plano.', 'error');
+    }
+}
+
+// ── Gerenciar seguros de uma bike ─────────────────────
+
+let _planoBikesId = null;
+
+async function abrirBikePlanos(bikeId, bikeNome) {
+    _planoBikesId = bikeId;
+    document.getElementById('planoBikesTitle').textContent = `Seguros de: ${bikeNome}`;
+    document.getElementById('planoBikesWrap').style.display = '';
+    document.getElementById('planoBikesList').innerHTML = '<p style="color:var(--text-secondary);">Carregando...</p>';
+    document.getElementById('planoBikesWrap').scrollIntoView({ behavior: 'smooth', block: 'start' });
+    try {
+        const r = await fetch(`${API_BASE}/planos/bike/${bikeId}`);
+        const assignedArr = await r.json();
+        const assignedIds = new Set((Array.isArray(assignedArr) ? assignedArr : []).map(p => p.id));
+        const plans = _coberturaPlanos.map(p => ({ ...p, assigned: assignedIds.has(p.id) }));
+        renderPlanoBikes(bikeId, plans);
+    } catch {
+        document.getElementById('planoBikesList').innerHTML = '<p style="color:var(--danger);">Erro ao carregar seguros.</p>';
+    }
+}
+
+function fecharPlanoBikes() {
+    _planoBikesId = null;
+    document.getElementById('planoBikesWrap').style.display = 'none';
+}
+
+function renderPlanoBikes(bikeId, plans) {
+    const el = document.getElementById('planoBikesList');
+    if (!el) return;
+    if (!plans.length) {
+        el.innerHTML = `<div class="empty-state"><strong>Nenhum plano disponível</strong><span>Crie um seguro clicando em "+ Novo seguro".</span></div>`;
+        return;
+    }
+    const cobTagSm = (on, label) => on
+        ? `<span class="badge badge-success" style="font-size:0.70rem;padding:2px 7px;">${label}</span>`
+        : `<span class="badge badge-muted"   style="font-size:0.70rem;padding:2px 7px;">${label}</span>`;
+
+    el.innerHTML = `<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(270px,1fr));gap:12px;">
+      ${plans.map(p => `
+        <div class="plano-bike-card${p.assigned ? ' assigned' : ''}" id="bike-plano-card-${p.id}" style="${p.ativo ? '' : 'opacity:0.55;'}">
+          <div style="flex:1;min-width:0;">
+            <div style="font-weight:600;font-size:0.88rem;">${escHtml(p.nome)}</div>
+            <div style="font-size:0.75rem;color:var(--color-primary,#F5C000);font-weight:700;margin-top:3px;">
+              ${Number(p.valorAdicional) > 0 ? `+ R$ ${Number(p.valorAdicional).toFixed(2).replace('.',',')} / ciclo` : 'Sem custo adicional'}
+            </div>
+            <div style="display:flex;flex-wrap:wrap;gap:3px;margin-top:7px;">
+              ${cobTagSm(p.cobreManutencao,   '🔧 Manutenção')}
+              ${cobTagSm(p.cobreAvaria,       '💥 Avaria')}
+              ${cobTagSm(p.cobreDuvidaFatura, '📄 Fatura')}
+              ${cobTagSm(p.cobreOutros,       '📦 Outros')}
+            </div>
+          </div>
+          <button class="plano-bike-toggle${p.assigned ? ' on' : ''}" id="toggle-${bikeId}-${p.id}"
+            onclick="toggleBikePlano(${p.id},${bikeId},${!p.assigned})"
+            title="${p.assigned ? 'Remover da bike' : 'Adicionar à bike'}">
+          </button>
+        </div>`).join('')}
+    </div>`;
+}
+
+async function toggleBikePlano(planoId, bikeId, assign) {
+    try {
+        const url    = `${API_BASE}/admin/planos/${planoId}/bikes/${bikeId}`;
+        const method = assign ? 'POST' : 'DELETE';
+        const r = await fetch(url, { method, headers: authH });
+        const d = await r.json();
+        if (r.ok) {
+            const card   = document.getElementById(`bike-plano-card-${planoId}`);
+            const toggle = document.getElementById(`toggle-${bikeId}-${planoId}`);
+            if (assign) {
+                card?.classList.add('assigned');
+                toggle?.classList.add('on');
+                toggle?.setAttribute('onclick', `toggleBikePlano(${planoId},${bikeId},false)`);
+                toggle?.setAttribute('title', 'Remover da bike');
+            } else {
+                card?.classList.remove('assigned');
+                toggle?.classList.remove('on');
+                toggle?.setAttribute('onclick', `toggleBikePlano(${planoId},${bikeId},true)`);
+                toggle?.setAttribute('title', 'Adicionar à bike');
+            }
+            showToast(d.message || 'Salvo!', 'success');
+            loadPlanos();
+        } else {
+            showToast(d.message || d.error || 'Erro.', 'error');
+        }
+    } catch {
+        showToast('Erro ao atualizar seguro.', 'error');
+    }
+}
+
 window.loadChamadosAdmin = loadChamadosAdmin;
 window.filterChamadosAdmin = filterChamadosAdmin;
 window.openChamadoAdminModal = openChamadoAdminModal;
 window.closeChamadoAdminModal = closeChamadoAdminModal;
 window.cancelarChamadoAdmin = cancelarChamadoAdmin;
+window.loadPlanos           = loadPlanos;
+window.openCriarPlanoModal  = openCriarPlanoModal;
+window.openEditarPlanoModal = openEditarPlanoModal;
+window.closePlanoModal      = closePlanoModal;
+window.salvarPlano          = salvarPlano;
+window.desativarPlano       = desativarPlano;
+window.abrirBikePlanos      = abrirBikePlanos;
+window.fecharPlanoBikes     = fecharPlanoBikes;
+window.toggleBikePlano      = toggleBikePlano;
+window.renderSegurosPosBike = renderSegurosPosBike;
 
 // ── Init ──────────────────────────────────────────────
 loadDash();
