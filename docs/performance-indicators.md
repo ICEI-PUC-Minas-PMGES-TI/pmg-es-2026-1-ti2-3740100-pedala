@@ -4,8 +4,8 @@ _Usar o seguinte modelo:_
 
 | **Indicador** | **Objetivos** | **Descrição** | **Fonte de dados** | **Fórmula de cálculo** |
 | --- | --- | --- | --- | --- |
-| Taxa de ocupação de bicicletas | Avaliar o quanto do estoque está sendo aproveitado em aluguéis ativos. Meta: manter acima de 70%. | Percentual de bicicletas disponíveis que estão atualmente alugadas. | Tabela Bikes e Rentals | (COUNT de RENTALS com status = 'ativo' / quantidade total de BIKES) × 100 |
+| Taxa de ocupação mensal de bicicletas | Avaliar o aproveitamento da frota ao longo de um mês, identificando períodos de alta e baixa demanda | Percentual de bicicletas que tiveram ao menos um aluguel iniciado dentro do mês em relação ao total da frota| Tabela Bikes e Rentals | (COUNT DISTINCT de RENTALS.bike_id onde data_inicio está no mês / quantidade_total de BIKES) × 100 |
 | Taxa de renovação de aluguéis | Medir a fidelização do cliente e a satisfação com o serviço. Meta: atingir pelo menos 25%. | Percentual de aluguéis que geraram ao menos uma renovação em relação ao total de aluguéis encerrados. | Tabela Rentals e Rental_Renewals | (COUNT de RENTALS com ao menos 1 registro em RENTAL_RENEWALS / COUNT total de RENTALS encerrados) × 100 |
-| Tempo médio de aprovação do pagamento | Monitorar a agilidade operacional na liberação dos pedidos. Meta: aprovar em até 2 horas. | Média de tempo entre a solicitação e a aprovação do pagamento dos aluguéis. | Tabela Rentals | AVG(data/hora de pagamento_aprovado_em - data/hora de pagamento_solicitado_em) em horas |
+| Tempo médio de entrega da bicicleta | Medir a agilidade na disponibilização da bicicleta após a abertura do aluguel | Tempo médio entre a criação do aluguel e a data de início efetivo, indicando a eficiência operacional na entrega | Tabela Rentals | AVG(data_inicio − criado_em) para todos os RENTALS no período, em horas ou minutos |
 
-_Metas sugeridas:_ manter a taxa de ocupação acima de 70%, a renovação de aluguéis acima de 25% e o tempo médio de aprovação do pagamento abaixo de 2 horas.
+_Metas sugeridas:_ manter a taxa de ocupação acima de 70 e a renovação de aluguéis acima de 25%.
