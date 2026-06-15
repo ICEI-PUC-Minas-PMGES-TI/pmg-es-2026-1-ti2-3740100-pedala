@@ -49,6 +49,6 @@ public interface RentalRepository extends JpaRepository<Rental, Long> {
     @Query("SELECT COUNT(r) FROM Rental r WHERE r.status = com.pedala.api.rental.domain.RentalStatus.finalizado AND SIZE(r.renovacoes) > 0")
     long countFinalizedWithRenovations();
 
-    @Query(value = "SELECT AVG(CAST(DATEDIFF(minute, criado_em, data_inicio) AS FLOAT)) FROM rentals WHERE data_inicio IS NOT NULL AND criado_em IS NOT NULL", nativeQuery = true)
+    @Query(value = "SELECT AVG(CAST(DATEDIFF(minute, criado_em, data_inicio) AS FLOAT)) FROM rentals WHERE data_inicio IS NOT NULL AND criado_em IS NOT NULL AND data_inicio >= criado_em", nativeQuery = true)
     Double avgDeliveryTimeMinutes();
 }
