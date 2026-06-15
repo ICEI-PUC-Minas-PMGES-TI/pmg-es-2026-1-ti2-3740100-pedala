@@ -114,4 +114,12 @@ public class AdminController {
         timeSimulator.addOffset(days);
         return ResponseEntity.ok(Map.of("message", "Time moved forward by " + days + " days", "newTime", timeSimulator.now().toString()));
     }
+
+    @Operation(summary = "Resetar tempo simulado (dev)")
+    @PostMapping("/reset-time")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<Map<String, Object>> resetTime() {
+        timeSimulator.setOffset(0);
+        return ResponseEntity.ok(Map.of("message", "Time reset to real time", "newTime", timeSimulator.now().toString()));
+    }
 }

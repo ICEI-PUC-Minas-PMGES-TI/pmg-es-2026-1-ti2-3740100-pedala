@@ -37,7 +37,10 @@
       <button class="theme-toggle" title="Mudar tema"></button>
       <div class="nav-user-info">
         <div class="nav-avatar" id="navAv">U</div>
-        <span class="nav-username" id="navNm">Usuário</span>
+        <div style="display:flex;flex-direction:column;gap:1px;">
+          <span class="nav-username" id="navNm">Usuário</span>
+          <span id="navRole" style="font-size:10px;font-weight:700;letter-spacing:0.06em;color:var(--accent);line-height:1.2;"></span>
+        </div>
       </div>
       <button class="btn btn-secondary btn-sm" type="button" onclick="sair()">Sair</button>
     </div>
@@ -337,7 +340,25 @@
   <div id="toast" class="toast" role="status" aria-live="polite"></div>
   <button class="scroll-top" id="scrollTop" type="button">↑ Topo</button>
 
+  <!-- CHATBOT -->
+  <button class="chatbot-trigger" id="chatbotToggle" aria-expanded="false" aria-controls="chatbotContainer" aria-label="Abrir chat"><i data-lucide="message-square"></i></button>
+  <div class="chatbot-panel" id="chatbotContainer" role="dialog" aria-hidden="true" aria-label="Assistente Pedala">
+    <div class="chat-header">
+      <span>Pedala Assistente</span>
+      <button id="chatbotClose" type="button" aria-label="Fechar chat">&times;</button>
+    </div>
+    <div class="chat-body" id="chatbotMessages">
+      <div class="msg bot">Olá! Como posso te ajudar com sua assinatura hoje?</div>
+    </div>
+    <div class="chat-footer">
+      <input type="text" id="chatbotInput" placeholder="Sua mensagem...">
+      <button id="chatbotSend"><i data-lucide="send"></i></button>
+    </div>
+  </div>
+
   <script src="../js/core/app.js"></script>
   <script src="../js/pages/dashboard.page.js"></script>
+  <script src="../js/core/chatbot.js"></script>
+  <script>lucide.createIcons();</script>
 </body>
 </html>

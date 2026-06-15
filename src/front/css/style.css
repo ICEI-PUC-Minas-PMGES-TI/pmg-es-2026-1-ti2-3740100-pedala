@@ -364,6 +364,8 @@ ul { list-style: none; }
 .form-input::placeholder { color: var(--color-text-muted); opacity: 0.65; }
 .form-input:focus { border-color: var(--color-primary); box-shadow: 0 0 0 3px rgba(247, 184, 76, 0.16); }
 .form-input.error { border-color: var(--danger); box-shadow: 0 0 0 3px var(--danger-bg); }
+.error-msg { display: block; font-size: 0.75rem; color: var(--danger); margin-top: 4px; min-height: 1em; }
+.req-star { color: var(--danger); }
 .form-textarea { min-height: 90px; resize: vertical; }
 
 .form-hint { font-size: 0.82rem; color: var(--color-text-muted); margin-top: 6px; }

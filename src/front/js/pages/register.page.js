@@ -1,34 +1,64 @@
 // @ts-check
 
+function _fieldErr(id, msg) {
+    const el = document.getElementById('err-' + id);
+    const input = document.getElementById(id);
+    if (el) el.textContent = msg || '';
+    if (input) input.classList.toggle('error', !!msg);
+}
+
+function _clearErrors() {
+    ['nome','cpf','email','telefone','senha','confirmarSenha',
+     'logradouro','numero','bairro','cidade','uf'].forEach(id => _fieldErr(id, ''));
+}
+
 async function handleRegister(e) {
     e.preventDefault();
+    _clearErrors();
     const err = document.getElementById('regError');
     err.style.display = 'none';
 
-    const senha = document.getElementById('senha').value;
-    if (senha !== document.getElementById('confirmarSenha').value) {
-        err.textContent = 'As senhas nao conferem.';
-        err.style.display = 'block';
-        return;
-    }
+    const nome     = document.getElementById('nome').value.trim();
+    const cpf      = document.getElementById('cpf').value.trim();
+    const email    = document.getElementById('email').value.trim();
+    const telefone = document.getElementById('telefone').value.trim();
+    const senha    = document.getElementById('senha').value;
+    const conf     = document.getElementById('confirmarSenha').value;
+    const logr     = document.getElementById('logradouro').value.trim();
+    const numero   = document.getElementById('numero').value.trim();
+    const bairro   = document.getElementById('bairro').value.trim();
+    const cidade   = document.getElementById('cidade').value.trim();
+    const uf       = document.getElementById('uf').value.trim();
+
+    let hasError = false;
+    function flag(id, msg) { _fieldErr(id, msg); hasError = true; }
+
+    if (!nome)                       flag('nome',     'Nome obrigatório.');
+    if (!cpf || cpf.replace(/\D/g,'').length !== 11)
+                                     flag('cpf',      'CPF inválido.');
+    if (!email || !email.includes('@')) flag('email', 'E-mail inválido.');
+    if (!telefone)                   flag('telefone', 'Telefone obrigatório.');
+    if (!senha || senha.length < 6)  flag('senha',    'Mínimo 6 caracteres.');
+    if (senha !== conf)              flag('confirmarSenha', 'Senhas não conferem.');
+    if (!logr)                       flag('logradouro', 'Logradouro obrigatório.');
+    if (!numero)                     flag('numero',   'Número obrigatório.');
+    if (!bairro)                     flag('bairro',   'Bairro obrigatório.');
+    if (!cidade)                     flag('cidade',   'Cidade obrigatória.');
+    if (!uf || uf.length !== 2)      flag('uf',       'UF inválida (2 letras).');
+
+    if (hasError) return;
 
     const btn = document.getElementById('submitBtn');
     btn.disabled = true;
     btn.textContent = 'Criando conta...';
 
     const body = {
-        nome: document.getElementById('nome').value.trim(),
-        cpf: document.getElementById('cpf').value.trim(),
-        email: document.getElementById('email').value.trim(),
-        telefone: document.getElementById('telefone').value.trim(),
-        senha,
+        nome, cpf, email, telefone, senha,
         endereco: {
-            logradouro: document.getElementById('logradouro').value.trim(),
-            numero: document.getElementById('numero').value.trim(),
+            logradouro: logr, numero,
             complemento: document.getElementById('complemento').value.trim(),
-            bairro: document.getElementById('bairro').value.trim(),
-            cidade: document.getElementById('cidade').value.trim(),
-            uf: document.getElementById('uf').value.trim().toUpperCase(),
+            bairro, cidade,
+            uf: uf.toUpperCase(),
             cep: document.getElementById('cep').value.trim()
         }
     };
@@ -44,7 +74,7 @@ async function handleRegister(e) {
         localStorage.setItem('pedala_token', data.token);
         localStorage.setItem('pedala_user', JSON.stringify(data.usuario));
         window.location.href = 'dashboard.html';
-    } catch (e) {
+    } catch (_e) {
         err.textContent = 'Erro de conexao.';
         err.style.display = 'block';
     } finally {
@@ -55,6 +85,12 @@ async function handleRegister(e) {
 
 window.handleRegister = handleRegister;
 document.getElementById('regForm')?.addEventListener('submit', handleRegister);
+
+// Clear inline error on focus
+['nome','cpf','email','telefone','senha','confirmarSenha',
+ 'logradouro','numero','bairro','cidade','uf'].forEach(id => {
+    document.getElementById(id)?.addEventListener('focus', () => _fieldErr(id, ''));
+});
 
 // CPF mask
 document.getElementById('cpf')?.addEventListener('input', e => {

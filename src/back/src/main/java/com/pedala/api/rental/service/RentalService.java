@@ -52,8 +52,12 @@ public class RentalService {
         catch (IllegalArgumentException e) { throw new BusinessException("Tipo invalido. Use: semanal, quinzenal, mensal"); }
 
         List<Rental> activeRentals = rentalRepository.findByUsuarioIdAndStatusNot(userId, RentalStatus.finalizado);
-        if (!activeRentals.isEmpty()) {
-            throw new BusinessException("Voce ja possui uma locacao ativa. Encerre a locacao atual antes de criar uma nova.");
+        boolean temAtrasada = activeRentals.stream()
+            .anyMatch(r -> r.getStatus() == RentalStatus.ativo
+                && r.getDataDevolucaoPrevista() != null
+                && r.getDataDevolucaoPrevista().isBefore(timeSimulator.now()));
+        if (temAtrasada) {
+            throw new BusinessException("Voce possui uma locacao em atraso. Regularize a devolucao antes de criar uma nova.");
         }
 
         Bike bike = bikeRepository.findById(bikeId).orElseThrow(() -> new ResourceNotFoundException("Bicicleta nao encontrada."));

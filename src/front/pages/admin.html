@@ -75,7 +75,10 @@
       <button class="theme-toggle" title="Mudar tema"></button>
       <div class="nav-user-info">
         <div class="nav-avatar" id="navAv">A</div>
-        <span class="nav-username" id="navNm">Admin</span>
+        <div style="display:flex;flex-direction:column;gap:1px;">
+          <span class="nav-username" id="navNm">Admin</span>
+          <span id="navRole" style="font-size:10px;font-weight:700;letter-spacing:0.06em;color:var(--accent);line-height:1.2;"></span>
+        </div>
       </div>
       <button class="btn btn-secondary btn-sm" onclick="sair()">Sair</button>
     </div>
@@ -538,19 +541,38 @@
         <div class="page-header-row">
           <div class="page-header">
             <h1>Configurações</h1>
-            <p>Gerencie as categorias disponíveis para cadastro de bicicletas.</p>
+            <p>Categorias de bicicletas e ferramentas de simulação para testes.</p>
           </div>
         </div>
+
         <div class="card">
-          <div class="card-header">
+          <div class="card-header" style="display:flex;align-items:center;justify-content:space-between;">
             <span class="card-title">Categorias de Bicicletas</span>
           </div>
           <div class="card-body" style="padding:20px;">
-            <div style="display:flex;gap:10px;margin-bottom:20px;">
-              <input class="form-input" id="newCategoryName" placeholder="Nova categoria (ex: BMX)" style="max-width:320px;">
-              <button class="btn btn-primary btn-sm" onclick="addCategory()">Adicionar</button>
+            <div style="display:flex;gap:10px;margin-bottom:20px;flex-wrap:wrap;">
+              <input class="form-input" id="newCategoryName" placeholder="Nova categoria (ex: BMX)" style="max-width:320px;" onkeydown="if(event.key==='Enter')addCategory()">
+              <button class="btn btn-primary btn-sm" onclick="addCategory()">+ Adicionar</button>
             </div>
-            <div id="categoryList"><p style="color:var(--text-muted);">Carregando...</p></div>
+            <div id="categoryList"><p style="color:var(--text-muted);font-size:0.84rem;">Carregando...</p></div>
+          </div>
+        </div>
+
+        <div class="card" style="margin-top:24px;">
+          <div class="card-header" style="display:flex;align-items:center;gap:10px;">
+            <span class="card-title">Simulador de Tempo</span>
+            <span class="badge badge-warning" style="font-size:0.7rem;padding:2px 8px;">DEV</span>
+          </div>
+          <div class="card-body" style="padding:20px;">
+            <p style="font-size:0.84rem;color:var(--text-muted);margin:0 0 16px;">
+              Avance o relógio interno do sistema para simular atrasos, vencimentos e renovações. O offset é mantido em memória e resetado ao reiniciar o backend.
+            </p>
+            <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;">
+              <input type="number" id="fwdDays" class="form-input" style="max-width:130px;" min="1" max="365" value="1" placeholder="Dias">
+              <button class="btn btn-primary btn-sm" onclick="forwardTime()">⏩ Avançar</button>
+              <button class="btn btn-secondary btn-sm" onclick="resetTime()">↩ Resetar</button>
+              <span id="currentSimTime" style="font-size:0.82rem;"></span>
+            </div>
           </div>
         </div>
       </div>

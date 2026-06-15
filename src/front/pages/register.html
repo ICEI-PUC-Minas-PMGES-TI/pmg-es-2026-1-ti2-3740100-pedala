@@ -68,38 +68,44 @@
             <span class="section-label-form">Dados pessoais</span>
             <div class="form-row">
               <div class="form-group">
-                <label class="form-label" for="nome">Nome completo</label>
+                <label class="form-label" for="nome">Nome completo <span class="req-star">*</span></label>
                 <input class="form-input" type="text" id="nome" placeholder="João Silva" required>
+                <span class="error-msg" id="err-nome"></span>
               </div>
               <div class="form-group">
-                <label class="form-label" for="cpf">CPF</label>
+                <label class="form-label" for="cpf">CPF <span class="req-star">*</span></label>
                 <input class="form-input" type="text" id="cpf" placeholder="000.000.000-00" maxlength="14" required>
+                <span class="error-msg" id="err-cpf"></span>
               </div>
             </div>
             <div class="form-row">
               <div class="form-group">
-                <label class="form-label" for="email">E-mail</label>
+                <label class="form-label" for="email">E-mail <span class="req-star">*</span></label>
                 <input class="form-input" type="email" id="email" placeholder="voce@pedala.com" autocomplete="email" required>
+                <span class="error-msg" id="err-email"></span>
               </div>
               <div class="form-group">
-                <label class="form-label" for="telefone">Telefone</label>
+                <label class="form-label" for="telefone">Telefone <span class="req-star">*</span></label>
                 <input class="form-input" type="tel" id="telefone" placeholder="(11) 99999-9999" required>
+                <span class="error-msg" id="err-telefone"></span>
               </div>
             </div>
             <div class="form-row">
               <div class="form-group input-wrapper">
-                <label class="form-label" for="senha">Senha</label>
+                <label class="form-label" for="senha">Senha <span class="req-star">*</span></label>
                 <input class="form-input" type="password" id="senha" placeholder="Mínimo 6 caracteres" minlength="6" autocomplete="new-password" required>
                 <button type="button" class="input-eye" onclick="toggleField('senha','eyeReg1')" aria-label="Mostrar senha">
                   <svg id="eyeReg1" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M2.036 12.322a1.012 1.012 0 010-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178z"/><path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
                 </button>
+                <span class="error-msg" id="err-senha"></span>
               </div>
               <div class="form-group input-wrapper">
-                <label class="form-label" for="confirmarSenha">Confirmar senha</label>
+                <label class="form-label" for="confirmarSenha">Confirmar senha <span class="req-star">*</span></label>
                 <input class="form-input" type="password" id="confirmarSenha" placeholder="Repita a senha" autocomplete="new-password" required>
                 <button type="button" class="input-eye" onclick="toggleField('confirmarSenha','eyeReg2')" aria-label="Mostrar confirmar senha">
                   <svg id="eyeReg2" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M2.036 12.322a1.012 1.012 0 010-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178z"/><path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
                 </button>
+                <span class="error-msg" id="err-confirmarSenha"></span>
               </div>
             </div>
           </div>
@@ -107,13 +113,15 @@
           <div class="form-block" style="margin-bottom:18px;">
             <span class="section-label-form">Endereço de entrega</span>
             <div class="form-group">
-              <label class="form-label" for="logradouro">Logradouro</label>
+              <label class="form-label" for="logradouro">Logradouro <span class="req-star">*</span></label>
               <input class="form-input" type="text" id="logradouro" placeholder="Av. Paulista" required>
+              <span class="error-msg" id="err-logradouro"></span>
             </div>
             <div class="form-row-3">
               <div class="form-group">
-                <label class="form-label" for="numero">Número</label>
+                <label class="form-label" for="numero">Número <span class="req-star">*</span></label>
                 <input class="form-input" type="text" id="numero" placeholder="1000" required>
+                <span class="error-msg" id="err-numero"></span>
               </div>
               <div class="form-group">
                 <label class="form-label" for="complemento">Complemento</label>
@@ -126,17 +134,20 @@
             </div>
             <div class="form-row">
               <div class="form-group">
-                <label class="form-label" for="bairro">Bairro</label>
+                <label class="form-label" for="bairro">Bairro <span class="req-star">*</span></label>
                 <input class="form-input" type="text" id="bairro" placeholder="Bela Vista" required>
+                <span class="error-msg" id="err-bairro"></span>
               </div>
               <div class="form-group">
-                <label class="form-label" for="cidade">Cidade</label>
+                <label class="form-label" for="cidade">Cidade <span class="req-star">*</span></label>
                 <input class="form-input" type="text" id="cidade" placeholder="São Paulo" required>
+                <span class="error-msg" id="err-cidade"></span>
               </div>
             </div>
             <div class="form-group uf-wrap">
-              <label class="form-label" for="uf">UF</label>
+              <label class="form-label" for="uf">UF <span class="req-star">*</span></label>
               <input class="form-input" type="text" id="uf" placeholder="SP" maxlength="2" required>
+              <span class="error-msg" id="err-uf"></span>
             </div>
           </div>
 

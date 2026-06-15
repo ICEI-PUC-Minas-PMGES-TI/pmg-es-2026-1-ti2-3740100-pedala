@@ -6,6 +6,7 @@ if (!token || adminRole !== 'admin') { alert('Acesso negado.'); location.href = 
 
 document.getElementById('navAv').textContent = user.nome ? user.nome[0].toUpperCase() : 'A';
 document.getElementById('navNm').textContent = user.nome ? user.nome.split(' ')[0] : 'Admin';
+(function(){ const el = document.getElementById('navRole'); if (el) el.textContent = { admin:'ADMIN', funcionario:'FUNC.', user:'USUÁRIO' }[adminRole] || 'ADMIN'; })();
 
 const authH = { Authorization: 'Bearer ' + token };
 const authHJ = { ...authH, 'Content-Type': 'application/json' };
@@ -97,16 +98,30 @@ function setupDragDrop(zoneId, inputId, previewId) {
 let chartLocacoesInst = null;
 let chartFrotaInst = null;
 
+function _counterUp(el, target, duration) {
+    if (!el) return;
+    const start = performance.now();
+    const from = 0;
+    function step(now) {
+        const p = Math.min((now - start) / duration, 1);
+        const ease = 1 - Math.pow(1 - p, 3);
+        el.textContent = Math.round(from + (target - from) * ease);
+        if (p < 1) requestAnimationFrame(step);
+        else el.textContent = target;
+    }
+    requestAnimationFrame(step);
+}
+
 async function loadDash() {
     try {
         const d = await fetch(`${API_BASE}/admin/stats`, { headers: authH }).then(r => r.json());
-        document.getElementById('stTot').textContent = d.bikes.total;
-        document.getElementById('stDisp').textContent = d.bikes.disponiveis;
-        document.getElementById('stAlug').textContent = d.bikes.alugadas;
-        document.getElementById('stAtr').textContent = d.alugueis.atrasados;
-        document.getElementById('stAtiv').textContent = d.alugueis.ativos;
-        document.getElementById('stAL').textContent = d.alugueis.aguardandoEntrega || 0;
-        document.getElementById('stVist').textContent = d.vistorias.pendentes;
+        _counterUp(document.getElementById('stTot'),  d.bikes.total,                         700);
+        _counterUp(document.getElementById('stDisp'), d.bikes.disponiveis,                   700);
+        _counterUp(document.getElementById('stAlug'), d.bikes.alugadas,                      700);
+        _counterUp(document.getElementById('stAtr'),  d.alugueis.atrasados,                  700);
+        _counterUp(document.getElementById('stAtiv'), d.alugueis.ativos,                     700);
+        _counterUp(document.getElementById('stAL'),   d.alugueis.aguardandoEntrega || 0,     700);
+        _counterUp(document.getElementById('stVist'), d.vistorias.pendentes,                 700);
         document.getElementById('stRec').textContent = 'R$' + Number(d.receitaTotal || 0).toFixed(2);
 
         const isDark = document.documentElement.getAttribute('data-theme') !== 'light';
@@ -1211,9 +1226,13 @@ function initGpsMap() {
                 document.head.appendChild(s);
             }
             _gpsMap = L.map('gpsMapContainer', { center: [-23.5505, -46.6333], zoom: 13, zoomControl: true });
-            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-                attribution: '© <a href="https://openstreetmap.org">OpenStreetMap</a> contributors', maxZoom: 19
-            }).addTo(_gpsMap);
+            const _agDark = document.documentElement.getAttribute('data-theme') === 'dark';
+            L.tileLayer(
+                _agDark
+                    ? 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png'
+                    : 'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png',
+                { attribution: '© <a href="https://openstreetmap.org">OSM</a> © <a href="https://carto.com">CARTO</a>', maxZoom: 19 }
+            ).addTo(_gpsMap);
 
             const ZONE = [-23.5615, -46.6560];
             L.circle(ZONE, { color: '#f97316', fillColor: '#f97316', fillOpacity: 0.04, radius: 5000, weight: 1.5, dashArray: '8 5' })
@@ -1356,12 +1375,15 @@ async function verRotaGPS(rentalId, horas=1) {
             <div style="font-size:10px;color:var(--text-muted);margin-bottom:4px;display:flex;align-items:center;"><span id="osrmStatus" style="opacity:.6;">▶ setas indicam direção de percurso</span><span style="margin-left:auto;opacity:.3;">${responseMs}ms</span></div>`;
 
         mapEl.style.display='';
-        if(!_historyMap){_historyMap=L.map('gpsHistoryMapContainer',{zoomControl:true});L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{attribution:'© <a href="https://openstreetmap.org">OpenStreetMap</a>',maxZoom:19}).addTo(_historyMap);}
-        _historyLayers.forEach(l=>_historyMap.removeLayer(l)); _historyLayers=[];
+        if(_historyMap){_historyMap.remove();_historyMap=null;}
+        _historyLayers=[];
+        _historyMap=L.map('gpsHistoryMapContainer',{zoomControl:true});
+        const _adDark=document.documentElement.getAttribute('data-theme')==='dark';
+        L.tileLayer(_adDark?'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png':'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png',{attribution:'© <a href="https://openstreetmap.org">OSM</a> © <a href="https://carto.com">CARTO</a>',maxZoom:19}).addTo(_historyMap);
         const rawLatLngs=points.map(p=>[p.lat,p.lng]);
         _historyLayers.push(..._rawPolyline(_historyMap,points));
         _historyMap.fitBounds(L.latLngBounds(rawLatLngs),{padding:[30,30]});
-        setTimeout(()=>_historyMap.invalidateSize(),100);
+        setTimeout(()=>_historyMap.invalidateSize(),300);
 
         const startIcon=L.divIcon({className:'',iconSize:[22,22],iconAnchor:[11,11],popupAnchor:[0,-14],html:`<div style="width:22px;height:22px;background:#22c55e;border-radius:50%;border:3px solid #fff;box-shadow:0 2px 8px rgba(0,0,0,.5);display:flex;align-items:center;justify-content:center;"><div style="width:6px;height:6px;background:#fff;border-radius:50%;"></div></div>`});
         const startM=L.marker(rawLatLngs[0],{icon:startIcon,zIndexOffset:1000}).addTo(_historyMap).bindPopup(`<b style="color:#22c55e;">▶ Partida</b><br>${escHtml(points[0].endereco||'—')}<br><small style="color:#666;">${firstTs.toLocaleString('pt-BR',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'})}</small>`);
@@ -1724,74 +1746,7 @@ async function excluirUsuario(id, nome) {
     if (r.ok) loadUsers();
 }
 
-// ── Categorias ────────────────────────────────────────
-let _allCategories = [];
-
-async function loadCategories() {
-    try {
-        const d = await fetch(`${API_BASE}/bike-categories`).then(r => r.json());
-        _allCategories = d.categorias || [];
-        renderCategoryList();
-        fillCategorySelects();
-    } catch (e) { showToast('Erro ao carregar categorias.', 'error'); }
-}
-
-function renderCategoryList() {
-    const el = document.getElementById('categoryList');
-    if (!el) return;
-    if (!_allCategories.length) {
-        el.innerHTML = '<p style="color:var(--text-muted);">Nenhuma categoria cadastrada.</p>';
-        return;
-    }
-    el.innerHTML = '<div style="display:flex;flex-wrap:wrap;gap:10px;">' +
-        _allCategories.map(c => `
-            <div style="display:flex;align-items:center;gap:8px;background:var(--surface-2,#1e293b);border-radius:8px;padding:8px 14px;">
-                <span style="font-weight:600;">${escHtml(c.nome)}</span>
-                <button class="btn btn-danger btn-sm" style="padding:2px 8px;font-size:11px;" onclick="deleteCategory(${c.id},'${escHtml(c.nome)}')">&times;</button>
-            </div>`
-        ).join('') + '</div>';
-}
-
-async function fillCategorySelects() {
-    if (!_allCategories.length) {
-        try {
-            const d = await fetch(`${API_BASE}/bike-categories`).then(r => r.json());
-            _allCategories = d.categorias || [];
-        } catch { return; }
-    }
-    ['bCat', 'editCat'].forEach(id => {
-        const sel = document.getElementById(id);
-        if (!sel || sel.tagName !== 'SELECT') return;
-        const current = sel.value;
-        sel.innerHTML = _allCategories.map(c =>
-            `<option value="${escHtml(c.nome)}" ${c.nome === current ? 'selected' : ''}>${escHtml(c.nome)}</option>`
-        ).join('');
-    });
-}
-
-async function addCategory() {
-    const input = document.getElementById('newCategoryName');
-    const nome = input ? input.value.trim() : '';
-    if (!nome) { showToast('Digite um nome para a categoria.', 'warning'); return; }
-    try {
-        const r = await fetch(`${API_BASE}/bike-categories`, {
-            method: 'POST', headers: authHJ, body: JSON.stringify({ nome })
-        });
-        const d = await r.json();
-        showToast(d.message || d.error || '', r.ok ? 'success' : 'error');
-        if (r.ok) { input.value = ''; await loadCategories(); }
-    } catch (e) { showToast('Erro ao criar categoria.', 'error'); }
-}
-
-async function deleteCategory(id, nome) {
-    if (!confirm(`Remover a categoria "${nome}"? Bikes com essa categoria NÃO serão afetadas.`)) return;
-    try {
-        const r = await fetch(`${API_BASE}/bike-categories/${id}`, { method: 'DELETE', headers: authH });
-        const d = await r.json();
-        showToast(d.message || d.error || '', r.ok ? 'success' : 'error');
-        if (r.ok) await loadCategories();
-    } catch (e) { showToast('Erro ao remover categoria.', 'error'); }
-}
+// ── Categorias (stub — implementação completa no bloco final) ─
 
 // ── Close modals on Escape ────────────────────────────
 document.addEventListener('keydown', e => {
@@ -2116,6 +2071,151 @@ window.abrirBikePlanos      = abrirBikePlanos;
 window.fecharPlanoBikes     = fecharPlanoBikes;
 window.toggleBikePlano      = toggleBikePlano;
 window.renderSegurosPosBike = renderSegurosPosBike;
+
+// ── Categorias de Bicicletas ─────────────────────────
+let _allCategories = [];
+
+async function loadCategories() {
+    const list = document.getElementById('categoryList');
+    if (list) list.innerHTML = '<p style="color:var(--text-muted);font-size:0.84rem;">Carregando...</p>';
+    try {
+        const d = await fetch(`${API_BASE}/bike-categories`, { headers: authH }).then(r => r.json());
+        _allCategories = d.categorias || [];
+        _renderCategories();
+        _fillCategorySelects();
+    } catch {
+        if (list) list.innerHTML = '<p style="color:var(--text-muted);">Erro ao carregar categorias.</p>';
+    }
+    _loadSimTime();
+}
+
+function _fillCategorySelects() {
+    ['bCat', 'editCat'].forEach(id => {
+        const sel = document.getElementById(id);
+        if (!sel || sel.tagName !== 'SELECT') return;
+        const current = sel.value;
+        sel.innerHTML = _allCategories.map(c =>
+            `<option value="${escHtml(c.nome)}" ${c.nome === current ? 'selected' : ''}>${escHtml(c.nome)}</option>`
+        ).join('');
+    });
+}
+
+function _renderCategories() {
+    const list = document.getElementById('categoryList');
+    if (!list) return;
+    if (!_allCategories.length) {
+        list.innerHTML = '<p style="color:var(--text-muted);font-size:0.84rem;">Nenhuma categoria cadastrada ainda.</p>';
+        return;
+    }
+    list.innerHTML = `<div style="display:flex;flex-wrap:wrap;gap:8px;">
+        ${_allCategories.map(c => `
+            <span style="display:inline-flex;align-items:center;gap:6px;background:var(--bg-secondary);border:1px solid var(--border);color:var(--text-primary);padding:5px 14px 5px 16px;border-radius:99px;font-size:0.82rem;font-weight:600;">
+                ${escHtml(c.nome)}
+                <button onclick="deleteCategory(${c.id})" title="Remover" style="background:none;border:none;cursor:pointer;color:var(--text-muted);font-size:16px;line-height:1;padding:0 2px;display:inline-flex;align-items:center;opacity:.7;" onmouseover="this.style.opacity=1;this.style.color='var(--danger)'" onmouseout="this.style.opacity=.7;this.style.color='var(--text-muted)'">×</button>
+            </span>
+        `).join('')}
+    </div>`;
+}
+
+async function addCategory() {
+    const input = document.getElementById('newCategoryName');
+    const nome = input?.value?.trim();
+    if (!nome) { showToast('Digite o nome da categoria.', 'error'); return; }
+    try {
+        const r = await fetch(`${API_BASE}/bike-categories`, {
+            method: 'POST', headers: authHJ, body: JSON.stringify({ nome })
+        });
+        const d = await r.json();
+        if (r.ok) {
+            input.value = '';
+            showToast('Categoria adicionada!', 'success');
+            loadCategories();
+        } else {
+            showToast(d.message || d.error || 'Erro ao adicionar.', 'error');
+        }
+    } catch {
+        showToast('Erro ao adicionar categoria.', 'error');
+    }
+}
+
+async function deleteCategory(id) {
+    if (!confirm('Remover esta categoria?')) return;
+    try {
+        const r = await fetch(`${API_BASE}/bike-categories/${id}`, { method: 'DELETE', headers: authH });
+        if (r.ok) {
+            showToast('Categoria removida.', 'success');
+            loadCategories();
+        } else {
+            const d = await r.json().catch(() => ({}));
+            showToast(d.message || d.error || 'Erro ao remover.', 'error');
+        }
+    } catch {
+        showToast('Erro ao remover categoria.', 'error');
+    }
+}
+
+// ── Simulador de Tempo ────────────────────────────────
+async function _loadSimTime() {
+    try {
+        const r = await fetch(`${API_BASE}/admin/forward-time`, {
+            method: 'POST', headers: authHJ, body: JSON.stringify({ days: 0 })
+        });
+        const d = await r.json();
+        if (r.ok) _updateSimTimeDisplay(d.newTime);
+    } catch { /* silencioso */ }
+}
+
+function _updateSimTimeDisplay(isoTime) {
+    const el = document.getElementById('currentSimTime');
+    if (!el || !isoTime) return;
+    const dt = new Date(isoTime);
+    const now = new Date();
+    const diffDays = Math.round((dt - now) / 86400000);
+    const formatted = dt.toLocaleString('pt-BR', { dateStyle: 'medium', timeStyle: 'short' });
+    el.innerHTML = diffDays > 0
+        ? `<span style="color:var(--warning);">+${diffDays}d</span> &nbsp; ${formatted}`
+        : `<span style="color:var(--text-muted);">Tempo real</span> &nbsp; ${formatted}`;
+}
+
+async function forwardTime() {
+    const days = parseInt(document.getElementById('fwdDays')?.value || '1', 10);
+    if (isNaN(days) || days < 1) { showToast('Informe um número válido de dias.', 'error'); return; }
+    try {
+        const r = await fetch(`${API_BASE}/admin/forward-time`, {
+            method: 'POST', headers: authHJ, body: JSON.stringify({ days })
+        });
+        const d = await r.json();
+        if (r.ok) {
+            showToast(`Avançou ${days} dia(s).`, 'success');
+            _updateSimTimeDisplay(d.newTime);
+        } else {
+            showToast(d.message || 'Erro.', 'error');
+        }
+    } catch {
+        showToast('Erro ao avançar tempo.', 'error');
+    }
+}
+
+async function resetTime() {
+    try {
+        const r = await fetch(`${API_BASE}/admin/reset-time`, { method: 'POST', headers: authH });
+        const d = await r.json();
+        if (r.ok) {
+            showToast('Tempo resetado para o real.', 'success');
+            _updateSimTimeDisplay(d.newTime);
+        } else {
+            showToast(d.message || 'Erro.', 'error');
+        }
+    } catch {
+        showToast('Erro ao resetar tempo.', 'error');
+    }
+}
+
+window.loadCategories = loadCategories;
+window.addCategory    = addCategory;
+window.deleteCategory = deleteCategory;
+window.forwardTime    = forwardTime;
+window.resetTime      = resetTime;
 
 // ── Init ──────────────────────────────────────────────
 loadDash();

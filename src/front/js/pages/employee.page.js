@@ -6,6 +6,9 @@ const empRole = window.normalizeUserRole ? window.normalizeUserRole(empUser.role
 if (!empToken || !['funcionario', 'admin'].includes(empRole)) { alert('Acesso negado.'); location.href = 'login.html'; }
 document.getElementById('navAv').textContent = empUser.nome ? empUser.nome[0].toUpperCase() : 'F';
 document.getElementById('navNm').textContent = empUser.nome ? empUser.nome.split(' ')[0] : 'Funcionário';
+(function(){ const el = document.getElementById('navRole'); if (el) el.textContent = { admin:'ADMIN', funcionario:'FUNC.', user:'USUÁRIO' }[empRole] || 'FUNC.'; })();
+const _empGreet = document.getElementById('empGreet');
+if (_empGreet) _empGreet.textContent = `Olá, ${empUser.nome ? empUser.nome.split(' ')[0] : 'Funcionário'}!`;
 const h = { Authorization: 'Bearer ' + empToken }, hj = { ...h, 'Content-Type': 'application/json' };
 function sair() { localStorage.removeItem('pedala_token'); localStorage.removeItem('pedala_user'); location.href = 'login.html'; }
 
@@ -52,8 +55,39 @@ function showSec(s, el) {
     document.getElementById('sec-' + s).classList.add('show');
     document.querySelectorAll('.sidebar-nav a').forEach(a => a.classList.remove('active'));
     if (el) el.classList.add('active');
-    const m = { vistorias: loadVist, locacoes: loadLoc, gps: initGpsMap, chamados: loadChamados };
+    const m = { home: loadEmpHome, vistorias: loadVist, locacoes: loadLoc, gps: initGpsMap, chamados: loadChamados };
     if (m[s]) m[s]();
+}
+
+async function loadEmpHome() {
+    const stVist = document.getElementById('empStVist');
+    const stLoc  = document.getElementById('empStLoc');
+    const stCham = document.getElementById('empStCham');
+    try {
+        const [vistRes, locRes, chamRes] = await Promise.all([
+            fetch(`${API_BASE}/vistorias`,     { headers: h }),
+            fetch(`${API_BASE}/rentals`,       { headers: h }),
+            fetch(`${API_BASE}/chamados`,      { headers: h })
+        ]);
+        const vistData = await vistRes.json();
+        const locData  = await locRes.json();
+        const chamData = await chamRes.json();
+
+        const pendVist = (vistData.vistorias || []).filter(v => v.status === 'pendente').length;
+        const pendLoc  = (locData.alugueis || locData || []).filter(a => a.status === 'aguardando_locacao').length;
+        const openCham = (chamData.chamados || chamData || []).filter(c => c.status === 'aberto').length;
+
+        if (stVist) stVist.textContent = pendVist;
+        if (stLoc)  stLoc.textContent  = pendLoc;
+        if (stCham) stCham.textContent = openCham;
+
+        const badge = document.getElementById('chamadosBadge');
+        if (badge) { badge.textContent = openCham; badge.style.display = openCham > 0 ? 'inline' : 'none'; }
+    } catch {
+        if (stVist) stVist.textContent = '—';
+        if (stLoc)  stLoc.textContent  = '—';
+        if (stCham) stCham.textContent = '—';
+    }
 }
 
 // ── Vistorias ─────────────────────────────────────────
@@ -633,10 +667,13 @@ function initGpsMap() {
                 zoom: 13,
                 zoomControl: true
             });
-            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-                attribution: '© <a href="https://openstreetmap.org">OpenStreetMap</a> contributors',
-                maxZoom: 19
-            }).addTo(_gpsMap);
+            const _isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+            L.tileLayer(
+                _isDark
+                    ? 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png'
+                    : 'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png',
+                { attribution: '© <a href="https://openstreetmap.org">OSM</a> © <a href="https://carto.com">CARTO</a>', maxZoom: 19 }
+            ).addTo(_gpsMap);
 
             // ── Zona de Segurança redesenhada ──
             const ZONE = [-23.5615, -46.6560];
@@ -781,16 +818,17 @@ async function verRotaGPS(rentalId) {
 
         mapEl.style.display = '';
 
-        if (!_historyMap) {
-            _historyMap = L.map('gpsHistoryMapContainer', { zoomControl: true });
-            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-                attribution: '© <a href="https://openstreetmap.org">OpenStreetMap</a>',
-                maxZoom: 19
-            }).addTo(_historyMap);
-        }
-
-        _historyLayers.forEach(l => _historyMap.removeLayer(l));
+        // Recreate map each time for correct tile theme and proper sizing
+        if (_historyMap) { _historyMap.remove(); _historyMap = null; }
         _historyLayers = [];
+        _historyMap = L.map('gpsHistoryMapContainer', { zoomControl: true });
+        const _rtDark = document.documentElement.getAttribute('data-theme') === 'dark';
+        L.tileLayer(
+            _rtDark
+                ? 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png'
+                : 'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png',
+            { attribution: '© <a href="https://openstreetmap.org">OSM</a> © <a href="https://carto.com">CARTO</a>', maxZoom: 19 }
+        ).addTo(_historyMap);
 
         // Glow polyline — rota nas ruas
         _historyLayers.push(..._glowPolyline(_historyMap, latlngs, '#818cf8'));
@@ -812,7 +850,7 @@ async function verRotaGPS(rentalId) {
         _historyLayers.push(endM);
 
         _historyMap.fitBounds(L.latLngBounds(latlngs), { padding: [32, 32] });
-        setTimeout(() => _historyMap.invalidateSize(), 120);
+        setTimeout(() => _historyMap.invalidateSize(), 300);
 
     } catch (e) {
         loading.style.display = 'none';
@@ -849,4 +887,4 @@ document.addEventListener('keydown', e => {
 });
 
 // ── Init ──────────────────────────────────────────────
-loadVist();
+loadEmpHome();

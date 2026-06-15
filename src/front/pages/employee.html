@@ -36,7 +36,10 @@
       <button class="theme-toggle" title="Mudar tema"></button>
       <div class="nav-user-info">
         <div class="nav-avatar" id="navAv">F</div>
-        <span class="nav-username" id="navNm">Funcionário</span>
+        <div style="display:flex;flex-direction:column;gap:1px;">
+          <span class="nav-username" id="navNm">Funcionário</span>
+          <span id="navRole" style="font-size:10px;font-weight:700;letter-spacing:0.06em;color:var(--accent);line-height:1.2;"></span>
+        </div>
       </div>
       <button class="btn btn-secondary btn-sm" onclick="sair()">Sair</button>
     </div>
@@ -45,7 +48,8 @@
   <div class="layout">
     <aside class="sidebar">
       <ul class="sidebar-nav">
-        <li><a href="#" class="active" onclick="showSec('vistorias',this)">Vistorias</a></li>
+        <li><a href="#" class="active" onclick="showSec('home',this)">Resumo</a></li>
+        <li><a href="#" onclick="showSec('vistorias',this)">Vistorias</a></li>
         <li><a href="#" onclick="showSec('locacoes',this)">Entregas</a></li>
         <li><a href="#" onclick="showSec('chamados',this)">Chamados <span id="chamadosBadge" class="badge badge-danger" style="display:none;font-size:10px;padding:1px 5px;margin-left:4px;">0</span></a></li>
         <li><a href="#" onclick="showSec('gps',this)">Mapa GPS</a></li>
@@ -53,8 +57,32 @@
     </aside>
 
     <main class="main-content">
+      <!-- HOME / RESUMO -->
+      <div id="sec-home" class="sec show">
+        <div class="page-banner">
+          <div class="page-banner-content">
+            <h1 id="empGreet">Olá!</h1>
+            <p>Aqui está o resumo das pendências de hoje.</p>
+          </div>
+        </div>
+        <div class="stat-grid" style="margin-top:8px;">
+          <div class="stat-card" style="cursor:pointer;" onclick="showSec('vistorias', document.querySelector('[onclick*=vistorias]'))">
+            <div class="stat-card-label">Vistorias pendentes</div>
+            <div class="stat-card-value" id="empStVist">—</div>
+          </div>
+          <div class="stat-card" style="cursor:pointer;" onclick="showSec('locacoes', document.querySelector('[onclick*=locacoes]'))">
+            <div class="stat-card-label">Entregas pendentes</div>
+            <div class="stat-card-value" id="empStLoc">—</div>
+          </div>
+          <div class="stat-card" style="cursor:pointer;" onclick="showSec('chamados', document.querySelector('[onclick*=chamados]'))">
+            <div class="stat-card-label">Chamados abertos</div>
+            <div class="stat-card-value" id="empStCham">—</div>
+          </div>
+        </div>
+      </div>
+
       <!-- VISTORIAS -->
-      <div id="sec-vistorias" class="sec show">
+      <div id="sec-vistorias" class="sec">
         <div class="page-banner">
           <div class="page-banner-content">
             <h1>Vistorias</h1>

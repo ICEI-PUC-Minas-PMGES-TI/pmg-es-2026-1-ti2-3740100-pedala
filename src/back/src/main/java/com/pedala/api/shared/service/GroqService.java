@@ -39,6 +39,11 @@ public class GroqService {
      */
     @SuppressWarnings("unchecked")
     public String askChatbot(String userMessage, List<Map<String, String>> history) {
+        if (apiKey == null || apiKey.isBlank()) {
+            log.warn("[Groq] GROQ_API_KEY nao configurada — chatbot indisponivel");
+            return "🔧 O assistente virtual está temporariamente em manutenção. Para dúvidas, acesse o painel e abra um chamado em **Suporte**!";
+        }
+
         if (userMessage == null || userMessage.isBlank())
             return "Como posso ajudar você com a Pedala hoje? 😊";
 

@@ -180,6 +180,7 @@ async function loadInicio() {
 
     document.getElementById('navAv').textContent = dashboardUser.nome ? dashboardUser.nome[0].toUpperCase() : 'U';
     document.getElementById('navNm').textContent = dashboardUser.nome ? dashboardUser.nome.split(' ')[0] : 'Usuário';
+    (function(){ const el = document.getElementById('navRole'); if (el) el.textContent = { admin:'ADMIN', funcionario:'FUNC.', user:'USUÁRIO', cliente:'USUÁRIO' }[dashboardRole] || 'USUÁRIO'; })();
     document.getElementById('greetMsg').textContent = `Olá, ${dashboardUser.nome ? dashboardUser.nome.split(' ')[0] : 'ciclista'}.`;
     document.getElementById('wBikes').textContent = String(available);
     document.getElementById('wLoc').textContent = String(rentals.length);
@@ -286,9 +287,14 @@ async function loadLocar() {
 
   try {
     const rentals = await fetch(`${dashboardApi}/rentals/meus`, { headers: dashboardHeaders }).then(response => response.json());
-    const activeRental = (rentals.alugueis || []).find(rental => rental.status !== 'finalizado');
-    if (activeRental) {
-      lock.textContent = `Você já possui a locação #${activeRental.id}. Finalize ou devolva a atual antes de contratar outra bike.`;
+    const now = new Date();
+    const overdueRental = (rentals.alugueis || []).find(rental =>
+      rental.status === 'ativo' &&
+      rental.dataDevolucaoPrevista &&
+      new Date(rental.dataDevolucaoPrevista) < now
+    );
+    if (overdueRental) {
+      lock.textContent = `Você possui a locação #${overdueRental.id} em atraso. Devolva a bike atual antes de contratar outra.`;
       lock.style.display = 'block';
       grid.innerHTML = '';
       return;
