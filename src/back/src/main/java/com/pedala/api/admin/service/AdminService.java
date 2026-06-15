@@ -21,9 +21,14 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.time.Instant;
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
+import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
 import java.util.*;
+import java.util.Locale;
 
 @Service
 @RequiredArgsConstructor
@@ -212,5 +217,74 @@ public class AdminService {
         else { rental.setPagamentoStatus("nao_pago"); }
         rental = rentalRepository.save(rental);
         return Map.of("message", "Fatura " + fatura.getId() + " aprovada!", "aluguel", rentalService.rentalToMap(rental, timeSimulator.now()));
+    }
+
+    // ── KPIs de Desempenho ────────────────────────────────
+
+    @Transactional(readOnly = true)
+    public Map<String, Object> getPerformanceKpis() {
+        ZoneId zone = ZoneId.of("America/Sao_Paulo");
+        ZonedDateTime now = timeSimulator.now().atZone(zone);
+
+        long totalBikes = bikeRepository.countByRemovidaFalse();
+
+        // ── KPI 1: Taxa de Ocupação Mensal ────────────────
+        ZonedDateTime startOfMonth = now.withDayOfMonth(1).truncatedTo(ChronoUnit.DAYS);
+        ZonedDateTime endOfMonth   = startOfMonth.plusMonths(1);
+        long bikesOcupadas = rentalRepository.countDistinctBikesRentedInPeriod(
+                startOfMonth.toInstant(), endOfMonth.toInstant());
+        double taxaOcupacao = totalBikes > 0 ? round1((bikesOcupadas * 100.0) / totalBikes) : 0;
+
+        // Histórico: últimos 6 meses
+        DateTimeFormatter labelFmt = DateTimeFormatter.ofPattern("MMM/yy", new Locale("pt", "BR"));
+        List<Map<String, Object>> historicoOcupacao = new ArrayList<>();
+        for (int i = 5; i >= 0; i--) {
+            ZonedDateTime ms = now.minusMonths(i).withDayOfMonth(1).truncatedTo(ChronoUnit.DAYS);
+            ZonedDateTime me = ms.plusMonths(1);
+            long occ = rentalRepository.countDistinctBikesRentedInPeriod(ms.toInstant(), me.toInstant());
+            double taxa = totalBikes > 0 ? round1((occ * 100.0) / totalBikes) : 0;
+            historicoOcupacao.add(Map.of(
+                "mes", ms.format(DateTimeFormatter.ofPattern("yyyy-MM")),
+                "label", ms.format(labelFmt),
+                "valor", taxa
+            ));
+        }
+
+        // ── KPI 2: Taxa de Renovação ──────────────────────
+        long totalEncerrados = rentalRepository.countByStatus(RentalStatus.finalizado);
+        long comRenovacao    = rentalRepository.countFinalizedWithRenovations();
+        double taxaRenovacao = totalEncerrados > 0 ? round1((comRenovacao * 100.0) / totalEncerrados) : 0;
+
+        // ── KPI 3: Tempo Médio de Entrega ─────────────────
+        Double avgMin = rentalRepository.avgDeliveryTimeMinutes();
+        long totalMinutos = avgMin != null ? Math.round(avgMin) : 0;
+        long horas   = totalMinutos / 60;
+        long minutos = totalMinutos % 60;
+        String tempoFormatado = horas > 0 ? horas + "h " + minutos + "min" : minutos + "min";
+
+        return Map.of(
+            "taxaOcupacaoMensal", Map.of(
+                "valor",        taxaOcupacao,
+                "meta",         70.0,
+                "bikesOcupadas", bikesOcupadas,
+                "totalBikes",   totalBikes,
+                "historico",    historicoOcupacao
+            ),
+            "taxaRenovacao", Map.of(
+                "valor",               taxaRenovacao,
+                "meta",                25.0,
+                "rentalsComRenovacao", comRenovacao,
+                "totalEncerrados",     totalEncerrados
+            ),
+            "tempoMedioEntrega", Map.of(
+                "valorMinutos",  totalMinutos,
+                "valorHoras",    round1(totalMinutos / 60.0),
+                "valorFormatado", tempoFormatado
+            )
+        );
+    }
+
+    private double round1(double v) {
+        return BigDecimal.valueOf(v).setScale(1, RoundingMode.HALF_UP).doubleValue();
     }
 }

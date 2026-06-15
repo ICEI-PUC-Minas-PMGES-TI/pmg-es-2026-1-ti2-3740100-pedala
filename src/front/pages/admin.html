@@ -96,6 +96,7 @@
         <li><a href="#" onclick="showSec('vistorias',this)">Vistorias</a></li>
         <li><a href="#" onclick="showSec('chamados',this)">Chamados</a></li>
         <li><a href="#" onclick="showSec('usuarios',this)">Usuários</a></li>
+          <li><a href="#" onclick="showSec('indicadores',this)">Indicadores</a></li>
           <li><a href="#" onclick="showSec('configuracoes',this)">Configurações</a></li>
       </ul>
     </aside>
@@ -530,6 +531,105 @@
               </thead>
               <tbody id="userTbody">
                 <tr><td colspan="6" style="text-align:center;padding:24px;color:var(--text-muted);">Carregando...</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- INDICADORES DE DESEMPENHO -->
+      <div id="sec-indicadores" class="sec">
+        <div class="page-banner">
+          <div class="page-banner-content">
+            <h1>Indicadores de Desempenho</h1>
+            <p>KPIs operacionais calculados em tempo real sobre a frota e os contratos.</p>
+          </div>
+        </div>
+
+        <!-- KPI Cards -->
+        <div class="stat-grid" id="kpiGrid" style="grid-template-columns:repeat(3,1fr);margin-top:8px;">
+
+          <!-- KPI 1: Ocupação -->
+          <div class="stat-card" id="kpiOcupCard" style="grid-column:1;">
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
+              <div>
+                <div class="stat-card-label">Taxa de Ocupação Mensal</div>
+                <div style="font-size:0.75rem;color:var(--text-muted,#94a3b8);margin-top:2px;">Bikes com aluguel iniciado no mês</div>
+              </div>
+              <span id="kpiOcupBadge" class="badge badge-muted" style="font-size:11px;">—</span>
+            </div>
+            <div style="display:flex;align-items:flex-end;gap:10px;margin-bottom:14px;">
+              <div class="stat-card-value" id="kpiOcupVal" style="font-size:2.4rem;line-height:1;">—</div>
+              <div style="font-size:0.8rem;color:var(--text-muted,#94a3b8);margin-bottom:4px;">meta 70%</div>
+            </div>
+            <div style="background:var(--bg-secondary,#1e293b);border-radius:6px;height:6px;overflow:hidden;">
+              <div id="kpiOcupBar" style="height:100%;border-radius:6px;transition:width .8s ease;width:0%;background:var(--accent,#f7b84c);"></div>
+            </div>
+            <div style="font-size:0.75rem;color:var(--text-muted);margin-top:8px;" id="kpiOcupSub">— de — bikes com locação este mês</div>
+          </div>
+
+          <!-- KPI 2: Renovação -->
+          <div class="stat-card" id="kpiRenCard" style="grid-column:2;">
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
+              <div>
+                <div class="stat-card-label">Taxa de Renovação</div>
+                <div style="font-size:0.75rem;color:var(--text-muted,#94a3b8);margin-top:2px;">Contratos encerrados com renovação</div>
+              </div>
+              <span id="kpiRenBadge" class="badge badge-muted" style="font-size:11px;">—</span>
+            </div>
+            <div style="display:flex;align-items:flex-end;gap:10px;margin-bottom:14px;">
+              <div class="stat-card-value" id="kpiRenVal" style="font-size:2.4rem;line-height:1;">—</div>
+              <div style="font-size:0.8rem;color:var(--text-muted,#94a3b8);margin-bottom:4px;">meta 25%</div>
+            </div>
+            <div style="background:var(--bg-secondary,#1e293b);border-radius:6px;height:6px;overflow:hidden;">
+              <div id="kpiRenBar" style="height:100%;border-radius:6px;transition:width .8s ease;width:0%;background:#8b5cf6;"></div>
+            </div>
+            <div style="font-size:0.75rem;color:var(--text-muted);margin-top:8px;" id="kpiRenSub">— de — contratos renovaram</div>
+          </div>
+
+          <!-- KPI 3: Entrega -->
+          <div class="stat-card" style="grid-column:3;">
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
+              <div>
+                <div class="stat-card-label">Tempo Médio de Entrega</div>
+                <div style="font-size:0.75rem;color:var(--text-muted,#94a3b8);margin-top:2px;">Da criação ao início efetivo</div>
+              </div>
+              <span class="badge badge-muted" style="font-size:11px;background:rgba(6,182,212,0.15);color:#06b6d4;">LOGÍSTICA</span>
+            </div>
+            <div style="display:flex;align-items:flex-end;gap:10px;margin-bottom:14px;">
+              <div class="stat-card-value" id="kpiEntVal" style="font-size:2.4rem;line-height:1;">—</div>
+            </div>
+            <div style="font-size:0.75rem;color:var(--text-muted);margin-top:22px;" id="kpiEntSub">Média calculada sobre todos os contratos com início registrado</div>
+          </div>
+        </div>
+
+        <!-- Gráfico de Tendência -->
+        <div class="card" style="margin-top:24px;">
+          <div class="card-header" style="display:flex;align-items:center;justify-content:space-between;">
+            <span class="card-title">Tendência de Ocupação — Últimos 6 Meses</span>
+            <button class="btn btn-secondary btn-sm" onclick="loadIndicadores()">Atualizar</button>
+          </div>
+          <div class="card-body" style="padding:16px;">
+            <canvas id="chartOcupacao" style="max-height:260px;"></canvas>
+          </div>
+        </div>
+
+        <!-- Resumo tabular -->
+        <div class="card" style="margin-top:24px;">
+          <div class="card-header"><span class="card-title">Resumo dos Indicadores</span></div>
+          <div class="card-body" style="padding:0;">
+            <table style="width:100%;border-collapse:collapse;font-size:0.875rem;">
+              <thead>
+                <tr style="border-bottom:1px solid var(--border);">
+                  <th style="padding:12px 16px;text-align:left;color:var(--text-muted);font-weight:600;font-size:0.75rem;text-transform:uppercase;letter-spacing:.04em;">Indicador</th>
+                  <th style="padding:12px 16px;text-align:center;color:var(--text-muted);font-weight:600;font-size:0.75rem;text-transform:uppercase;letter-spacing:.04em;">Resultado</th>
+                  <th style="padding:12px 16px;text-align:center;color:var(--text-muted);font-weight:600;font-size:0.75rem;text-transform:uppercase;letter-spacing:.04em;">Meta</th>
+                  <th style="padding:12px 16px;text-align:center;color:var(--text-muted);font-weight:600;font-size:0.75rem;text-transform:uppercase;letter-spacing:.04em;">Status</th>
+                  <th style="padding:12px 16px;text-align:left;color:var(--text-muted);font-weight:600;font-size:0.75rem;text-transform:uppercase;letter-spacing:.04em;">Fórmula</th>
+                </tr>
+              </thead>
+              <tbody id="kpiTableBody">
+                <tr><td colspan="5" style="padding:20px;text-align:center;color:var(--text-muted);">Carregando...</td></tr>
               </tbody>
             </table>
           </div>

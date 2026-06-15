@@ -35,6 +35,13 @@ public class AdminController {
         return ResponseEntity.ok(adminService.getStats());
     }
 
+    @Operation(summary = "KPIs de desempenho operacional")
+    @GetMapping("/performance-kpis")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<Map<String, Object>> performanceKpis() {
+        return ResponseEntity.ok(adminService.getPerformanceKpis());
+    }
+
     @Operation(summary = "Bikes com detalhes de aluguel")
     @GetMapping("/bikes")
     @PreAuthorize("hasRole('ADMIN')")

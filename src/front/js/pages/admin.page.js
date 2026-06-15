@@ -27,7 +27,7 @@ function showSec(s, el) {
         dashboard: loadDash, bikes: loadBikes,
         locacoes: loadLocacoes, pagamentos: loadPagamentos, planos: loadPlanos,
         gps: initGpsMap, vistorias: loadVist, chamados: loadChamadosAdmin,
-        usuarios: loadUsers, configuracoes: loadCategories
+        usuarios: loadUsers, configuracoes: loadCategories, indicadores: loadIndicadores
     };
     if (loaders[s]) loaders[s]();
 }
@@ -2216,6 +2216,157 @@ window.addCategory    = addCategory;
 window.deleteCategory = deleteCategory;
 window.forwardTime    = forwardTime;
 window.resetTime      = resetTime;
+
+// ── Indicadores de Desempenho ─────────────────────────
+let _chartOcupacao = null;
+
+async function loadIndicadores() {
+    const grid    = document.getElementById('kpiGrid');
+    const tableEl = document.getElementById('kpiTableBody');
+    if (tableEl) tableEl.innerHTML = '<tr><td colspan="5" style="padding:20px;text-align:center;color:var(--text-muted);">Carregando...</td></tr>';
+
+    let d;
+    try {
+        const r = await fetch(`${API_BASE}/admin/performance-kpis`, { headers: authH });
+        if (!r.ok) throw new Error(r.status);
+        d = await r.json();
+    } catch (e) {
+        showToast('Erro ao carregar indicadores.', 'error');
+        if (tableEl) tableEl.innerHTML = '<tr><td colspan="5" style="padding:20px;text-align:center;color:var(--danger);">Erro ao carregar dados.</td></tr>';
+        return;
+    }
+
+    const oc  = d.taxaOcupacaoMensal;
+    const ren = d.taxaRenovacao;
+    const ent = d.tempoMedioEntrega;
+
+    // ── KPI 1: Ocupação ──
+    const ocMeta = oc.valor >= oc.meta;
+    document.getElementById('kpiOcupVal').textContent = oc.valor + '%';
+    document.getElementById('kpiOcupVal').style.color = ocMeta ? 'var(--success,#22c55e)' : 'var(--warning,#f59e0b)';
+    document.getElementById('kpiOcupSub').textContent = `${oc.bikesOcupadas} de ${oc.totalBikes} bikes com locação este mês`;
+    _kpiBar('kpiOcupBar', oc.valor, 100, ocMeta ? '#22c55e' : '#f59e0b');
+    const ocBadge = document.getElementById('kpiOcupBadge');
+    if (ocBadge) { ocBadge.textContent = ocMeta ? '✓ META' : '↓ ABAIXO'; ocBadge.style.cssText = ocMeta ? 'background:rgba(34,197,94,.15);color:#22c55e;font-size:11px;' : 'background:rgba(245,158,11,.15);color:#f59e0b;font-size:11px;'; }
+
+    // ── KPI 2: Renovação ──
+    const renMeta = ren.valor >= ren.meta;
+    document.getElementById('kpiRenVal').textContent = ren.valor + '%';
+    document.getElementById('kpiRenVal').style.color = renMeta ? '#22c55e' : '#f59e0b';
+    document.getElementById('kpiRenSub').textContent = `${ren.rentalsComRenovacao} de ${ren.totalEncerrados} contratos renovaram`;
+    _kpiBar('kpiRenBar', ren.valor, 100, renMeta ? '#22c55e' : '#f59e0b');
+    const renBadge = document.getElementById('kpiRenBadge');
+    if (renBadge) { renBadge.textContent = renMeta ? '✓ META' : '↓ ABAIXO'; renBadge.style.cssText = renMeta ? 'background:rgba(34,197,94,.15);color:#22c55e;font-size:11px;' : 'background:rgba(245,158,11,.15);color:#f59e0b;font-size:11px;'; }
+
+    // ── KPI 3: Entrega ──
+    document.getElementById('kpiEntVal').textContent = ent.valorFormatado;
+    document.getElementById('kpiEntVal').style.color = '#06b6d4';
+
+    // ── Gráfico de Tendência ──
+    _renderOcupChart(oc.historico);
+
+    // ── Tabela Resumo ──
+    if (tableEl) tableEl.innerHTML = [
+        _kpiRow('Taxa de Ocupação Mensal',
+            oc.valor + '%', '≥ 70%', ocMeta,
+            `(${oc.bikesOcupadas} bikes c/ locação ÷ ${oc.totalBikes} bikes) × 100`),
+        _kpiRow('Taxa de Renovação de Aluguéis',
+            ren.valor + '%', '≥ 25%', renMeta,
+            `(${ren.rentalsComRenovacao} com renovação ÷ ${ren.totalEncerrados} encerrados) × 100`),
+        _kpiRow('Tempo Médio de Entrega',
+            ent.valorFormatado, '—', null,
+            `AVG(data_inicio − criado_em) sobre contratos com início registrado`),
+    ].join('');
+}
+
+function _kpiBar(id, val, max, color) {
+    const el = document.getElementById(id);
+    if (!el) return;
+    el.style.background = color;
+    setTimeout(() => { el.style.width = Math.min((val / max) * 100, 100) + '%'; }, 80);
+}
+
+function _kpiRow(label, resultado, meta, atingiu, formula) {
+    const statusHtml = atingiu === null
+        ? '<span class="badge badge-muted">—</span>'
+        : atingiu
+            ? '<span class="badge" style="background:rgba(34,197,94,.15);color:#22c55e;">✓ Atingida</span>'
+            : '<span class="badge" style="background:rgba(245,158,11,.15);color:#f59e0b;">↓ Abaixo</span>';
+    return `<tr style="border-bottom:1px solid var(--border);">
+        <td style="padding:12px 16px;font-weight:600;">${label}</td>
+        <td style="padding:12px 16px;text-align:center;font-weight:700;font-size:1.05rem;">${resultado}</td>
+        <td style="padding:12px 16px;text-align:center;color:var(--text-muted);">${meta}</td>
+        <td style="padding:12px 16px;text-align:center;">${statusHtml}</td>
+        <td style="padding:12px 16px;color:var(--text-muted);font-size:0.78rem;font-family:monospace;">${formula}</td>
+    </tr>`;
+}
+
+function _renderOcupChart(historico) {
+    const ctx = document.getElementById('chartOcupacao');
+    if (!ctx || !window.Chart) return;
+    if (_chartOcupacao) { _chartOcupacao.destroy(); _chartOcupacao = null; }
+
+    const isDark    = document.documentElement.getAttribute('data-theme') !== 'light';
+    const textColor  = isDark ? '#e2e8f0' : '#1e293b';
+    const mutedColor = isDark ? '#64748b' : '#94a3b8';
+    const gridColor  = isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.06)';
+    const accentColor = '#f7b84c';
+
+    _chartOcupacao = new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: historico.map(h => h.label),
+            datasets: [{
+                label: 'Ocupação (%)',
+                data: historico.map(h => h.valor),
+                borderColor: accentColor,
+                backgroundColor: isDark ? 'rgba(247,184,76,0.12)' : 'rgba(247,184,76,0.1)',
+                borderWidth: 2.5,
+                pointBackgroundColor: accentColor,
+                pointRadius: 5,
+                pointHoverRadius: 7,
+                fill: true,
+                tension: 0.4,
+            }, {
+                label: 'Meta (70%)',
+                data: historico.map(() => 70),
+                borderColor: isDark ? 'rgba(34,197,94,0.5)' : 'rgba(34,197,94,0.7)',
+                borderWidth: 1.5,
+                borderDash: [6, 4],
+                pointRadius: 0,
+                fill: false,
+                tension: 0,
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: { labels: { color: mutedColor, font: { size: 12 }, boxWidth: 14 } },
+                tooltip: {
+                    backgroundColor: isDark ? '#1e293b' : '#fff',
+                    titleColor: textColor,
+                    bodyColor: mutedColor,
+                    borderColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)',
+                    borderWidth: 1,
+                    padding: 10,
+                    callbacks: { label: ctx => ` ${ctx.raw}%` }
+                }
+            },
+            scales: {
+                x: { grid: { color: gridColor }, ticks: { color: mutedColor, font: { size: 12 } } },
+                y: {
+                    grid: { color: gridColor },
+                    ticks: { color: mutedColor, font: { size: 11 }, callback: v => v + '%' },
+                    min: 0, max: 100,
+                    beginAtZero: true
+                }
+            }
+        }
+    });
+}
+
+window.loadIndicadores = loadIndicadores;
 
 // ── Init ──────────────────────────────────────────────
 loadDash();

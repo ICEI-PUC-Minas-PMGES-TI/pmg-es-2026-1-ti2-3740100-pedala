@@ -7,6 +7,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
 
@@ -39,4 +40,15 @@ public interface RentalRepository extends JpaRepository<Rental, Long> {
 
     @Query("SELECT r FROM Rental r LEFT JOIN FETCH r.faturas WHERE r.pagamentoStatus IN :statuses")
     List<Rental> findByPagamentoStatusIn(@Param("statuses") List<String> statuses);
+
+    // ── KPI queries ───────────────────────────────────────
+
+    @Query(value = "SELECT COUNT(DISTINCT bike_id) FROM rentals WHERE data_inicio >= :start AND data_inicio < :end", nativeQuery = true)
+    long countDistinctBikesRentedInPeriod(@Param("start") Instant start, @Param("end") Instant end);
+
+    @Query("SELECT COUNT(r) FROM Rental r WHERE r.status = com.pedala.api.rental.domain.RentalStatus.finalizado AND SIZE(r.renovacoes) > 0")
+    long countFinalizedWithRenovations();
+
+    @Query(value = "SELECT AVG(CAST(DATEDIFF(minute, criado_em, data_inicio) AS FLOAT)) FROM rentals WHERE data_inicio IS NOT NULL AND criado_em IS NOT NULL", nativeQuery = true)
+    Double avgDeliveryTimeMinutes();
 }
