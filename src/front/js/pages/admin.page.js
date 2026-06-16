@@ -2259,8 +2259,10 @@ async function loadIndicadores() {
     if (renBadge) { renBadge.textContent = renMeta ? '✓ META' : '↓ ABAIXO'; renBadge.style.cssText = renMeta ? 'background:rgba(34,197,94,.15);color:#22c55e;font-size:11px;' : 'background:rgba(245,158,11,.15);color:#f59e0b;font-size:11px;'; }
 
     // ── KPI 3: Entrega ──
-    document.getElementById('kpiEntVal').textContent = ent.valorFormatado;
-    document.getElementById('kpiEntVal').style.color = '#06b6d4';
+    const entEl = document.getElementById('kpiEntVal');
+    entEl.textContent = ent.valorFormatado;
+    entEl.style.color = ent.valorFormatado === 'N/D' ? 'var(--text-muted,#64748b)' : '#06b6d4';
+    entEl.style.fontSize = ent.valorFormatado === 'N/D' ? '1.6rem' : '2.4rem';
 
     // ── Gráfico de Tendência ──
     _renderOcupChart(oc.historico);

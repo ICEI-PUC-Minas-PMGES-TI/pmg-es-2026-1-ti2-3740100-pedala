@@ -257,10 +257,11 @@ public class AdminService {
 
         // ── KPI 3: Tempo Médio de Entrega ─────────────────
         Double avgMin = rentalRepository.avgDeliveryTimeMinutes();
-        long totalMinutos = avgMin != null ? Math.round(avgMin) : 0;
+        long totalMinutos = (avgMin != null && avgMin > 0) ? Math.round(avgMin) : 0;
         long horas   = totalMinutos / 60;
         long minutos = totalMinutos % 60;
-        String tempoFormatado = horas > 0 ? horas + "h " + minutos + "min" : minutos + "min";
+        String tempoFormatado = totalMinutos <= 0 ? "N/D"
+                : horas > 0 ? horas + "h " + minutos + "min" : minutos + "min";
 
         return Map.of(
             "taxaOcupacaoMensal", Map.of(
