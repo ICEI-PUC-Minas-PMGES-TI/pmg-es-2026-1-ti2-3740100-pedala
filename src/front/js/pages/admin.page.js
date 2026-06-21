@@ -421,7 +421,7 @@ async function loadBikes() {
         allBikes = d.bikes || [];
         const countEl = document.getElementById('bikeCount');
         if (countEl) countEl.textContent = `${allBikes.length} modelo(s)`;
-        await fillCategorySelects(); // preenche os selects de categoria
+        _fillCategorySelects(); // preenche os selects de categoria
         filterBikeCards();
     } catch (e) { showToast('Erro ao carregar bikes.', 'error'); }
 }
@@ -636,7 +636,7 @@ async function openEditModal(bikeId) {
     document.getElementById('editPM').value = bike.precos?.mensal || '';
 
     // Preenche o select de categoria e seleciona o valor atual da bike
-    await fillCategorySelects();
+    _fillCategorySelects();
     const editCat = document.getElementById('editCat');
     if (editCat && bike.categoria) editCat.value = bike.categoria;
 

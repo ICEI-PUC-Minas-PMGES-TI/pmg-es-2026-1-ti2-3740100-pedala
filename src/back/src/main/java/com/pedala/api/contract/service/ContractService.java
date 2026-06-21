@@ -26,7 +26,7 @@ public class ContractService {
     @Transactional(readOnly = true)
     public Map<String, Object> generateContract(Long aluguelId, Long requesterId, String requesterRole) {
         Rental aluguel = rentalRepository.findByIdWithDetails(aluguelId)
-                .orElseThrow(() -> new ResourceNotFoundException("Locacao nao encontrada."));
+                .orElseThrow(() -> new ResourceNotFoundException("Locação não encontrada."));
         boolean isOwner = aluguel.getUsuarioId().equals(requesterId);
         boolean isStaff = "admin".equals(requesterRole) || "funcionario".equals(requesterRole);
         if (!isOwner && !isStaff) throw new AccessDeniedException("Acesso negado.");
@@ -34,10 +34,10 @@ public class ContractService {
         User usuario = userRepository.findById(aluguel.getUsuarioId()).orElse(null);
         String nome = usuario != null ? usuario.getNome() : aluguel.getUsuarioNome();
         String email = usuario != null ? usuario.getEmail() : aluguel.getUsuarioEmail();
-        String cpf = usuario != null && usuario.getCpf() != null ? usuario.getCpf() : "Nao informado";
-        String telefone = usuario != null && usuario.getTelefone() != null ? usuario.getTelefone() : "Nao informado";
+        String cpf = usuario != null && usuario.getCpf() != null ? usuario.getCpf() : "Não informado";
+        String telefone = usuario != null && usuario.getTelefone() != null ? usuario.getTelefone() : "Não informado";
 
-        String enderecoStr = "Endereco nao informado";
+        String enderecoStr = "Endereço não informado";
         if (aluguel.getEnderecoLogradouro() != null) {
             enderecoStr = aluguel.getEnderecoLogradouro() + ", " + aluguel.getEnderecoNumero()
                     + (aluguel.getEnderecoComplemento() != null ? ", " + aluguel.getEnderecoComplemento() : "")
@@ -51,7 +51,7 @@ public class ContractService {
 
         StringBuilder renovacoesHtml = new StringBuilder();
         if (aluguel.getRenovacoes() != null && !aluguel.getRenovacoes().isEmpty()) {
-            renovacoesHtml.append("<div class=\"section\"><h3>Renovacoes de Contrato</h3><table><thead><tr><th>Data</th><th>Extensao</th><th>Nova data de devolucao</th></tr></thead><tbody>");
+            renovacoesHtml.append("<div class=\"section\"><h3>Renovações de Contrato</h3><table><thead><tr><th>Data</th><th>Extensão</th><th>Nova data de devolução</th></tr></thead><tbody>");
             aluguel.getRenovacoes().forEach(r -> renovacoesHtml.append("<tr><td>").append(FMT.format(r.getCriadoEm()))
                     .append("</td><td>").append(r.getDias()).append(" dias (").append(r.getTipo()).append(")</td><td>")
                     .append(FMT.format(r.getDataPara())).append("</td></tr>"));
@@ -71,7 +71,7 @@ public class ContractService {
                               String status, String renovacoesHtml) {
         return """
 <!DOCTYPE html><html lang="pt-BR"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">
-<title>Contrato de Locacao #%d - Pedala</title>
+<title>Contrato de Locação #%d - Pedala</title>
 <style>@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;900&display=swap');
 *{box-sizing:border-box;margin:0;padding:0}body{font-family:'Inter',sans-serif;background:#F4F6F6;color:#1A202C;padding:40px 20px}
 .contract{max-width:800px;margin:0 auto;background:#fff;border-radius:16px;overflow:hidden;box-shadow:0 4px 24px rgba(31,60,136,.12)}
@@ -97,40 +97,40 @@ table{width:100%%;border-collapse:collapse;font-size:13px}table th{text-align:le
 </style></head><body>
 <button class="print-btn" onclick="window.print()">Imprimir / Salvar PDF</button>
 <div class="contract"><div class="contract-header"><div class="logo">Pedala</div>
-<h1>Contrato de Locacao de Bicicleta</h1>
-<div style="font-size:13px;color:rgba(255,255,255,.5);margin-top:4px">Locacao #%d &bull; Emitido em %s</div>
+<h1>Contrato de Locação de Bicicleta</h1>
+<div style="font-size:13px;color:rgba(255,255,255,.5);margin-top:4px">Locação #%d &bull; Emitido em %s</div>
 <div style="margin-top:10px"><span class="badge-status">%s</span></div></div>
 <div class="contract-body">
 <div class="highlight"><div><div class="h-value">R$%.2f</div><div class="h-label">Valor do plano</div></div>
-<div><div class="h-value">%s</div><div class="h-label">Data de inicio</div></div>
-<div><div class="h-value">%s</div><div class="h-label">Devolucao prevista</div></div></div>
-<div class="section"><h3>Dados do Locatario</h3><div class="info-grid">
+<div><div class="h-value">%s</div><div class="h-label">Data de início</div></div>
+<div><div class="h-value">%s</div><div class="h-label">Devolução prevista</div></div></div>
+<div class="section"><h3>Dados do Locatário</h3><div class="info-grid">
 <div class="info-item"><div class="label">Nome completo</div><div class="value">%s</div></div>
 <div class="info-item"><div class="label">Email</div><div class="value">%s</div></div>
 <div class="info-item"><div class="label">CPF</div><div class="value">%s</div></div>
 <div class="info-item"><div class="label">Telefone</div><div class="value">%s</div></div>
-<div class="info-item full"><div class="label">Endereco de entrega</div><div class="value">%s</div></div></div></div>
+<div class="info-item full"><div class="label">Endereço de entrega</div><div class="value">%s</div></div></div></div>
 <div class="section"><h3>Dados da Bicicleta</h3><div class="info-grid">
 <div class="info-item"><div class="label">Modelo</div><div class="value">%s</div></div>
 <div class="info-item"><div class="label">Categoria</div><div class="value">%s</div></div>
 <div class="info-item"><div class="label">Plano contratado</div><div class="value">%s</div></div>
 <div class="info-item"><div class="label">Valor total</div><div class="value" style="color:#1F3C88;font-size:18px">R$%.2f</div></div></div></div>
-<div class="section"><h3>Clausulas e Condicoes de Uso</h3><div class="clausulas"><div class="clausulas-list">
-<div class="item">1. O locatario declara receber a bicicleta em perfeito estado.</div>
-<div class="item">2. O locatario se compromete a utilizar com cuidado e responsabilidade.</div>
-<div class="item">3. Danos ao equipamento serao de responsabilidade do locatario.</div>
-<div class="item">4. Atrasos na devolucao implicam cobranca proporcional adicional.</div>
-<div class="item" style="color:#d97706;font-weight:700">5. MULTA POR DEVOLUCAO ANTECIPADA: 15%% sobre o valor proporcional do periodo nao utilizado.</div>
-<div class="item">6. A bicicleta devera ser devolvida no mesmo estado em que foi recebida.</div>
-<div class="item">7. O locatario autoriza coleta de dados GPS durante o periodo de locacao.</div>
-<div class="item">8. Renovacao pode ser solicitada sujeita a disponibilidade.</div>
-<div class="item">9. Em caso de roubo, comunicar a Pedala e registrar boletim de ocorrencia.</div></div></div></div>
+<div class="section"><h3>Cláusulas e Condições de Uso</h3><div class="clausulas"><div class="clausulas-list">
+<div class="item">1. O locatário declara receber a bicicleta em perfeito estado.</div>
+<div class="item">2. O locatário se compromete a utilizá-la com cuidado e responsabilidade.</div>
+<div class="item">3. Danos ao equipamento serão de responsabilidade do locatário.</div>
+<div class="item">4. Atrasos na devolução implicam cobrança proporcional adicional.</div>
+<div class="item" style="color:#d97706;font-weight:700">5. MULTA POR DEVOLUÇÃO ANTECIPADA: 15%% sobre o valor proporcional do período não utilizado.</div>
+<div class="item">6. A bicicleta deverá ser devolvida no mesmo estado em que foi recebida.</div>
+<div class="item">7. O locatário autoriza a coleta de dados GPS durante o período de locação.</div>
+<div class="item">8. Renovação pode ser solicitada sujeita à disponibilidade.</div>
+<div class="item">9. Em caso de roubo, comunicar a Pedala e registrar boletim de ocorrência.</div></div></div></div>
 %s
 <div class="assinatura"><div class="assinatura-box"><div class="assinatura-line"></div>
-<div class="assinatura-label">%s<br>Locatario — CPF: %s</div></div>
+<div class="assinatura-label">%s<br>Locatário — CPF: %s</div></div>
 <div class="assinatura-box"><div class="assinatura-line"></div>
-<div class="assinatura-label">Pedala Locacao de Bicicletas<br>Representante Legal</div></div></div></div>
-<div class="footer">Pedala Locacao de Bicicletas &bull; Contrato #%d &bull; Emitido em %s<br>Este documento tem validade juridica mediante assinatura das partes.</div>
+<div class="assinatura-label">Pedala Locação de Bicicletas<br>Representante Legal</div></div></div></div>
+<div class="footer">Pedala Locação de Bicicletas &bull; Contrato #%d &bull; Emitido em %s<br>Este documento tem validade jurídica mediante assinatura das partes.</div>
 </div></body></html>""".formatted(
                 a.getId(), a.getId(), dataCriacao, status,
                 a.getPreco().doubleValue(), dataInicio, dataDev,

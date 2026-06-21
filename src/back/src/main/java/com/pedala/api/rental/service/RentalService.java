@@ -212,7 +212,7 @@ public class RentalService {
         rental = rentalRepository.save(rental);
         inspectionRepository.save(Inspection.builder().aluguelId(rental.getId()).usuarioId(rental.getUsuarioId())
                 .usuarioNome(rental.getUsuarioNome()).bikeId(rental.getBikeId()).bikeNome(rental.getBikeNome()).criadaEm(agora).build());
-        return Map.of("message", "Devolucao solicitada. Um funcionario agendara a vistoria da bike.", "aluguel", rentalToMap(rental, agora));
+        return Map.of("message", "Devolução solicitada. Um funcionário agendará a vistoria da bike.", "aluguel", rentalToMap(rental, agora));
     }
 
     @Transactional
