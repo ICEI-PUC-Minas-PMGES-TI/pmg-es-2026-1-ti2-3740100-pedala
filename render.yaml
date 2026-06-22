@@ -1,0 +1,37 @@
+services:
+  # ── Backend Spring Boot ─────────────────────────────────────────────────────
+  - type: web
+    name: pedala-api
+    env: docker
+    dockerfilePath: src/back/src/Dockerfile
+    dockerContext: src/back/src
+    plan: free
+    healthCheckPath: /actuator/health
+    envVars:
+      - key: PORT
+        value: 8080
+      - key: GROQ_API_KEY
+        sync: false          # definir manualmente no dashboard do Render
+      - key: DB_URL
+        sync: false          # jdbc:sqlserver://pedaladb.database.windows.net:1433;...
+      - key: DB_USER
+        sync: false
+      - key: DB_PASSWORD
+        sync: false
+
+  # ── Frontend SPA estático ───────────────────────────────────────────────────
+  - type: web
+    name: pedala-front
+    env: static
+    staticPublishPath: src/front
+    # Injeta a URL do backend em env.js antes de publicar
+    buildCommand: >
+      echo "window.__PEDALA_API_URL__ = '${PEDALA_API_URL}';" > src/front/js/core/env.js
+    envVars:
+      - key: PEDALA_API_URL
+        # Trocar pela URL real gerada pelo Render para pedala-api
+        value: https://pedala-api.onrender.com/api
+    routes:
+      - type: rewrite
+        source: /*
+        destination: /index.html

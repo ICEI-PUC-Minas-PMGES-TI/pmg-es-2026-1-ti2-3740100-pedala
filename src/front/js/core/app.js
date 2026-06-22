@@ -4,7 +4,7 @@ const TOKEN_KEY = 'pedala_token';
 const USER_KEY = 'pedala_user';
 const host = window.location.hostname || 'localhost';
 const protocol = window.location.protocol === 'https:' ? 'https:' : 'http:';
-const API_BASE = `${protocol}//${host}:8080/api`;
+const API_BASE = window.__PEDALA_API_URL__ || `${protocol}//${host}:8080/api`;
 
 window.PEDALA_API_BASE = API_BASE;
 

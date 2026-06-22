@@ -1,15 +1,12 @@
-# Multi-stage build for Pedala API
 FROM eclipse-temurin:17-jdk-alpine AS build
-
-# Instala o Maven
-RUN apk add --no-cache maven
-
 WORKDIR /app
-COPY src/pom.xml .
-COPY src/.mvn .mvn
-COPY src/main main
-RUN mvn -B dependency:go-offline
-RUN mvn -B package -DskipTests
+COPY pom.xml .
+COPY mvnw .
+COPY mvnw.cmd .
+COPY .mvn .mvn
+COPY main main
+COPY test test
+RUN chmod +x mvnw && ./mvnw clean package -DskipTests --no-transfer-progress
 
 FROM eclipse-temurin:17-jre-alpine
 WORKDIR /app
