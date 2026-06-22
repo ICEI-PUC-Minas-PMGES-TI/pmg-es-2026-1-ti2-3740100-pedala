@@ -7,7 +7,7 @@ RUN apk add --no-cache maven
 WORKDIR /app
 COPY src/pom.xml .
 COPY src/.mvn .mvn
-COPY src/main src/main
+COPY src/main main
 RUN mvn -B dependency:go-offline
 RUN mvn -B package -DskipTests
 
