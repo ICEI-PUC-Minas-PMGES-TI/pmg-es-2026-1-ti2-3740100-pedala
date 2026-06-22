@@ -5,7 +5,6 @@ COPY mvnw .
 COPY mvnw.cmd .
 COPY .mvn .mvn
 COPY main main
-COPY test test
 RUN chmod +x mvnw && ./mvnw clean package -DskipTests --no-transfer-progress
 
 FROM eclipse-temurin:17-jre-alpine
