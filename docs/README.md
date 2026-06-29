@@ -218,4 +218,4 @@ _Atualizar os links e adicionar novos links para que a estrutura do código este
 [Slides da apresentação final](presentations/)
 
 
-[Vídeo da apresentação final]([video/](https://youtu.be/epQmrRXqzDA))
+[Vídeo da apresentação final](https://youtu.be/epQmrRXqzDA)
